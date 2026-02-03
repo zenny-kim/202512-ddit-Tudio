@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.dashboard.mapper.ITodoMapper">
+
+	<select id="selectTodoList" parameterType="kr.or.ddit.vo.TodoVO" resultType="kr.or.ddit.vo.TodoVO">
+		SELECT 
+			TODO_NO
+			, MEMBER_NO
+			, PROJECT_NO
+			, TODO_CONTENT
+			, TODO_STATUS
+			, TODO_REGDATE
+			, TODO_STRDATE
+			, TODO_ENDDATE
+			, TODO_DONEDATE
+		FROM TODO
+		WHERE MEMBER_NO = #{memberNo}
+		
+        <if test="projectNo != null and projectNo > 0">
+          AND PROJECT_NO = #{projectNo}
+    	</if>
+    
+    	<if test="projectNo == 0 or projectNo == null">
+          AND PROJECT_NO IS NULL
+    	</if>   
+    	   
+        ORDER BY TODO_STATUS ASC, TODO_ENDDATE ASC
+	</select>
+	
+	<insert id="insertTodo" parameterType="kr.or.ddit.vo.TodoVO">
+		INSERT INTO TODO (
+			TODO_NO
+			, MEMBER_NO
+			, PROJECT_NO
+			, TODO_CONTENT
+			, TODO_STATUS
+			, TODO_REGDATE
+			, TODO_STRDATE
+			, TODO_ENDDATE
+		) VALUES (
+			SEQ_TODO.NEXTVAL
+			, #{memberNo}
+			, #{projectNo}
+			, #{todoContent}
+			, 'N'
+			, CURRENT_TIMESTAMP
+			, #{todoStrdate}
+			, #{todoEnddate}
+		)
+	</insert>
+	
+	<update id="updateTodoStatus" parameterType="kr.or.ddit.vo.TodoVO">
+		UPDATE TODO
+		SET
+			TODO_STATUS = #{todoStatus}
+			, TODO_DONEDATE = CASE WHEN #{todoStatus} = 'Y' THEN CURRENT_TIMESTAMP 
+							  ELSE NULL 
+							  END
+		WHERE TODO_NO = #{todoNo}
+		  AND MEMBER_NO = #{memberNo}
+	</update>
+
+	<delete id="deleteCompletedTodo">
+		DELETE FROM TODO
+		WHERE TODO_STATUS = 'Y'
+		<![CDATA[
+		  AND TRUNC(TODO_DONEDATE) < TRUNC(CURRENT_TIMESTAMP)
+		]]>
+	</delete>
+	
+	<update id="updateTodoContent" parameterType="kr.or.ddit.vo.TodoVO">
+        UPDATE TODO
+        SET TODO_CONTENT = #{todoContent}
+        WHERE TODO_NO = #{todoNo}
+          AND MEMBER_NO = #{memberNo}
+    </update>
+	
+	<delete id="deleteTodo" parameterType="kr.or.ddit.vo.TodoVO">
+		DELETE FROM TODO
+		WHERE TODO_NO = #{todoNo}
+	</delete>
+
+</mapper>

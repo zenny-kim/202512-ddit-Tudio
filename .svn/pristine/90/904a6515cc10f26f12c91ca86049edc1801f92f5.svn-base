@@ -1,0 +1,13 @@
+package kr.or.ddit.vo;
+
+import java.util.List;
+
+import lombok.Data;
+
+@Data
+public class ProjectMiniHeaderVO {
+	private int projectNo;	// 프로젝트 일련번호
+	private String fixTab;	// 1:게시판, 2:업무, 3:일정, 4:간트차트, 5:자료실, 6:구성원
+	
+	private List<Integer> tabOrderList;	// 프로젝트 미니헤더(탭) 순서 목록
+}

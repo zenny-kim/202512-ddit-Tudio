@@ -1,0 +1,21 @@
+package kr.or.ddit.log.mapper;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.vo.log.LogLoginVO;
+import kr.or.ddit.vo.log.LogSearchVO;
+
+@Mapper
+public interface ILogMapper {
+
+	// 로그인 로그 저장
+	public int insertLoginLog(LogLoginVO logVO);
+	
+	// 전체 글 개수 조회
+	public int selectLoginLogCount(LogSearchVO searchVO);
+	
+	// 로그인 로그 전체 조회
+	public List<LogLoginVO> selectLoginLogList(LogSearchVO searchVO);
+}

@@ -1,0 +1,231 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- 
+    파일명: approval_list_client.jsp
+    설명: 고객사 전용 결재 대기/완료 목록 조회 페이지
+--%>
+
+<div class="main-content-wrap">
+    <div class="container-fluid p-0">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">결재 관리</h3>
+                <p class="text-muted small m-0">요청된 기안서를 검토하고 승인해주세요.</p>
+            </div>
+        </div>
+
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-body py-3 bg-white" style="border-radius: 12px;">
+                <form class="row g-2 align-items-center" onsubmit="return false;">
+                    <div class="col-md-2">
+                        <select class="form-select form-select-sm fw-bold border bg-light" id="searchPeriod">
+                            <option value="all" selected>전체 기간</option>
+                            <option value="1">1개월</option>
+                            <option value="3">3개월</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select form-select-sm" id="searchStatus">
+                            <option value="all" selected>전체 상태</option>
+                            <option value="waiting">대기중</option>
+                            <option value="approved">승인</option>
+                            <option value="rejected">반려</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="searchKeyword" placeholder="기안명 또는 기안자(Tudio) 검색">
+                        </div>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button type="button" class="btn btn-sm btn-light border me-1" onclick="resetSearch()">초기화</button>
+                        <button type="button" class="btn btn-sm btn-primary px-3 fw-bold" onclick="handleSearch()">조회</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white border-0 pt-2 px-0 mx-4" style="border-bottom: 1px solid #eee;">
+                <ul class="nav nav-tabs card-header-tabs border-0" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active position-relative" data-bs-toggle="tab" href="#waiting" onclick="switchTab('waiting')">
+                            <i class="bi bi-hourglass-split me-2"></i>결재 대기함
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#processed" onclick="switchTab('processed')">
+                            <i class="bi bi-archive me-2"></i>결재 처리함 (완료)
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="tab-content">
+                    
+                    <div class="tab-pane fade show active" id="waiting">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4" style="width:22%">기안서 종류</th>
+                                    <th style="width:33%">제목</th>
+                                    <th style="width:15%">프로젝트</th>
+                                    <th style="width:15%">기안자</th>
+                                    <th style="width:15%">기안일</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody_waiting">
+                                </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="processed">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4" style="width:40%">제목</th>
+                                    <th style="width:15%">프로젝트</th>
+                                    <th style="width:15%">기안자</th>
+                                    <th style="width:15%">처리일</th>
+                                    <th class="text-center" style="width:15%">결과</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody_processed">
+                                </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* ============================================================
+       [Data] 데이터 Mockup (고객사 시점)
+    ============================================================ */
+    const dbData = {
+        waiting: [
+            { id: 'APL-002', title: "신규 프로젝트 'Alpha' 장비 구매 요청", project: "Alpha 프로젝트", drafter: "박개발 (Tudio)", date: "2025.12.16", status: "waiting", docType: "산출물 검수" },
+            { id: 'APL-004', title: "마케팅 캠페인 1차 시안 검수 요청", project: "마케팅 캠페인", drafter: "최디자 (Tudio)", date: "2025.12.17", status: "waiting", docType: "진척 보고" },
+            { id: 'APL-005', title: "2025년 1분기 유지보수 계획안 승인 요청", project: "Tudio 런칭", drafter: "김사용 (Tudio)", date: "2025.12.18", status: "waiting", docType: "승인/결정요청" },
+            { id: 'APL-006', title: "서버 증설에 따른 예산 변경 요청", project: "Alpha 프로젝트", drafter: "이서버 (Tudio)", date: "2025.12.19", status: "waiting", docType: "예산/일정 변경" }
+        ],
+        processed: [
+            { id: 'APL-001', title: "Tudio 런칭 프로젝트 최종 기획안 승인", project: "Tudio 런칭", drafter: "김사용 (Tudio)", processDate: "2025.12.15", status: "approved", badge: "bg-success bg-opacity-10 text-success", statusText: "승인" },
+            { id: 'APL-003', title: "추가 마케팅 예산 증액 요청", project: "마케팅 캠페인", drafter: "이디자인 (Tudio)", processDate: "2025.12.03", status: "rejected", badge: "bg-danger bg-opacity-10 text-danger", statusText: "반려" }
+        ]
+    };
+
+    let currentTab = 'waiting'; 
+
+    /* ============================================================
+       [Logic] 초기화 및 데이터 렌더링
+    ============================================================ */
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshAllTables();
+    });
+
+    function switchTab(tabName) {
+        currentTab = tabName;
+        handleSearch(); 
+    }
+
+    function refreshAllTables() {
+        renderTable('waiting', dbData.waiting);
+        renderTable('processed', dbData.processed);
+    }
+
+    // 테이블 렌더링 함수
+    function renderTable(type, dataList) {
+        const tbody = document.getElementById(`tableBody_\${type}`);
+        tbody.innerHTML = '';
+
+        if (dataList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>해당하는 내역이 없습니다.</td></tr>`;
+            return;
+        }
+
+        dataList.forEach(item => {
+            let rowHtml = '';
+
+            // (A) 대기함 렌더링 (고객사 시점: 기안서 종류, 제목, 프로젝트 등)
+            if (type === 'waiting') {
+                rowHtml = `
+                    <tr onclick="location.href='approval_view_client.jsp?id=\${item.id}'">
+                        <td class="ps-4">
+                            <span class="fw-bold text-secondary text-nowrap">\${item.docType}</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-dark text-decoration-none">\${item.title}</span>
+                            <span class="badge bg-danger ms-1" style="font-size:0.65rem;">New</span>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">\${item.project}</span></td>
+                        <td>\${item.drafter}</td>
+                        <td>\${item.date}</td>
+                    </tr>
+                `;
+            
+            // (B) 처리함 렌더링
+            } else if (type === 'processed') {
+                rowHtml = `
+                    <tr onclick="location.href='approval_view_client.jsp?id=\${item.id}'">
+                        <td class="ps-4"><span class="fw-bold text-secondary text-decoration-none">\${item.title}</span></td>
+                        <td><span class="badge bg-light text-secondary border">\${item.project}</span></td>
+                        <td>\${item.drafter}</td>
+                        <td>\${item.processDate}</td>
+                        <td class="text-center"><span class="badge \${item.badge} badge-status">\${item.statusText}</span></td>
+                    </tr>
+                `;
+            }
+
+            tbody.insertAdjacentHTML('beforeend', rowHtml);
+        });
+    }
+
+    /* ============================================================
+       [Search] 검색 및 필터링 기능
+    ============================================================ */
+    function handleSearch() {
+        const keyword = document.getElementById('searchKeyword').value.toLowerCase();
+        const statusFilter = document.getElementById('searchStatus').value;
+
+        // 현재 탭에 맞는 원본 데이터 선택
+        let sourceData = (currentTab === 'waiting') ? dbData.waiting : dbData.processed;
+
+        const filteredData = sourceData.filter(item => {
+            // 1) 키워드 검색
+            const matchKeyword = (item.title.toLowerCase().includes(keyword) || 
+                                  item.project.toLowerCase().includes(keyword) || 
+                                  item.drafter.toLowerCase().includes(keyword));
+            
+            // 2) 상태 검색
+            let matchStatus = true;
+            if (statusFilter !== 'all') {
+                if (currentTab === 'waiting') {
+                    matchStatus = (statusFilter === 'waiting');
+                } else {
+                    // 처리함에서는 approved 또는 rejected 상태 비교
+                    if(statusFilter === 'approved') matchStatus = (item.status === 'approved');
+                    else if(statusFilter === 'rejected') matchStatus = (item.status === 'rejected');
+                    else matchStatus = false; // waiting을 선택했는데 processed 탭인 경우 등
+                }
+            }
+            return matchKeyword && matchStatus;
+        });
+
+        renderTable(currentTab, filteredData);
+    }
+
+    function resetSearch() {
+        document.getElementById('searchKeyword').value = '';
+        document.getElementById('searchStatus').value = 'all';
+        document.getElementById('searchPeriod').value = 'all';
+        handleSearch();
+    }
+
+</script>

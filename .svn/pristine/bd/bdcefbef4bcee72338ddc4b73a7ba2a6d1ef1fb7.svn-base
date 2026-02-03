@@ -1,0 +1,119 @@
+function toggleSubTasks(taskId, btnElement) {
+    const subRows = document.querySelectorAll('.sub-group-' + taskId);
+    const icon = btnElement.querySelector('i');
+    
+    // 현재 첫 번째 하위 행의 display 속성을 체크하여 열림/닫힘 판단
+    let isVisible = false;
+    if(subRows.length > 0) {
+        isVisible = (window.getComputedStyle(subRows[0]).display !== 'none');
+    }
+
+    if (!isVisible) {
+        // 펼치기
+        subRows.forEach(row => row.style.display = 'table-row');
+        icon.classList.remove('bi-caret-right-fill');
+        icon.classList.add('bi-caret-down-fill');
+    } else {
+        // 접기
+        subRows.forEach(row => row.style.display = 'none');
+        icon.classList.remove('bi-caret-down-fill');
+        icon.classList.add('bi-caret-right-fill');
+    }
+}
+
+// 2. 상세 패널 열기
+function openTaskDetail(id) { 
+    const panel = document.getElementById('taskDetailPanel');
+    if(panel) panel.classList.add('open'); 
+}
+
+// 3. 상세 패널 닫기
+function closeTaskPanel() { 
+    const panel = document.getElementById('taskDetailPanel');
+    if(panel) panel.classList.remove('open'); 
+}
+
+// 4. 하위업무 상세 (로그용)
+function openSubTaskDetail(subId) { 
+    console.log("하위업무 상세 클릭: " + subId); 
+}
+
+// 5. 핀 토글 (UI 처리)
+function togglePin(id) {
+    // 이벤트 버블링 방지는 JSP의 onclick에서 처리하거나 여기서 처리
+    // 현재는 UI 클래스 토글만 담당
+    const target = event.currentTarget.querySelector('i');
+    if(target){
+        target.classList.toggle('active');
+        target.classList.toggle('bi-pin-angle');
+        target.classList.toggle('bi-pin-angle-fill');
+    }
+}
+
+// ============================================================
+// [DOM 로드 후 실행] 필터 버튼 활성화 & 하위업무 전체 토글
+// ============================================================
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // --------------------------------------------------------
+    // A. URL 파라미터에 따른 라디오 버튼 색상 활성화
+    // --------------------------------------------------------
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type'); // 'writer', 'manager', or null
+
+    // 1) 우선 모든 버튼의 active 클래스와 체크 상태를 초기화 (중복 방지)
+    const allLabels = document.querySelectorAll('.btn-group label');
+    const allRadios = document.querySelectorAll('.btn-group input[type="radio"]');
+
+    allLabels.forEach(label => label.classList.remove('active'));
+    allRadios.forEach(radio => radio.checked = false);
+
+    // 2) 활성화할 타겟 ID 결정
+    let targetId = 'typeAll'; 
+    if (typeParam === 'writer') {
+        targetId = 'typeWriter';
+    } else if (typeParam === 'manager') {
+        targetId = 'typeManager';
+    }
+
+    // 3) 해당 버튼 체크 및 라벨 색상 적용
+    const targetInput = document.getElementById(targetId);
+    const targetLabel = document.querySelector('label[for="' + targetId + '"]');
+
+    if (targetInput && targetLabel) {
+        targetInput.checked = true; 
+        targetLabel.classList.add('active');
+    }
+
+    // --------------------------------------------------------
+    // B. 하위업무 모두 펼치기/접기 기능
+    // --------------------------------------------------------
+    const toggleAllBtn = document.getElementById('toggleAllCheckbox');
+    
+    if(toggleAllBtn){
+        toggleAllBtn.addEventListener('change', function(){
+            const isChecked = this.checked;
+            
+            // 모든 하위업무 행 (.sub-row)
+            const allSubRows = document.querySelectorAll('.sub-row');
+            // 모든 토글 아이콘 (.toggle-btn 안의 i 태그)
+            const allIcons = document.querySelectorAll('.toggle-btn i');
+
+            // 표시/숨김 처리
+            allSubRows.forEach(row => {
+                row.style.display = isChecked ? 'table-row' : 'none';
+            });
+
+            // 아이콘 방향 일괄 변경
+            allIcons.forEach(icon => {
+                if(isChecked){
+                    icon.classList.remove('bi-caret-right-fill');
+                    icon.classList.add('bi-caret-down-fill');
+                } else {
+                    icon.classList.remove('bi-caret-down-fill');
+                    icon.classList.add('bi-caret-right-fill');
+                }
+            });
+        });
+    }
+});

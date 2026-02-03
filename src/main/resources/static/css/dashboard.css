@@ -1,0 +1,859 @@
+@charset "UTF-8";
+
+:root {
+    --zen-primary-original: #4361ee;      /* 비비드 블루 */
+    --zen-primary: #3B82F6;       		/* 프로젝트 공통 */
+    --zen-primary-soft: rgba(67, 97, 238, 0.15);
+    --zen-bg-soft: #f8f9fc;       		/* 연한 회색 배경 (Card-in-Card용) */
+    --zen-text-dark: #2b2d42; 		    /* 진한 텍스트 */
+    --zen-text-gray: #8d99ae;   			/* 연한 텍스트 */
+    --zen-radius-xl: 24px;        			/* 큰 둥근 모서리 */
+    --zen-radius-md: 16px;        			/* 중간 둥근 모서리 */
+    --zen-radius-pill: 50px;      			/* 캡슐형 */
+    --zen-shadow: 0 10px 30px -5px rgba(67, 97, 238, 0.1); /* 부드러운 그림자 */
+    --dark-navy: #00407F;
+    --border-blue: #BFDBFE;
+}
+
+:root {
+    /* 파스텔 컬러 팔레트 정의 */
+    --pastel-primary: #8C9EFF;  /* 부드러운 인디고/블루 */
+    --pastel-secondary: #B0BEC5;  /* 웜 그레이 */
+    --pastel-success: #81C784;  /* 소프트 민트/그린 */
+    --pastel-info: #4DD0E1;  /* 스카이 블루 */
+    --pastel-warning: #FFB74D;  /* 살구색/오렌지 */
+    --pastel-danger: #ff6b6b;  /* 소프트 코랄/레드 */
+    --pastel-light: #F5F7FA;  /* 아주 연한 배경색 */
+    --pastel-dark: #546E7A;  /* 차분한 다크 그레이 */
+
+    /* 가독성을 위한 텍스트 컬러 */
+    --text-primary:     #3B82F6;
+    --text-success:     #388E3C;
+    --text-danger:      #ff6b6b;
+    --text-warning:     #F57C00;
+    
+    --bg-success: 2ec4b6;
+}
+
+
+/* Primary Button */
+.btn-primary {
+    background-color: var(--zen-primary) !important;
+    border-color: var(--pastel-primary) !important;
+    color: #fff !important;
+}
+.btn-primary:hover {
+    background-color: #7986CB !important; /* 호버 시 약간 진하게 */
+    border-color: #7986CB !important;
+}
+
+/* Outline Primary (위젯 등에서 많이 사용됨) */
+.btn-outline-primary {
+    color: var(--pastel-primary) !important;
+    border-color: var(--pastel-primary) !important;
+}
+.btn-outline-primary:hover {
+    background-color: var(--pastel-primary) !important;
+    color: #fff !important;
+}
+
+/* Secondary Button */
+.btn-secondary, .btn-outline-secondary {
+    border-color: var(--pastel-secondary) !important;
+}
+.btn-secondary { background-color: var(--pastel-secondary) !important; }
+.btn-outline-secondary { color: var(--pastel-secondary) !important; }
+.btn-outline-secondary:hover { background-color: var(--pastel-secondary) !important; color: #fff !important; }
+
+/* Danger Button (삭제 등) */
+.btn-danger, .btn-outline-danger {
+    border-color: var(--pastel-danger) !important;
+}
+.btn-danger { background-color: var(--pastel-danger) !important; }
+.btn-outline-danger { color: var(--pastel-danger) !important; }
+.btn-outline-danger:hover { background-color: var(--pastel-danger) !important; color: #fff !important; }
+
+/* Warning Button (토글 등) */
+.btn-warning, .btn-outline-warning {
+    border-color: var(--pastel-warning) !important;
+}
+.btn-warning { background-color: var(--pastel-warning) !important; color: #fff !important; }
+.btn-outline-warning { color: var(--pastel-warning) !important; }
+.btn-outline-warning:hover { background-color: var(--pastel-warning) !important; color: #fff !important; }
+
+.btn-success { background-color: var(--bg-success) !important;}
+
+.text-primary-dark {
+	color: var(--dark-navy) !important;
+}
+
+.text-danger { color: var(--pastel-danger) !important; }
+.text-primary { color: var(--zen-primary) !important; }
+
+/* D-Day 배지 커스텀 */
+.badge {
+    border-radius: var(--zen-radius-pill);
+    padding: 6px 10px;
+    font-weight: 600;
+    font-size: 0.7rem;
+}
+.badge.bg-success { background-color: #2ec4b6 !important; color: white; } /* 청록색 */
+.badge.bg-danger { background-color:  var(--pastel-danger) !important; color: white; }  /* 붉은색 */
+.badge.bg-pending { background-color: var(--pastel-dark) !important; color:white; }
+.badge.bg-warning { background-color: #ffb703 !important; color: #fff !important; } /* 노란색 */
+.bg-danger { background-color:  var(--pastel-danger) !important; color: white; }
+.bg-warning { background-color: #ffb703 !important; color: #fff !important; }
+
+.deadline-card-item {
+	transition: all 0.2s ease-in-out;
+	border: 1px solid rgba(0,0,0,0.05);
+}
+.deadline-card-item:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.08) !important;
+	background-color: #fff !important;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+        transform: scale(1);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+        transform: scale(1.01); /* 살짝 커지는 효과 */
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+        transform: scale(1);
+    }
+}
+
+
+/* =========================================
+   1. 메인 레이아웃 (껍데기 & 공통 설정)
+   ========================================= */
+
+
+/* =========================================
+   2. 대시보드 페이지 전용 스타일
+   ========================================= */
+.grid-stack-item-content {
+    background: #fff; 
+    /*background-color: transparent !important; */
+    border-radius: var(--zen-radius-md);
+	padding: 0px; 
+	border: 2px solid rgba(255, 255, 255, 0.5);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+	transition: box-shadow 0.2s, border-color 0.2s;
+	z-index: 1;
+	overflow: hidden !important; /* 자식 요소가 둥근 모서리를 넘지 않도록 */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    inset: 5px !important;
+}
+
+.title-padding {
+    padding: 0 10px;
+}
+/* 
+.widget-header {
+	padding: 14px 20px;
+} */
+
+/* 스크롤바 */
+.widget-content {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    overflow: auto;
+}
+.widget-content::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px; /* 스크롤바 너비 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af; /* 호버 시 색상 */
+}
+
+/* 커스텀 스크롤바 (파스텔톤에 맞게 부드럽게) */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--zen-primary-soft) !important; /* 연한 그레이 블루 */
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+
+.widget-icon {
+	padding: 20px;
+}
+
+/* 위젯 헤더 (타이틀) */
+.grid-stack-item-content h6 {
+    font-size: 1.05rem;
+    font-weight: 800 !important;
+    color: var(--zen-primary);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    /* padding: 15px 40px 15px 20px; */
+    margin-bottom: 0 !important;
+    /* border-bottom: 1px solid #f8f9fa;  헤더 구분선 */
+    background: #fff;
+    flex-shrink: 0; /* 헤더 크기 고정 */
+    display: flex;
+    align-items: center;
+}
+
+.grid-stack-item-content h6 i {
+    opacity: 0.8;
+    color: var(--zen-primary) !important;
+    background-color: var(--zen-primary-soft);
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 1rem;
+}
+
+/* [공통] 리스트 아이템 스타일 (공지, 알림 등) */
+
+
+/* 드래그 중 효과 */
+.grid-stack-item.ui-draggable-dragging .grid-stack-item-content {
+    box-shadow: 0 20px 40px rgba(67, 97, 238, 0.25);
+    transform: scale(1.02);
+    z-index: 999;
+}
+
+/* 그리드 영역을 강제로 넓혀서 드롭 구역 확보 */
+.main-content-wrapper {
+    width: 100% !important;
+    min-height: 800px !important; /* 위젯이 없어도 드롭할 공간 확보 */
+}
+
+.grid-stack {
+    min-height: 600px !important;
+    width: 100% !important;
+    position: relative !important;
+}
+
+.grid-stack-placeholder {
+    display: block !important;
+    visibility: visible !important;
+}
+
+.grid-stack-placeholder > .placeholder-content {
+    background: rgba(0, 64, 127, 0.15) !important; /* 드롭 가능 영역임을 시각적으로 표시 */
+    border: 2px dashed #00407F !important;
+    border-radius: 8px;
+}
+
+/* 드래그 중 위젯 미리보기 */
+.ui-draggable-dragging {
+  opacity: 0.85;
+  transform: rotate(1deg) scale(0.98);
+  box-shadow: 0 12px 30px rgba(0, 64, 127, 0.35);
+  border-radius: 12px;
+  z-index: 9999 !important;
+}
+
+
+/* ==========================================================================
+   [Folder Widget] Gooey Tab Design
+   ========================================================================== */
+
+/* 위젯 껍데기 (기준점) */
+.zen-folder-widget {
+    background: transparent !important; /* 배경 투명화 (모양 레이어가 대신함) */
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important; 
+    position: relative;
+    z-index: 1;
+}
+
+/* 배경 모양 레이어 (필터 적용) */
+.folder-shape-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;				 /* 콘텐츠 뒤로 보내기 */
+    filter: url('#filter-svg');  /* SVG 필터 적용 */
+    padding: 10px; 
+    background: #e6ebf9;
+}
+
+.folder-tab {
+    position: absolute;
+    top: 0px;          /* 상단 여백 */
+    left: 0;           /* 왼쪽에 고정 */
+    width: 450px;      /* 탭 너비 고정 */
+    height: 60px;      /* 탭 높이 */
+    background-color: #f8f9fc; /* 위젯 배경색 */
+    border-radius: 20px 20px 0 0;
+}
+
+/* 탭 (튀어나온 부분) */
+.folder-tab-todo {
+    position: absolute;
+    top: 0px;         /* 상단 여백 */
+    left: 0;          /* 왼쪽에 고정 */
+    width: 100%;      /* 탭 너비 고정 */
+    height: 60px;     /* 탭 높이 */
+    background-color: #e6ebf9; /* 위젯 배경색 */
+    /* border-radius: 20px 20px 0 0; */
+}
+
+.widget-header-custom h6 {
+	border-bottom: none !important;
+	border-top-right-radius: 10px;
+}
+
+/* 몸통 (메인 영역) */
+.folder-body-bg {
+    position: absolute;
+    top: 60px; 		   /* 탭 아래에서 시작 */
+    left: 0;
+    width: 100%;       /* 위젯이 넓어지면 이 100%가 오른쪽으로 늘어남 */
+    height: calc(100% - 50px);
+    background-color: #fff; /* 위젯 배경색 */
+    border-radius: 0 20px 20px 20px;
+}
+
+/* 콘텐츠 레이어 */
+.folder-content-layer {
+    display: flex;
+    flex-direction: column;  /* 위에서 아래로 배치 */
+    height: 100%;            /* 위젯 전체 높이 사용 */
+    position: relative;
+    z-index: 2;
+    padding: 0 !important;  
+}
+
+.widget-header-wrapper {
+    flex: 0 0 60px;          /* 높이 60px 고정 (탭 높이와 일치) */
+    display: flex;
+    align-items: center;     /* 수직 중앙 정렬 */
+    z-index: 10;
+}
+
+/* 헤더 내부 정렬 (제목은 왼쪽 탭 위, 버튼은 오른쪽 몸통 위) */
+.widget-header-custom {
+    width: 100%;             	
+    margin-bottom: 0 !important;
+    padding-right: 20px;
+}
+
+/* 내용 영역 (리스트): 남은 공간 모두 차지 */
+.zen-folder-widget .widget-content {
+    flex-grow: 1;            /* 남은 세로 공간 모두 차지 */
+    overflow-y: auto;        /* 내용 넘치면 스크롤 */
+    padding: 15px 25px;      /* 몸통 안쪽 여백 */
+    
+    /* 스크롤바가 몸통 둥근 모서리를 침범하지 않게 */
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+/* 닫기 버튼 위치 (오른쪽 상단) */
+.zen-folder-widget .btn-close-widget {
+    top: 15px;
+    right: 15px;
+    z-index: 20; 
+}
+
+/* ==========================================================================
+   [To Do Widget] Header Button Style
+   ========================================================================== */
+/* 우측 상단 (+) 원형 버튼 */
+.btn-circle-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+.btn-circle-sm:hover {
+    transform: scale(1.1); /* 살짝 커짐 */
+    background-color: var(--zen-primary) !important; /* 파란색 배경 */
+    border-color: var(--zen-primary);
+}
+
+.btn-circle-sm:hover i {
+    color: #fff !important; /* 아이콘 흰색 */
+}
+
+/* ---------------------------------------------------------
+   6. [Widget] Project Summary (Progress Bars)
+   --------------------------------------------------------- */
+[id^="project-summary-area-"] .list-group-item {
+    /* display: block !important; flex 해제 -> 위아래 배치 */
+    width: 100%;
+}   
+   
+/* 프로젝트 이름 등 텍스트 */
+.list-group-item .fw-bold {
+    color: var(--zen-text-dark);
+}
+
+/* ==========================================================================
+   [Widget] Project Summary - Circular Progress
+   ========================================================================== */
+/* 위젯 컨테이너 */
+.circular-chart-container {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    margin-right: 15px; /* 오른쪽 텍스트와 간격 */
+    flex-shrink: 0;
+}
+
+/* SVG 차트 스타일 */
+.circular-chart {
+    display: block;
+    width: 100%;
+    height: 100%; 
+}
+
+/* 회색 배경 원 (트랙) */
+.circle-bg {
+    fill: none;
+    stroke: #e9ecef;
+    stroke-width: 3.8; /* 두께 조절 */
+}
+
+/* 진행률 원 (그라데이션 적용 부분) */
+.circle {
+    fill: none;
+    stroke-width: 3.8; /* 두께 */
+    stroke-linecap: round; /* 끝부분 둥글게 */
+    transition: stroke-dasharray 0.3s ease; /* 애니메이션 효과 */
+}
+
+/* 가운데 퍼센트 텍스트 */
+.percentage-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* 중앙 정렬 */
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--zen-primary);
+    line-height: 1;
+}
+
+/* 프로그레스 바 배경 */
+.progress {
+    background-color: #e9ecef;
+    border-radius: var(--zen-radius-pill);
+    height: 8px !important;
+    overflow: hidden;
+    /* border-radius: 1rem; */
+}
+
+/* 프로그레스 바 채움 (그라디언트) */
+.progress-bar {
+    background: linear-gradient(90deg, var(--zen-primary), rgb(62, 139, 255));
+    border-radius: var(--zen-radius-pill);
+    box-shadow: 0 2px 5px rgba(67, 97, 238, 0.3);
+    transition: width 0.6s ease;
+}
+
+
+
+/* ---------------------------------------------------------
+   4. [Widget] Personal Work (Calendar) - Zen Style
+   --------------------------------------------------------- */
+/* ==========================================================================
+   [Widget] Modern Weekly Calendar (Div Layout)
+   ========================================================================== */
+/* 요일 카드 (개별 날짜) */
+.zen-day-card {
+    flex: 1; /* 균등 분할 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 95px; /* 높이 고정 */
+    border-radius: 18px; /* 둥근 캡슐 모양 */
+	background-color: var(--zen-primary-soft) !important;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    border: 1px solid transparent;
+    gap: 0.3rem;
+}
+
+/* 내부 텍스트 */
+.zen-day-card .day-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.zen-day-card .day-num {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--zen-text-dark);
+    line-height: 1.1;
+}
+
+/* 업무 알림 점 (Dot) */
+.zen-day-card .work-dot {
+    width: 5px;
+    height: 5px;
+    background-color: var(--zen-primary); /* 메인 컬러 */
+    border-radius: 50%;
+    margin-top: 4px;
+    transition: opacity 0.2s;
+}
+
+.zen-day-card:not(.active):hover {
+    background-color: #f1f3f5;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* 선택된 날짜 (Active) - 그라디언트 적용 */
+.zen-day-card.active {
+	background: linear-gradient(180deg, var(--zen-primary) 0%, #5499ff 100%);
+    box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    color: white !important;
+}
+
+/* 선택된 상태에서 내부 텍스트 색상 변경 */
+.zen-day-card.active .day-name,
+.zen-day-card.active .day-num {
+    color: white !important;
+}
+
+/* 선택된 상태에서 점 색상 변경 */
+.zen-day-card.active .work-dot {
+    background-color: white !important;
+}
+
+.schedule-title {
+	font-weight: 700;
+}
+
+.list-group {
+	padding: 10px 12px;
+}
+
+.list-group-item {
+	border-radius: 12px;	
+	background: #f8f9fa;
+	margin-bottom: 0.5em;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    color: #2e59d9;
+    text-decoration: none;
+}
+
+/* 날짜/시간 텍스트 스타일 */
+.list-group-item small.text-muted {
+    font-size: 0.75rem;
+    background-color: #fff;
+    white-space: nowrap; /* 줄바꿈 방지 */
+    padding: 4px 8px;
+    border-radius: var(--zen-radius-pill);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    font-weight: 600;
+    color: var(--zen-text-gray) !important;
+	/* margin-left: 10px; */
+}
+
+/* 링크 텍스트 hover 효과 */
+.list-group-item a:hover {
+    text-decoration: underline;
+}
+
+.info-icon-wrapper {
+	position: relative;
+	display: inline-block;
+	margin-left: 8px;
+	cursor: help;
+}
+
+.info-tooltip {
+	visibility: hidden;
+	border: 2px solid var(--zen-primary);
+	width: 140px;
+	background-color: #fff;
+	color: var(--zen-primary);
+	text-align: left;
+	border-radius: 6px;
+	padding: 8px 12px;
+	position: absolute;
+	z-index: 1000;
+	top: -5px;
+	left: 120%; /* 아이콘 오른쪽으로 띄움 */
+	opacity: 0;
+	transition: opacity 0.3s;
+	font-size: 0.75rem;
+	font-weight: normal;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+/* 말풍선 화살표 */
+.info-tooltip::after {
+	content: "";
+	position: absolute;
+	top: 10px;
+	right: 100%;
+	margin-top: -5px;
+	border-width: 5px;
+	border-style: solid;
+	border-color: transparent #333 transparent transparent;
+}
+
+.info-icon-wrapper:hover .info-tooltip {
+	visibility: visible;
+	opacity: 1;
+}
+
+/* ---------------------------------------------------------
+   7. [Widget] To Do List Specific
+   --------------------------------------------------------- */
+/* 체크박스 */
+.form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    border: 2px solid #bfbfbf;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 12px;
+}
+ 
+ .form-check-input:checked {
+    background-color: var(--zen-primary);
+    border-color: var(--zen-primary);
+}
+
+/* 완료된 텍스트 (취소선) */
+.text-decoration-line-through {
+    color: #adb5bd !important;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* 추가/수정/삭제 버튼 아이콘 */
+.btn-link {
+    color: var(--zen-text-gray);
+    transition: color 0.2s;
+}
+.btn-link:hover {
+    color: var(--zen-primary);
+}
+.btn-link.text-danger:hover {
+    color: #ef233c;
+}
+
+.btn-link {
+    text-decoration: none;
+}
+.btn-link:hover {
+    background-color: #f1f3f9;
+    border-radius: 50%;
+}
+
+/* To Do 입력창 (Zen Input) */
+#newTodoInput-widgetNo, 
+input[id^="newTodoInput-"] {
+    border: none;
+    background-color: var(--zen-bg-soft);
+    border-radius: var(--zen-radius-pill);
+    padding: 5px 20px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+    color: var(--zen-text-dark);
+    font-weight: 500;
+}
+
+input[id^="newTodoInput-"]:focus {
+    background-color: #fff;
+    box-shadow: 0 0 0 3px var(--zen-primary-soft);
+    outline: none;
+}
+
+
+/* ----------------------------------------------- */
+/* 1. 최상위 컨테이너 */
+.dashboard-container {
+    position: relative;
+    width: 100%;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* 2. 컨텐츠 래퍼 (상단바 + 그리드) */
+.dashboard-content-wrapper {
+    width: 100%;
+    /* 부드럽게 밀리는 애니메이션 */
+    transition: margin-right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background-color: transparent; 
+}
+
+.maon-content-wrap {
+	/* 1. 사이드바가 열릴 때 부드럽게 밀리도록 설정 */
+    transition: margin-right 0.3s ease-in-out;
+    /* 2. 스크롤바가 생기고 사라질 때 가로폭이 흔들리는 것을 원천 차단 */
+    scrollbar-gutter: stable;
+    min-height: 100vh;
+}
+/* ★ [핵심] 편집 모드일 때: 래퍼 전체(헤더포함)에 오른쪽 여백을 줌 */
+.main-content-wrap.dashboard-edit-mode {
+    margin-right: 320px !important; 
+    width: calc(100% - var(--sidebar-width) - 320px) !important;
+}
+
+.dashboard-container {
+    scrollbar-gutter: stable;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+.ui-draggable-dragging, 
+.grid-stack-item-dragging {
+    cursor: grabbing !important; 
+    z-index: 99999 !important;
+}
+
+/* 위젯 보관함 (사이드바) - 평소엔 숨김 */
+.widget-drawer {
+    position: fixed;
+    top: 0;
+    right: -320px; /* 화면 밖으로 숨김 */
+    width: 300px;
+    height: 100vh;
+    background: #f8f9fa;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    z-index: 1050;
+    transition: right 0.3s ease-in-out;
+    padding: 20px;
+    overflow-y: auto;
+    border-left: 1px solid #dee2e6;
+}
+
+.widget-drawer.open {
+    right: 0; /* 편집 모드 시 나옴 */
+}
+
+.sidebar-widget-item {
+	background: #fff;
+	border: 10x solid #ebedf0;
+	padding: 16px;
+	margin-bottom: 12px;
+	border-radius: 8px;
+	cursor: grab;
+	font-weight: 800;
+	z-index: 10000;
+}
+
+.grid-stack>.grid-stack-item>.grid-stack-item-content {
+    margin: 7px;
+    border: 2px solid var(--border-blue);
+}
+
+/* 위젯 삭제 버튼 (X) */
+.grid-stack-item-content .btn-close-widget {
+	width: 28px;
+    height: 28px;
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+    background-color: var(--zen-bg-soft);
+    border-radius: 50%;
+    padding: 2px 6px;
+    cursor: pointer;
+    color: var(--zen-text-gray);
+    transition: all 0.2s;
+}
+
+.grid-stack-item-content .btn-close-widget:hover {
+    background-color: #ffe5e5;
+    color: #ff6b6b;
+    transform: rotate(90deg);
+}
+
+/* 편집 모드일 때 X 버튼 보이기 */
+.dashboard-edit-mode .btn-close-widget {
+    display: block;
+}
+
+/* 편집 모드일 때 위젯에 점선 테두리로 이동 가능함 표시 */
+.dashboard-edit-mode .grid-stack-item-content {
+    border: 2px dashed var(--zen-primary) !important;
+    background-color: #ffffff;
+    animation: pulse 2s infinite;
+}
+
+#sidebar-content .grid-stack-item-content {
+    padding: 12px 15px !important;  		
+    min-height: auto !important;    		
+    border: none; 
+    background-color: #fff !important;  	
+    box-shadow: none !important; 
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: grab;
+	width: 100%;
+}
+
+/* 보관함 아이템 마우스 올렸을 때 효과 */
+#sidebar-content .grid-stack-item-content:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* 드래그 중인 상태 (손으로 잡은 모양) */
+#sidebar-content .grid-stack-item-content:active {
+    cursor: grabbing;
+}
+
+/* 위젯 보관함에 있는 위젯 아이템 */
+.sidebar-item {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: grab;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* 드래그 중인 아이템(Helper)이 최상단에 오도록 강제 */
+.grid-stack-drag-helper {
+    z-index: 9999 !important;
+    pointer-events: none !important; /* 드래그 중 마우스 이벤트를 가리지 않도록 */
+	opacity: 0.8;
+}
+
+.sidebar-item:active {
+    cursor: grabbing;
+}

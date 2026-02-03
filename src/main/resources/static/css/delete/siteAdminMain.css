@@ -1,0 +1,58 @@
+@charset "UTF-8";
+
+/* 1. 레이아웃 변수 설정 */
+:root {
+    --sidebar-width: 260px;  /* 관리자 사이드바 너비 */
+    --header-height: 60px;   /* 헤더 높이 */
+}
+
+/* 2. 전체 화면 구조 잡기 (Flexbox) */
+body {
+    padding-top: var(--header-height); /* 헤더 높이만큼 내용 내리기 */
+    background-color: #f8fafc;
+    min-height: 100vh;       /* 화면 전체 높이 사용 */
+    display: flex;
+    flex-direction: column;  /* 세로 방향 배치 (헤더-본문-푸터) */
+}
+
+/* 3. 사이드바 고정 (왼쪽) */
+.sidebar {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    z-index: 1000;
+    overflow-y: auto; /* 내용 길면 스크롤 */
+    /* 기존 배경색 등 스타일 유지 */
+}
+
+/* 4. 메인 컨텐츠 영역 (핵심!) */
+.main-content-wrap {
+    /* 사이드바 너비만큼 오른쪽으로 밀기 */
+    margin-left: var(--sidebar-width); 
+    width: calc(100% - var(--sidebar-width));
+    
+    /* 남은 공간 꽉 채우기 (푸터를 아래로 밀어냄) */
+    flex: 1; 
+    padding: 35px;
+}
+
+/* 5. 푸터 영역 (핵심!) */
+/* include한 footer.jsp의 최상위 태그가 <footer> 또는 class="footer"라고 가정 */
+footer, .footer { 
+    /* 푸터도 사이드바 너비만큼 오른쪽으로 밀어야 안 가려짐 */
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    
+    /* 스타일 (필요시 수정) */
+    background-color: #343a40; /* 어두운 배경 */
+    color: #fff;
+    padding: 20px;
+    margin-top: auto; /* 내용이 짧아도 바닥에 붙게 함 */
+}
+
+/* 6. (참고) 중간 컨테이너(.d-flex) 높이 확보 */
+body > .d-flex {
+    flex: 1; /* 본문 영역이 화면 남은 공간을 다 차지하도록 */
+}

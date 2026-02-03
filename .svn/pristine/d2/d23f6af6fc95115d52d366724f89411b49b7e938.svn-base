@@ -1,0 +1,97 @@
+package kr.or.ddit.member.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import kr.or.ddit.member.service.MemberService;
+import kr.or.ddit.vo.MemberVO;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : AuthController
+ * DESC : 로그인, 권한(사용자/사이트관리자)별 메인 페이지, ID,PW 찾기 관련 클래스
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 KSJ
+ * @version 1.0, 2025.12.26
+ * 
+ */
+
+@Slf4j
+@Controller
+@RequestMapping("/tudio")
+public class AuthController {
+
+	@Autowired
+	private MemberService memberService;
+	
+	@Autowired
+	BCryptPasswordEncoder bCryptPasswordEncoder;
+	
+	// 루트 경로("/")로 접속했을 때 실행
+    @GetMapping("/")
+    public String home() {
+        return "main"; // views/main.jsp 파일을 찾아감
+    }
+
+    // /tudio/main 경로로 접속했을 때 실행 (SecurityConfig에 맞춰둠)
+    @GetMapping("/main")
+    public String mainPage() {
+        return "main"; // views/main.jsp 파일을 찾아감
+    }
+	
+	//로그인
+	@GetMapping("/login")
+	public String login() {
+		log.info("1234->{}",this.bCryptPasswordEncoder.encode("1234"));
+		return "login";
+	}
+	
+	//아이디 찾기 화면
+	@GetMapping("/findMemberId")
+	public String findMemberIdPage() {
+	    return "member/findMemberId";
+	}
+
+	//아이디 찾기 기능
+	@PostMapping("/findMemberId")
+	public ResponseEntity<String> findMemberId(@RequestBody MemberVO memberVO){
+		log.info("findMemberId() 실행");
+		ResponseEntity<String> entity = null;
+		String memberId = memberService.findMemberId(memberVO);
+		if(memberId != null) {
+	        entity = ResponseEntity.ok(memberId);
+	    } else {
+	    	entity = ResponseEntity.badRequest().build();
+	    }
+		return entity;
+		
+	}
+	
+	//비밀번호 찾기 화면
+	@GetMapping("/findMemberPw")
+	public String findMemberPwPage() {
+	    return "member/findMemberPw";
+	}
+	
+	//비밀번호 찾기 기능
+	@PostMapping("/findMemberPw")
+	public ResponseEntity<MemberVO> pwForgetProcess(@RequestBody MemberVO memberVO){
+		log.info("pwForgetProcess 실행");
+		MemberVO resultVO = memberService.findMemberPw(memberVO);
+		if(resultVO != null) {
+	        return ResponseEntity.ok(resultVO);
+	    } else {
+	    	return ResponseEntity.badRequest().build();
+	    }
+	}
+	
+}

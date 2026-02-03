@@ -1,0 +1,297 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. 기본 레이아웃 (기존 유지)
+   ========================================= */
+:root {
+	--bg-body: #f8f9fa;
+	--header-height: 70px;
+}
+
+.main-content-wrap {
+	padding: 30px 40px;
+	width: 100%;
+	min-height: calc(100vh - var(--header-height));
+	background-color: var(--bg-body);
+	font-family: 'Pretendard', sans-serif;
+}
+
+/* =========================================
+   2. 테이블 스타일 (기존 유지)
+   ========================================= */
+.tudio-table-wrap {
+	overflow-y: visible;
+}
+
+.tudio-table-card {
+	table-layout: fixed;
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+.tudio-table-card thead th {
+	font-size: 14px;
+	color: #64748b;
+	font-weight: 700;
+	padding: 12px 10px;
+	background-color: #f8fafc;
+	border-bottom: 1px solid #e2e8f0;
+	text-align: center;
+}
+
+.tudio-table-card tbody td {
+	padding: 12px 10px;
+	vertical-align: middle;
+	border-bottom: 1px solid #f1f5f9;
+	font-size: 14px;
+	color: #334155;
+	text-align: center;
+}
+
+/* =========================================
+   3. 업무 행(Row) 디자인
+   ========================================= */
+
+/* A. 내 상위 업무 (Active Parent) */
+.task-row td {
+	background-color: #ffffff !important;
+	transition: background-color 0.2s;
+}
+
+.task-row:hover td {
+	background-color: #f8fbff !important;
+}
+/* 파란색 띠 (강조) */
+.task-row td:first-child {
+	border-left: 4px solid #3B82F6 !important;
+}
+
+/* B. 하위 업무 (Sub) */
+.sub-row {
+	display: none;
+}
+
+.sub-row td {
+	background-color: #fafafa !important;
+	padding-top: 10px !important;
+	padding-bottom: 10px !important;
+}
+/* 하위업무는 띠 없음 (일반 테두리) */
+.sub-row td:first-child {
+	border-left: 1px solid #e2e8f0;
+}
+
+.sub-row:hover td {
+	background-color: #f1f5f9 !important;
+}
+
+/* C. [수정] 껍데기 상위업무 (Shell Task) */
+.task-shell-row td {
+	background-color: #f1f5f9 !important; /* 배경: 약간 더 진한 회색 */
+	color: #64748b; /* 글자: 흐릿하게 */
+	/* 위아래 구분선 */
+	border-bottom: 1px solid #e2e8f0;
+}
+
+/* 껍데기 업무 좌측 띠: 회색으로 차분하게 */
+.task-shell-row td:first-child {
+	border-left: 4px solid #cbd5e1 !important;
+}
+
+/* =========================================
+   4. 업무명(Title) 내부 레이아웃
+   ========================================= */
+.task-title {
+	display: flex !important;
+	align-items: center !important;
+	gap: 6px;
+	height: 100%;
+	text-align: left !important;
+	padding-left: 10px !important;
+}
+
+.sub-title {
+	text-align: left !important;
+	padding-left: 30px !important;
+}
+
+.task-title-text {
+	font-size: 0.95rem !important;
+	font-weight: 600 !important;
+	color: #1e293b !important;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.task-row:hover .task-title-text {
+	color: #3b82f6 !important;
+}
+
+/* 토글 버튼 */
+.toggle-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
+	color: #94a3b8;
+	transition: color 0.2s;
+}
+
+.toggle-btn:hover {
+	color: #3b82f6;
+}
+
+/* =========================================
+   5. 핀(Pin) 아이콘 스타일
+   ========================================= */
+.pin-wrapper {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	width: 24px;
+	height: 24px;
+}
+
+.task-pin-icon, .sub-pin-icon {
+	font-size: 1.1rem;
+	color: #cbd5e1;
+	transition: transform 0.2s, color 0.2s;
+}
+
+.pin-wrapper:hover .task-pin-icon, .pin-wrapper:hover .sub-pin-icon {
+	transform: scale(1.2) rotate(15deg);
+	color: #64748b;
+}
+
+.task-pin-icon.active, .sub-pin-icon.active {
+	color: #f59e0b !important;
+}
+
+/* =========================================
+   6. 우측 슬라이딩 패널 & 기타
+   ========================================= */
+.task-detail-panel {
+	position: fixed;
+	top: var(--header-height);
+	right: -600px;
+	width: 600px;
+	height: calc(100vh - var(--header-height));
+	background: #fff;
+	border-left: 1px solid #e2e8f0;
+	z-index: 1060;
+	transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+	box-shadow: -15px 0 30px rgba(0, 0, 0, 0.05);
+	display: flex;
+	flex-direction: column;
+}
+
+.task-detail-panel.open {
+	right: 0;
+}
+
+.panel-header {
+	padding: 24px;
+	border-bottom: 1px solid #eef2f7;
+	display: flex;
+	justify-content: space-between;
+}
+
+.panel-body {
+	padding: 30px;
+	overflow-y: auto;
+	flex-grow: 1;
+}
+
+.panel-footer {
+	padding: 20px 30px;
+	border-top: 1px solid #eef2f7;
+	background: #f8fafc;
+	display: flex;
+	justify-content: space-between;
+}
+
+/* =========================================
+   7. [수정] 필터 라디오 버튼 활성화 디자인 (강력 버전)
+   ========================================= */
+/* 1) 라디오 버튼이 체크되었을 때 형제 라벨 스타일 */
+.btn-check:checked+.btn-outline-primary {
+	background-color: #3b82f6 !important; /* 메인 블루 */
+	color: #ffffff !important;
+	border-color: #3b82f6 !important;
+	box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+/* 2) JSP에서 강제로 .active 클래스를 줬을 때 스타일 (새로고침 후 유지용) */
+.btn-outline-primary.active {
+	background-color: #3b82f6 !important;
+	color: #ffffff !important;
+	border-color: #3b82f6 !important;
+	box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+/* 3) 체크 안 된 상태 hover */
+.btn-check:not(:checked)+.btn-outline-primary:hover,
+	.btn-outline-primary:not(.active):hover {
+	background-color: #eff6ff !important;
+	color: #3b82f6 !important;
+	border-color: #3b82f6 !important;
+}
+
+/* =========================================
+   8. [수정] 진척도 슬라이더 커스텀 디자인 (완결판)
+   ========================================= */
+
+/* 1. 슬라이더 본체 (트랙) 초기화 및 스타일 */
+input[type=range].form-range {
+    -webkit-appearance: none; /* 브라우저 기본 스타일 제거 */
+    width: 100%;
+    height: 6px; /* 트랙 높이를 얇게 설정 (목록의 진행바와 통일) */
+    background: #dee2e6; /* 기본 회색 (JS가 로드되기 전 색상) */
+    border-radius: 5px;  /* 둥근 모서리 */
+    outline: none;
+    cursor: pointer;
+    margin-top: 5px;     /* 상단 여백 미세 조정 */
+    padding: 0;          /* 부트스트랩 패딩 제거 */
+}
+
+/* 2. 트랙(Track) 배경 투명화 (JS 그라데이션이 보이게 하기 위함) */
+input[type=range].form-range::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    background: transparent; /* 투명하게 해야 본체(input)의 그라데이션이 보임 */
+    border-radius: 5px;
+    border: none;
+}
+
+/* 3. 핸들(Thumb) 디자인 - 크롬/엣지/사파리 */
+input[type=range].form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 18px;        /* 핸들 크기 */
+    width: 18px;
+    border-radius: 50%;  /* 완전한 원형 */
+    background: #ffffff; /* 내부 흰색 */
+    border: 2px solid #3B82F6; /* 테두리 파란색 */
+    
+    /* [중요] 핸들 수직 중앙 정렬 계산식: (트랙높이 - 핸들높이) / 2 */
+    /* (6px - 18px) / 2 = -6px */
+    margin-top: -6px; 
+    
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); /* 부드러운 그림자 */
+    transition: background 0.1s, transform 0.1s;
+}
+
+/* 핸들에 마우스 올렸을 때 효과 */
+input[type=range].form-range::-webkit-slider-thumb:hover {
+    transform: scale(1.15); /* 살짝 커짐 */
+    background: #3B82F6;    /* 내부가 파란색으로 채워짐 (선택사항) */
+}
+
+/* 4. 포커스 시 못생긴 박스 제거 */
+input[type=range].form-range:focus {
+    box-shadow: none;
+    border-color: transparent;
+}

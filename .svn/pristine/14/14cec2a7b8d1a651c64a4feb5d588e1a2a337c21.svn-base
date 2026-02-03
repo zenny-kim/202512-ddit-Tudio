@@ -1,0 +1,19 @@
+ /* ===== 알림 탭 버튼(파란색) ===== */
+  #notiPanel .noti-tabs .noti-tab {
+    border: 1px solid #1E90FF;
+    color: #0d6efd;
+    background: #fff;
+  }
+  #notiPanel .noti-tabs .noti-tab.active {
+    background: #0d6efd;
+    color: #fff;
+  }
+  #notiPanel .noti-tabs .noti-tab:hover {
+    background: rgba(13, 110, 253, 0.08);
+  }
+
+  /* ===== 알림 리스트 ===== */
+  #notiPanel .noti-item { cursor: pointer; }
+  #notiPanel .noti-item.unread { font-weight: 600; }
+  #notiPanel .noti-item.read { color: #999; }
+  #notiPanel .noti-item:hover { background-color: #f8f9fa; }

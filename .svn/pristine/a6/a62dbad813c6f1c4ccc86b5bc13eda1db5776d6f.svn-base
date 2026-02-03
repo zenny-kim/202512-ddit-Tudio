@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.chat.mapper.IChatMapper">
+	<!-- 채팅방 목록 조회 쿼리 -->
+	<select id="selectChatroomList" parameterType="int" resultType="kr.or.ddit.vo.chat.ChatroomVO">
+		SELECT R.CHATROOM_NO,
+		       R.CHATROOM_NAME, 
+		       R.CHATROOM_TYPE,
+		       R.LAST_CHAT,
+		       (SELECT COUNT(*) 
+		        FROM CHAT C
+		        WHERE C.CHAT_NO > NVL(M.LAST_READ_CHAT_NO, 0)
+		          AND C.CHATROOM_NO = M.CHATROOM_NO) AS NOT_READ_CNT,
+		       R.MEM_COUNT,
+		       R.LAST_CHAT_DATE
+		FROM CHAT_MEMBER M 
+		INNER JOIN CHATROOM R ON M.CHATROOM_NO = R.CHATROOM_NO
+		WHERE M.MEMBER_NO = #{memberNo}
+		ORDER BY R.LAST_CHAT_DATE DESC NULLS LAST
+	</select>
+	
+	<!-- 특정 채팅방 조회 쿼리(채팅 내역 및 세부사항) -->
+	<select id="selectChatList" parameterType="kr.or.ddit.vo.chat.ChatVO" resultType="kr.or.ddit.vo.chat.ChatVO">
+		SELECT FINAL.*,
+		      (SELECT COUNT(*)
+		         FROM CHAT_MEMBER CM
+		        WHERE FINAL.CHAT_NO > NVL(CM.LAST_READ_CHAT_NO, 0)
+		          AND CM.CHATROOM_NO = FINAL.CHATROOM_NO) AS NOT_READ_CNT
+		FROM (SELECT *
+		        FROM (SELECT C.CHAT_NO, 
+		                     C.CHATROOM_NO, 
+		                     C.MEMBER_NO,
+		                     M.MEMBER_NAME,
+		                     C.MESSAGE, 
+		                     C.CREATE_DATE, 
+		                     C.FILE_ATTACH_NO, 
+		                     C.CHAT_TYPE            
+		              FROM CHAT C
+		              LEFT JOIN MEMBER M ON C.MEMBER_NO = M.MEMBER_NO
+		              WHERE CHATROOM_NO = #{chatroomNo}
+		              ORDER BY CHAT_NO DESC) 
+            <![CDATA[
+		        WHERE ROWNUM <=30
+            ]]>
+	       	<if test="chatNo != null and chatNo != 0">
+	       	 	<![CDATA[
+	       			AND CHAT_NO < #{chatNo}
+	       		]]>
+	       	</if>
+ 			) FINAL
+		ORDER BY CREATE_DATE
+	</select>
+	
+	<!-- 특정 채팅방의 채팅방 타이틀 조회(방이름, 인원수) -->
+	<select id="selectChatroomTitle" parameterType="kr.or.ddit.vo.chat.ChatVO" resultType="map">
+		SELECT CHATROOM_NAME,
+		       MEM_COUNT
+		FROM CHATROOM
+		WHERE CHATROOM_NO = #{chatroomNo}
+	</select>
+	
+</mapper>

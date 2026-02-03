@@ -1,0 +1,50 @@
+package kr.or.ddit.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : WebSocketStompBrokerConfig
+ * DESC : STOMP를 사용하여 메시지 브로커를 설정하는 클래스. 
+ *        메시지 브로커를 구성하고 STOMP 엔드포인트를 등록함.
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 KJS
+ * @version 1.0, 2025.12.26
+ * 
+ */	
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketStompBrokerConfig implements WebSocketMessageBrokerConfigurer{
+
+	/**
+	 *	<p>메세지 브로커 설정 메서드</p>
+	 *	@date 2026.01.08
+	 *	@author KJS
+	 */
+	@Override
+	public void configureMessageBroker(MessageBrokerRegistry config) {
+		// 클라이언트에게 메세지 보낼 때의 시작 주소 설정
+		config.enableSimpleBroker("/sub");
+		// 서버로 보낼 때의 시작 주소 설정
+		config.setApplicationDestinationPrefixes("/pub");
+	}
+
+	/**	
+	 *	<p>메세지 브로커의 endPoint(끝나는 주소)를 설정</p>
+	 *	@date 2026.01.08
+	 *	@author KJS
+	 */
+	@Override
+	public void registerStompEndpoints(StompEndpointRegistry registry) {
+		registry.addEndpoint("/ws-stomp")
+				.setAllowedOriginPatterns("*") // 모든 도메인에서의 접속 허용 (위젯 갱신 기능시 사용)
+				.withSockJS();
+	}
+	
+}

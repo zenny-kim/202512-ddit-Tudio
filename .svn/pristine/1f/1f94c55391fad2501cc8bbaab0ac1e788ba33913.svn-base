@@ -1,0 +1,9 @@
+package kr.or.ddit.projectTask.service;
+
+import java.util.List;
+
+import kr.or.ddit.vo.project.ProjectTaskVO;
+
+public interface IProjectTaskService {
+	List<ProjectTaskVO> selectTaskList(int projectNo);
+}

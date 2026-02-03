@@ -1,0 +1,69 @@
+package kr.or.ddit.siteAdmin.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import kr.or.ddit.siteAdmin.service.INoticeService;
+import kr.or.ddit.vo.NoticeVO;
+import kr.or.ddit.vo.PageResult;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RestController
+@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping("/api/notice")
+public class NoticeApiController {
+	
+	@Autowired
+	private INoticeService noticeService;
+	
+	// 공지사항 목록 조회
+	@GetMapping("/list")
+	public PageResult<NoticeVO> getList(NoticeVO noticeVO){
+		log.info("[API] 공지사항 목록 조회 요청 - 페이지 : {}", noticeVO.getCurrentPage());
+		
+		return noticeService.retrieveNoticeList(noticeVO);
+	}
+	
+	// 공지사항 등록
+	@PostMapping("/write")
+	public String insert(@RequestBody NoticeVO noticeVO) {
+		return noticeService.createNotice(noticeVO);
+	}
+	
+	// 공지사항 핀 상태 변경
+	@PostMapping("/updatePin")
+	public String updatePin(@RequestBody NoticeVO noticeVO) {
+		return noticeService.modifyPin(noticeVO);
+	}
+	
+	// 공지사항 상세 조회
+	@GetMapping("/detail")
+	public NoticeVO getDetail(
+			@RequestParam int noticeNo, 
+			@RequestParam(defaultValue = "0") int memberNo) {
+		
+		return noticeService.retrieveNotice(noticeNo, memberNo);
+	}
+	
+	// 공지사항 수정
+	@PostMapping("/update")
+	public String update(@RequestBody NoticeVO noticeVO) {
+		return noticeService.modifyNotice(noticeVO);
+	}
+	
+	// 공지사항 삭제
+	@PostMapping("/delete")
+	public String delete(@RequestBody NoticeVO noticeVO) {
+		return noticeService.removeNotice(noticeVO.getNoticeNo());
+	}
+}

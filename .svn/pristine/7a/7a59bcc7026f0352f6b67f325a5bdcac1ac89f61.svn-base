@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.faq.mapper.IFaqMapper">
+
+	<select id="selectFaqList" resultType="kr.or.ddit.vo.FaqVO">
+		SELECT
+		    FAQ_NO
+		  , ADMIN_NO
+		  , FAQ_TITLE
+		  , FAQ_CONTENT
+		  , FAQ_REGDATE
+		  , FAQ_UPDATE
+		  , FAQ_ORDER
+		  , FAQ_HIT
+		  , FILE_GROUP_NO
+		  , PUBLIC_STATUS
+		FROM
+		    FAQ
+		ORDER BY
+		    FAQ_NO
+	</select>
+
+</mapper>

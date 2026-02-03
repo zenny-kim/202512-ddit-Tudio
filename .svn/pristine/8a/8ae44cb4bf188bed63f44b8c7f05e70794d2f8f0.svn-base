@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.siteAdmin.mapper.INoticeMapper">
+	
+	<select id="selectNoticeList" resultType="kr.or.ddit.vo.NoticeVO">
+		SELECT 
+			N.NOTICE_NO AS noticeNo
+			, N.NOTICE_TITLE AS noticeTitle
+			, N.NOTICE_CONTENT AS noticeContent
+			, N.NOTICE_REGDATE AS noticeRegdate
+			, N.NOTICE_UPDDATE AS noticeUpdate
+			, N.NOTICE_HIT AS noticeHit
+			, N.NOTICE_FILE_NO AS noticeFileNo
+			, N.NOTICE_PIN_STATUS AS noticePinStatus
+			, N.MEMBER_NO AS memberNo
+			, M.MEMBER_NAME AS writer
+		FROM NOTICE N
+		LEFT JOIN MEMBER M ON N.MEMBER_NO = M.MEMBER_NO
+		ORDER BY N.NOTICE_PIN_STATUS DESC, N.NOTICE_NO DESC
+	</select>
+	
+	<insert id="insertNotice" parameterType="kr.or.ddit.vo.NoticeVO">
+		INSERT INTO NOTICE(
+			NOTICE_NO
+			, NOTICE_TITLE
+			, NOTICE_CONTENT
+			, NOTICE_PIN_STATUS
+			, MEMBER_NO
+			, NOTICE_REGDATE
+			, NOTICE_HIT
+			, NOTICE_FILE_NO
+		) VALUES (
+			SEQ_NOTICE.NEXTVAL, #{noticeTitle}, #{noticeContent}, #{noticePinStatus},
+			#{memberNo}, sysdate, 0, 0
+		)
+	</insert>
+	
+	<update id="updateNoticePin" parameterType="kr.or.ddit.vo.NoticeVO">
+		UPDATE NOTICE
+		SET NOTICE_PIN_STATUS = #{noticePinStatus}
+		WHERE NOTICE_NO = #{noticeNo}
+	</update>
+	
+</mapper>

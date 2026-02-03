@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.project.mapper.IProjectMapper">
+
+	<resultMap id="projectDetailMap" type="kr.or.ddit.vo.project.ProjectVO">
+        <id property="projectNo" column="PROJECT_NO"/>
+        <result property="projectName" column="PROJECT_NAME"/>
+        <result property="projectDesc" column="PROJECT_DESC"/>
+        <result property="projectStartdate" column="PROJECT_STARTDATE"/>
+        <result property="projectEnddate" column="PROJECT_ENDDATE"/>
+        <result property="projectStatus" column="PROJECT_STATUS"/>
+        <result property="projectType" column="PROJECT_TYPE"/>
+        <result property="memberNo" column="MEMBER_NO"/>
+        <result property="projectMemberCount" column="PROJECT_MEMBER_COUNT"/>
+        <result property="delayedTaskCount" column="DELAYED_TASK_COUNT"/>
+        <association property="miniheader" javaType="kr.or.ddit.vo.project.ProjectMiniHeaderVO">
+            <result property="fixTab" column="FIX_TAB"/>
+            <result property="projectNo" column="PROJECT_NO"/>
+        </association>
+        <collection property="memberList" ofType="kr.or.ddit.vo.project.ProjectMemberVO">
+            <result property="memberNo" column="MEM_NO"/>
+            <result property="memberEmail" column="MEM_EMAIL"/>
+            <result property="memberName" column="MEM_NAME"/>
+            <result property="projectMemstatus" column="PROJECT_MEM_STATUS"/>
+            <result property="projectRole" column="ROLE_IN_PROJECT"/>
+        </collection>
+    </resultMap>
+
+	<!-- 
+			[ INSERT ]
+	 -->
+    <insert id="insertProject" parameterType="kr.or.ddit.vo.project.ProjectVO">
+        <selectKey keyProperty="projectNo" resultType="int" order="BEFORE">
+            SELECT SEQ_PROJECT.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO PROJECT (
+            PROJECT_NO
+            , MEMBER_NO
+            , PROJECT_NAME
+            , PROJECT_STARTDATE
+            , PROJECT_ENDDATE
+            , PROJECT_STATUS
+            , PROJECT_REGDATE
+            , PROJECT_TYPE
+            , PROJECT_DESC
+        ) VALUES (
+            #{projectNo}
+            , #{memberNo}
+            , #{projectName}
+            , #{projectStartdate}
+            , #{projectEnddate}
+            , 0
+            , CURRENT_TIMESTAMP
+            , #{projectType}
+            , #{projectDesc}
+        )
+    </insert>
+    
+    <insert id="insertProjectMember" parameterType="kr.or.ddit.vo.project.ProjectMemberVO">
+	    INSERT INTO PROJECT_MEMBER (
+	    	PROJECT_MEM_NO
+	    	, PROJECT_NO
+	    	, MEMBER_NO
+	    	, PROJECT_MEM_REGDATE
+	    	, PROJECT_MEM_STATUS
+	    	, PROJECT_ROLE
+	    ) VALUES (
+	        SEQ_PROJECT_MEMBER.NEXTVAL
+	        , #{projectNo}
+	        , #{memberNo}
+	        , CURRENT_TIMESTAMP
+	        , 'Y'
+	        , #{projectRole}
+	    )
+	</insert>
+	
+	<insert id="insertNotification" parameterType="kr.or.ddit.vo.NotificationVO">
+		INSERT INTO NOTIFICATION (
+			NOTI_NO
+			, MEMBER_NO
+			, NOTI_TYPE
+			, TARGET_ID
+			, NOTI_URL
+			, IS_READ
+			, NOTICE_REGDATE
+		) VALUES (
+			SEQ_NOTIFICATION.NEXTVAL
+			, #{memberNo}
+			, #{notiType}
+			, #{targetId}
+			, #{notiUrl}
+			, 'N'
+			, CURRENT_TIMESTAMP
+		)
+	</insert>
+
+    <insert id="insertMiniHeader" parameterType="kr.or.ddit.vo.project.ProjectMiniHeaderVO">
+        INSERT INTO MINI_HEADER_ORDER (
+            PROJECT_NO
+            , FIX_TAB
+        ) VALUES (
+            #{projectNo}
+            , #{fixTab}
+        )
+    </insert>
+    
+    <select id="checkMemberExistence" parameterType="list" resultType="kr.or.ddit.vo.MemberVO">
+	    SELECT 
+	    	MEMBER_NO
+	    	, MEMBER_EMAIL
+	    	, MEMBER_NAME
+	    FROM MEMBER
+	    WHERE MEMBER_EMAIL IN
+	    <foreach item="email" collection="emailList" open="(" separator="," close=")">
+	        #{email}
+	    </foreach>
+	</select>
+	
+	<select id="findMemberByEmail" parameterType="string" resultType="kr.or.ddit.vo.MemberVO">
+		SELECT 
+			MEMBER_NO
+			, MEMBER_EMAIL
+			, MEMBER_NAME 
+		FROM MEMBER 
+		WHERE MEMBER_EMAIL = #{memberEmail}
+	</select>
+	
+	<select id="selectProjectForDelete" resultType="kr.or.ddit.vo.project.ProjectVO">
+		SELECT 
+			P.PROJECT_NO
+			, P.PROJECT_NAME
+			, P.MEMBER_NO
+			, (SELECT M.MEMBER_EMAIL 
+			   FROM MEMBER M 
+				WHERE M.MEMBER_NO = P.MEMBER_NO) AS adminEmail
+		FROM PROJECT P
+		WHERE P.PROJECT_STATUS = 0
+			AND TRUNC(CURRENT_TIMESTAMP - P.PROJECT_REGDATE) >= 7
+			AND NOT EXISTS (
+				SELECT 1 
+				FROM PROJECT_MEMBER PM
+				 WHERE PM.PROJECT_NO = P.PROJECT_NO 
+				   AND PM.PROJECT_ROLE = 'MEMBER'
+			)
+	</select>
+	
+	<select id="selectProjectForWarning" resultType="kr.or.ddit.vo.project.ProjectVO">
+		SELECT 
+			P.PROJECT_NO
+			, P.PROJECT_NAME
+			, P.MEMBER_NO
+			, (SELECT M.MEMBER_EMAIL FROM MEMBER M WHERE M.MEMBER_NO = P.MEMBER_NO) AS adminEmail
+			, TRUNC(CURRENT_TIMESTAMP - P.PROJECT_REGDATE) AS elapsedDays
+		FROM PROJECT P
+		WHERE P.PROJECT_STATUS = 0		
+		<![CDATA[	
+			AND TRUNC(CURRENT_TIMESTAMP - P.PROJECT_REGDATE) < 7
+		]]>
+			AND NOT EXISTS (
+				SELECT 1 FROM PROJECT_MEMBER PM
+				WHERE PM.RPOJECT_NO = P.PROJECT_NO AND PM.PROJECT_ROLE = 'MEMBER'
+			)
+	</select>
+	
+	<!-- 
+			[ SELECT ]
+	 -->
+	<select id="checkProjectAccess" parameterType="map" resultType="int">
+	    SELECT COUNT(*)
+	    FROM PROJECT_MEMBER
+	    WHERE PROJECT_NO = #{projectNo}
+	      AND MEMBER_NO = #{memberNo}
+	      AND PROJECT_MEM_STATUS = 'Y'
+	</select>
+    
+    <select id="selectProjectDetail" parameterType="int" resultMap="projectDetailMap">
+        SELECT 
+            P.PROJECT_NO 
+            , P.PROJECT_NAME 
+            , P.PROJECT_DESC
+            , P.PROJECT_STARTDATE
+            , P.PROJECT_ENDDATE
+            , P.PROJECT_STATUS
+            , P.PROJECT_TYPE
+            , P.MEMBER_NO
+            , M.FIX_TAB
+            , (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO) AS TOTAL_TASK_COUNT
+            , FN_GET_PROJ_DONE_CNT(P.PROJECT_NO) AS COMPLETED_TASK_COUNT
+            , MEM.MEMBER_NO AS MEM_NO
+            , MEM.MEMBER_EMAIL AS MEM_EMAIL
+            , MEM.MEMBER_NAME AS MEM_NAME
+            , PM.PROJECT_MEM_STATUS
+            , PM.PROJECT_ROLE AS ROLE_IN_PROJECT
+            , (SELECT COUNT(*)
+            	FROM PROJECT_MEMBER 
+            	WHERE PROJECT_NO = P.PROJECT_NO 
+            	  AND PROJECT_MEM_STATUS = 'Y'
+            	  AND PROJECT_ROLE != 'CLIENT') AS PROJECT_MEMBER_COUNT
+        <![CDATA[
+            , (SELECT COUNT(*)
+           		 FROM PROJECT_TASK
+          		WHERE PROJECT_NO = P.PROJECT_NO
+            	  AND TASK_STATUS != 1
+            	  AND TASK_ENDDATE < CURRENT_TIMESTAMP) AS DELAYED_TASK_COUNT
+        ]]>
+        FROM PROJECT P
+        LEFT JOIN MINI_HEADER_ORDER M ON P.PROJECT_NO = M.PROJECT_NO
+        LEFT JOIN PROJECT_MEMBER PM ON P.PROJECT_NO = PM.PROJECT_NO
+        LEFT JOIN MEMBER MEM ON PM.MEMBER_NO = MEM.MEMBER_NO
+        WHERE P.PROJECT_NO = #{projectNo}
+        ORDER BY
+        	PM.PROJECT_MEM_STATUS DESC
+            , CASE PM.PROJECT_ROLE
+              WHEN 'MANAGER' THEN 1  
+              WHEN 'CLIENT'  THEN 2  
+              ELSE 3                 
+              END ASC        
+            , MEM.MEMBER_NAME ASC
+    </select>
+    
+    <select id="selectBookmark" parameterType="map" resultType="string">
+	    SELECT PROJECT_BOOKMARK
+	    FROM PROJECT_MEMBER
+	    WHERE PROJECT_NO = #{projectNo}
+	      AND MEMBER_NO = #{memberNo}
+	</select>
+	
+	<update id="toggleBookmark" parameterType="map">
+	    UPDATE PROJECT_MEMBER
+	    SET PROJECT_BOOKMARK = CASE 
+	        WHEN PROJECT_BOOKMARK = 'Y' THEN 'N' 
+	        ELSE 'Y' 
+	    END
+	    WHERE PROJECT_NO = #{projectNo}
+	      AND MEMBER_NO = #{memberNo}
+	</update>
+	
+	<delete id="deleteProject" parameterType="int">
+		DELETE FROM PROJECT
+		WHERE PROJECT_NO = #{projectNo}
+	</delete>
+	
+	<!-- 
+			[ UPDATE ]
+	 -->
+	<select id="checkManager" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM PROJECT_MEMBER
+        WHERE PROJECT_NO = #{projectNo}
+          AND MEMBER_NO = #{memberNo}
+          AND PROJECT_ROLE = 'MANAGER'       
+          AND PROJECT_MEM_STATUS = 'Y'
+    </select>
+	 	
+	<update id="updateProject" parameterType="kr.or.ddit.vo.project.ProjectVO">
+		UPDATE PROJECT
+		SET
+			PROJECT_NAME = #{projectName}
+            , PROJECT_DESC = #{projectDesc}
+            , PROJECT_TYPE = #{projectType}
+            , PROJECT_STARTDATE = #{projectStartdate}
+            , PROJECT_ENDDATE = #{projectEnddate}
+		WHERE PROJECT_NO = #{projectNo}
+	</update>
+	
+	<update id="updateMiniHeader" parameterType="kr.or.ddit.vo.project.ProjectMiniHeaderVO">
+        MERGE INTO MINI_HEADER_ORDER M
+        USING DUAL
+        ON (M.PROJECT_NO = #{projectNo})
+        WHEN MATCHED THEN
+            UPDATE SET 
+                FIX_TAB = #{fixTab}
+        WHEN NOT MATCHED THEN
+            INSERT (
+                PROJECT_NO 
+                , FIX_TAB
+            ) VALUES (
+                #{projectNo} 
+                , #{fixTab}
+            )
+    </update>
+    
+    <select id="selectProjectMember" parameterType="map" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+        SELECT 
+            MEMBER_NO 
+            , PROJECT_NO 
+            , PROJECT_ROLE AS projectRole
+            , PROJECT_MEM_STATUS AS projectMemStatus
+        FROM PROJECT_MEMBER
+        WHERE PROJECT_NO = #{projectNo} 
+          AND MEMBER_NO = #{memberNo}
+    </select>
+    
+	<update id="deactivateProjectMember" parameterType="map">
+        UPDATE PROJECT_MEMBER
+        SET PROJECT_MEM_STATUS = 'N'
+        WHERE PROJECT_NO = #{projectNo}
+          AND PROJECT_ROLE != 'MANAGER' 
+          <if test="emailList != null and emailList.size() > 0">
+              AND MEMBER_NO NOT IN (
+                  SELECT MEMBER_NO 
+                  FROM MEMBER 
+                  WHERE MEMBER_EMAIL IN
+                  <foreach collection="emailList" item="email" open="(" separator="," close=")">
+                      #{email}
+                  </foreach>
+              )
+          </if>
+    </update>
+    
+    <update id="mergeProjectMember" parameterType="kr.or.ddit.vo.project.ProjectMemberVO">
+        MERGE INTO PROJECT_MEMBER PM
+        USING DUAL
+        ON (PM.PROJECT_NO = #{projectNo} AND PM.MEMBER_NO = #{memberNo})
+        WHEN MATCHED THEN
+            UPDATE SET 
+                PM.PROJECT_MEM_STATUS = 'Y'
+                , PM.PROJECT_ROLE = #{projectRole}
+        WHEN NOT MATCHED THEN
+            INSERT (
+                PROJECT_NO 
+                , MEMBER_NO 
+                , PROJECT_ROLE 
+                , PROJECT_MEM_STATUS
+            ) VALUES (
+                #{projectNo} 
+                , #{memberNo} 
+                , #{projectRole} 
+                , 'Y'
+            )
+    </update>
+    
+    <!-- 
+			[ DELETE ]
+	 -->
+	<update id="deleteProjectLogically" parameterType="int">
+		UPDATE PROJECT
+		SET PROJECT_STATUS = 2
+		WHERE PROJECT_NO = #{projectNo}
+	</update>
+	
+	<!-- 
+			[ COMPLETE ]
+	 -->
+	<select id="countUnfinishedTask" parameterType="int">
+        SELECT COUNT(*)
+        FROM PROJECT_TASK
+        WHERE PROJECT_NO = #{projectNo}
+          AND TASK_STATUS != 3
+    </select>
+
+    <update id="updateProjectStatus" parameterType="int">
+        UPDATE PROJECT
+        SET PROJECT_STATUS = #{projectStatus}
+        WHERE PROJECT_NO = #{projectNo}
+    </update>
+	
+</mapper>

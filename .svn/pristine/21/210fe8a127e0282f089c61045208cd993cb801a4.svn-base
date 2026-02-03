@@ -1,0 +1,15 @@
+package kr.or.ddit.project.mapper;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.vo.ProjectMemberVO;
+import kr.or.ddit.vo.ProjectMiniHeaderVO;
+import kr.or.ddit.vo.ProjectVO;
+
+@Mapper
+public interface IProjectMapper {
+	// 프로젝트 생성
+	public int insertProject(ProjectVO projectVO);
+	public int insertProjectMember(ProjectMemberVO memberVO);
+	public int insertMiniHeader(ProjectMiniHeaderVO miniheaderVO);	
+}

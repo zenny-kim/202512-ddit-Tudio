@@ -1,0 +1,81 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. 메인 레이아웃 (껍데기 & 공통 설정)
+   ========================================= */
+
+/* 헤더 높이만큼 상단 여백 확보 */
+body {
+    padding-top: 60px; 
+    background-color: #f4f7f6;
+}
+
+/* [중요] 사이드바 너비(90px)만큼 본문을 오른쪽으로 밀어주는 핵심 코드 */
+/* 이 안에 들어가는 모든 탭 내용(게시판, 일정 등)은 자동으로 위치가 잡힙니다. */
+.main-content-wrap {
+    margin-left: 90px; 
+    padding: 20px;
+    min-height: calc(100vh - 60px - 200px); /* 화면 꽉 차게 높이 계산 */
+    transition: margin-left 0.3s ease;
+}
+
+/* =========================================
+   2. 프로젝트 상세 페이지 전용 스타일
+   ========================================= */
+
+/* 상단 KPI 통계 카드 */
+.kpi-card-project {
+    height: 100px;
+    border: none;
+    border-radius: 8px;
+    transition: transform 0.2s;
+    background-color: white;
+}
+.kpi-card-project:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+
+/* 탭 메뉴 디자인 */
+.nav-tabs .nav-link {
+    color: #6c757d;
+    font-weight: 500;
+    cursor: pointer;
+    
+    display: flex;        
+    flex-direction: row;
+    align-items: center;
+    gap: 8px; /* 아이콘과 글자 사이 간격 */
+    padding: 10px 16px; /* 버튼 내부 여백을 좀 더 넉넉하게 */
+}
+
+/* 탭 아이콘 크기 미세 조정 (필요하다면) */
+.nav-tabs .nav-link i {
+    font-size: 1.1rem; /* 아이콘 크기를 글자보다 살짝 크게 */
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    font-weight: bold;
+    border-bottom-color: white;
+}
+
+/* 탭 내용이 들어갈 빈 공간 (AJAX 타겟) */
+#tabContentArea {
+    background-color: #ffffff;
+    min-height: 500px;
+    padding: 20px;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* 로딩 스피너 (가운데 정렬) */
+.loading-spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    color: #0d6efd;
+}

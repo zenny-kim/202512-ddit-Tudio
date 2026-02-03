@@ -1,0 +1,36 @@
+package kr.or.ddit.vo.project;
+
+import java.util.Date;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import lombok.Data;
+
+@Data
+public class ProjectTaskVO {
+	
+	private int taskId;      		 // 상위업무 일련번호     
+    private int projectNo;           // 프로젝트 일련번호
+    private int taskWriter;          // 상위업무 작성자
+    private String taskTitle;        // 상위업무 제목
+    private String taskContent;      // 상위업무 내용
+    private Date taskRegdate;        // 상위업무 등록일
+    
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date taskStartdate;      // 상위업무 시작일
+    
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date taskEnddate;        // 상위업무 종료일
+    
+    private int taskStatus;          // 상위업무 상태
+    private int taskRate;            // 상위업무 진척도
+    private int taskPriority;        // 상위업무 우선순위
+    private int fileGroupNo;         // 파일번호
+    private String taskPinYn;        // 상위업무 고정여부
+    private int taskPinOrder;        // 상위업무 고정 순서
+    private int taskPinMember;       // 상위업무 고정자
+    
+    
+    private String projectName;		 // 프로젝트 이름
+    private int taskDday;			 // 상위업무 D-day				
+}

@@ -1,0 +1,55 @@
+package kr.or.ddit.projectTask.service;
+
+import java.util.List;
+
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.vo.project.ProjectTaskSubVO;
+import kr.or.ddit.vo.project.ProjectTaskVO;
+
+public interface IProjectTaskService {
+	
+	/**
+	 * <p>업무 리스트 (상위업무, 하위업무, 각 업무의 담당자)</p>
+	 * @param projectNo
+	 * @return List<ProjectTaskVO>
+	 */
+	public List<ProjectTaskVO> selectTaskList(int projectNo);
+
+	/**
+	 * <p>업무 생성</p>
+	 * @param projectTaskVO
+	 * @param writerNo
+	 * @return ServiceResult
+	 */
+	public ServiceResult createTask(ProjectTaskVO projectTaskVO, int writerNo);
+
+	/**
+	 * <p>하위업무 생성</p>
+	 * @param subVO
+	 * @param writerNo
+	 * @return ServiceResult
+	 */
+	public ServiceResult createSubTask(ProjectTaskSubVO subVO, int writerNo);
+
+	/**
+	 * <p>상위업무 상세보기</p>
+	 * @param taskId
+	 * @return ProjectTaskVO
+	 */
+	public ProjectTaskVO getTaskDetail(int taskId);
+	
+	/**
+	 * <p>하위업무 상세보기</p>
+	 * @param subId
+	 * @return
+	 */
+	public ProjectTaskSubVO getSubTaskDetail(int subId);
+
+	/**
+	 * 
+	 * @param subId
+	 * @param subRate
+	 * @return
+	 */
+	public ServiceResult updateSubTaskRate(int subId, int subRate);
+}

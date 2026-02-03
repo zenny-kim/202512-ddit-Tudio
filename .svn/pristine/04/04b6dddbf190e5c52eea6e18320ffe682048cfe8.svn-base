@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.project.mapper.IProjectMapper">
+
+    <insert id="insertProject" parameterType="kr.or.ddit.vo.ProjectVO">
+        <selectKey keyProperty="projectNo" resultType="int" order="BEFORE">
+            SELECT SEQ_PROJECT_NO.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO PROJECT (
+            PROJECT_NO, MEMBER_NO, PROJECT_NAME, PROJECT_DESC, PROJECT_STARTDATE, PROJECT_ENDDATE, 
+            PROJECT_STATUS, PROJECT_TYPE, PROJECT_REGDATE
+        ) VALUES (
+            #{projectNo}, #{memberNo}, #{projectName}, #{projectDesc},             
+            TO_TIMESTAMP(#{projectStartdate}, 'YYYY-MM-DD HH24:MI:SS'), 
+            TO_TIMESTAMP(#{projectEnddate}, 'YYYY-MM-DD HH24:MI:SS'), 
+            0, #{projectType}, CURRENT_TIMESTAMP
+        )
+    </insert>
+    
+    <insert id="insertProjectMember" parameterType="kr.or.ddit.vo.ProjectMemberVO">
+	    INSERT INTO PROJECT_MEMBERS (
+	    	PROJECT_MEMBER_NO, PROJECT_NO, MEMBER_NO, PROJECT_MEM_REGDATE, PROJECT_MEM_STATUS, PROJECT_ROLE
+	    ) VALUES (
+	        SEQ_PROJECT_MEMBER.NEXTVAL, #{projectNo}, #{memberNo}, CURRENT_TIMESTAMP, 'Y', #{projectRole}
+	    )
+	</insert>
+
+    <insert id="insertMiniHeader" parameterType="kr.or.ddit.vo.ProjectMiniHeaderVO">
+        INSERT INTO MINI_HEADER_ORDER (
+            PROJECT_NO, FIX_TAB
+        ) VALUES (
+            #{projectNo}, #{fixTab}
+        )
+    </insert>
+	
+</mapper>

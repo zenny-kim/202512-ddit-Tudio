@@ -1,0 +1,16 @@
+package kr.or.ddit.vo.chat;
+
+import java.util.Date;
+
+import lombok.Data;
+
+@Data
+public class ChattingVO {
+	private int chatNo;
+	private int chatroomNo;
+	private int memberNo;
+	private String message ;
+	private Date createDate;
+	private int fileAttachNo;
+	private String chatType;
+}

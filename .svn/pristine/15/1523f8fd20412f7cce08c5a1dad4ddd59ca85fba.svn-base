@@ -1,0 +1,270 @@
+// 1. 공통 변수 설정
+if (typeof urlParams === 'undefined') {
+	var urlParams = new URLSearchParams(window.location.search);
+}
+if (typeof ctxPath === 'undefined') {
+	var ctxPath = window.location.pathname.substring(0, window.location.pathname.indexOf("/", 2));
+}
+
+if (typeof window.projectNo === 'undefined') {
+    window.projectNo = new URLSearchParams(window.location.search).get('projectNo') || $('input[name="projectNo"]').val();
+} else {
+    window.projectNo = new URLSearchParams(window.location.search).get('projectNo') || $('input[name="projectNo"]').val();
+}
+
+//페이지 로드 시 실행
+$(function() {
+	//console.log("tabBoard.js 로드됨");
+	// 초기 목록 로딩
+	if ($('#boardTbody').length > 0) {
+	        loadList(1);
+	}
+
+	// 목록 페이지
+	$(document).off('click', '#btnInsertForm').on('click', '#btnInsertForm', function() {
+		$(".tudio-section").load(`${ctxPath}/tudio/project/board/insert?projectNo=${projectNo}`);
+	});
+
+	// 목록 데이터
+	if ($('#boardTbody').length > 0) {
+		// 카테고리 필터
+		$(document).off('click', '.tudio-pill').on('click', '.tudio-pill', function() {
+			$(".tudio-pill").removeClass("is-active");
+			$(this).addClass("is-active");
+			loadList(1);
+		});
+	}
+	
+	// 검색 버튼 클릭
+	$(document).off('click', '#btnSearch').on('click', '#btnSearch', function() {
+		loadList(1);
+	});
+	
+	// 페이징 번호 클릭
+	$(document).off('click', '.page-link').on('click', '.page-link', function(e) {
+		e.preventDefault();
+		let page = $(this).data("page");
+		loadList(page);
+	});
+
+	// 돌아가기
+	$(document).off('click', '#btnBackToList').on('click', '#btnBackToList', function() {
+		$('body').removeClass('is-pdf-mode');
+		$(".tudio-section").load(`${ctxPath}/tudio/project/board?projectNo=${projectNo}`);
+	});
+
+	// 글쓰기(Insert) 페이지
+	if ($('#insertForm').length > 0) {
+		initInsertForm();
+	}
+
+	$(document).off('change', 'input[name="categoryName"]').on('change', 'input[name="categoryName"]', function() {
+		const val = $(this).val();
+		console.log("선택된 카테고리: ", val);
+
+		if (val === 'MINUTES') {
+			$('#meetingDetailsArea, #meetingResultArea').stop().slideDown(300);
+			$('#titleLabel').html('<i class="bi bi-tag-fill me-1"></i> 회의 주제');
+			$('#submitBtn').html('<i class="bi bi-check-lg"></i> 회의록 저장');
+		} else {
+			$('#meetingDetailsArea, #meetingResultArea').stop().slideUp(200);
+			$('#titleLabel').html('<i class="bi bi-tag-fill me-1"></i> 제목');
+			$('#submitBtn').html('<i class="bi bi-check-lg"></i> 게시글 저장');
+		}
+	});
+});
+
+// 목록 데이터, 페이징, 검색
+function loadList(page) {
+	let category = $(".tudio-pill.is-active").data("category") || "";
+	let searchType = $("#searchType").val();
+	let searchWord = $("#searchWord").val();
+    $.ajax({
+        url: ctxPath + "/tudio/project/board/listData",
+		type: "GET",
+		data: {
+			projectNo: projectNo,
+			category: category,
+			page: page,
+			searchType: searchType,
+			searchWord: searchWord
+		},
+        success: function(res) {
+            // 1. 총 건수 표시
+            $("#totalCnt").text(res.totalRecord);
+
+            // 2. 리스트 그리기
+            let html = "";
+			if(res.dataList && res.dataList.length > 0) {
+            res.dataList.forEach(board => {
+				html += `
+						<tr class="row-click">
+							<td class="text-center">${board.boNo}</td>
+							<td class="text-center">${getBadgeHtml(board.categoryName)}</td>
+							<td class="title" onclick="goDetail(${projectNo}, ${board.boNo})">
+								${board.boTitle}
+							</td>
+							<td class="text-center">${board.memberVO ? board.memberVO.memberName : '-'}</td>
+							<td class="text-center">${board.boRegdate.substring(0, 10)}</td>
+							<td class="text-center">${board.boHit}</td>
+						</tr>`;
+            });
+			} else {
+				html = "<tr><td colspan='6' class='text-center'>게시글이 없습니다.</td></tr>";
+			}
+            $("#boardTbody").html(html);
+
+            // 페이징 HTML 넣기 (VO에서 만든 getPagingHTML() 결과)
+            $("#boardPager").html(res.pagingHTML);
+        }
+    });
+}
+
+// 헬퍼 함수: 뱃지 정보
+function getBadgeInfo(category) {
+    switch (category) {
+        case 'NOTICE': return { txt: "공지", cls: "badge-red" };
+        case 'FREE':   return { txt: "자유", cls: "badge-yellow" };
+        case 'MINUTES': return { txt: "회의록", cls: "badge-blue" };
+        default:       return { txt: "기타", cls: "badge-default" };
+    }
+}
+function getBadgeHtml(category) {
+    const info = getBadgeInfo(category);
+    // 위에서 정의한 txt와 cls를 사용해서 span 태그를 만듭니다.
+    return `<span class="tudio-badge ${info.cls}">${info.txt}</span>`;
+}
+
+//글쓰기 폼
+function initInsertForm() {
+	let selectedMembers = [];
+
+	// 참석자 검색
+	$('#memberSearchInput').on('input', function() {
+		const val = $(this).val().trim().toLowerCase();
+		$('#memberSearchList .member-item').each(function() {
+			const memberText = $(this).text().toLowerCase();
+			const isMatch = memberText.indexOf(val) > -1;
+			//검색된 내용과 일치하면 보여주기
+			if (isMatch) {
+				$(this).attr('style', 'display: flex !important');
+			} else {
+				$(this).attr('style', 'display: none !important');
+			}
+		});
+	});
+
+	// 멤버 추가
+	$(document).off('click', '.btn-add-member').on('click', '.btn-add-member', function() {
+		const li = $(this).closest('li');
+		const no = String(li.data('no'));
+		const name = li.data('name');
+		if (selectedMembers.find(m => m.no === no)) {
+			Swal.fire('알림', '이미 추가된 멤버입니다.', 'info');
+			return;
+		}
+		selectedMembers.push({ no: no, name: name });
+		renderSelectedMembers();
+	});
+
+	// 멤버 삭제
+	$(document).off('click', '.btn-remove-member').on('click', '.btn-remove-member', function() {
+		const no = String($(this).data('no'));
+		selectedMembers = selectedMembers.filter(m => m.no !== no);
+		renderSelectedMembers();
+	});
+
+	// 멤버 검색
+	function renderSelectedMembers() {
+		const nameArea = $('#selectedAttendeeNames');
+		const inputArea = $('#attendeeHiddenInputs');
+		nameArea.empty(); inputArea.empty();
+		if (selectedMembers.length === 0) {
+			nameArea.append('<span class="text-muted">선택된 참석자가 없습니다.</span>');
+			return;
+		}
+		selectedMembers.forEach((mem, index) => {
+			nameArea.append(`
+		            <span class="attendee-tag">
+		                ${mem.name}
+		                <span class="btn-remove-member" data-no="${mem.no}">&times;</span>
+		            </span>
+		        `);
+			inputArea.append(`<input type="hidden" name="meetingMemberList[${index}].memberNo" value="${mem.no}">`);
+		});
+	}
+
+
+	// 폼 제출 유효성 검사
+	$('#insertForm').off('submit').on('submit', function(e) {
+		e.preventDefault(); // 페이지 새로고침 방지
+		e.stopPropagation(); // 이벤트가 위로 퍼지는 것을 막음
+		
+		const form = this; // 폼 요소 보관
+		const category = $('input[name="categoryName"]:checked').val();
+
+		// 유효성 검사 (기존 로직 유지)
+		if (!$('#boardTitle').val().trim()) { showWarning('제목을 입력해주세요!', '#boardTitle'); return; }
+		if (category === 'MINUTES') {
+			if (!$('input[name="boardMinutesVO.meetingDate"]').val()) { showWarning('회의 일시를 선택해주세요!', 'input[name="boardMinutesVO.meetingDate"]'); return; }
+			if (!$('input[name="boardMinutesVO.meetingGoal"]').val().trim()) { showWarning('회의 목표를 입력해주세요!', 'input[name="boardMinutesVO.meetingGoal"]'); return; }
+			if (selectedMembers.length === 0) { showWarning('참석자를 최소 한 명 이상 선택해주세요!', '#selectedAttendeeNames'); return; }
+		}
+		if (!$('textarea[name="boContent"]').val().trim()) { showWarning('내용을 입력해주세요!', 'textarea[name="boContent"]'); return; }
+
+		Swal.fire({
+			title: '저장하시겠습니까?',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '저장'
+		}).then((res) => {
+			if (res.isConfirmed) {
+
+				// AJAX 전송
+				const formData = new FormData(form);
+				$.ajax({
+					url: $(form).attr('action'),
+					type: 'POST',
+					data: formData,
+					processData: false,
+					contentType: false,
+					success: function(response) {
+						if (response.status === "success") {
+							Swal.fire('등록 완료', '게시글이 성공적으로 등록되었습니다.', 'success').then(() => {
+								goDetail(response.projectNo, response.boNo);
+							});
+						} else {
+							Swal.fire('실패', response.message || '저장 중 오류가 발생했습니다.', 'error');
+						}
+					},
+					error: function() {
+						Swal.fire('오류', '서버와의 통신에 실패했습니다.', 'error');
+					}
+				});
+				//AJAX 전송
+			}
+			return false;
+		});
+	});
+
+	function showWarning(msg, target) {
+		Swal.fire({ icon: 'warning', title: '필수 입력 누락', text: msg }).then(() => $(target).focus());
+	}
+}
+
+// 상세화면 페이지
+function goDetail(projectNo, boNo) {
+	$.post(ctxPath + "/tudio/project/board/hit", { boNo });
+
+
+	$(".tudio-section").load(
+		`${ctxPath}/tudio/project/board/detail?projectNo=${projectNo}&boNo=${boNo}`,
+		function() {
+			isProcessing = false;
+			window.scrollTo(0, 0);
+		}
+	);
+}
+
+
+

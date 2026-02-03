@@ -1,0 +1,20 @@
+package kr.or.ddit.common;
+
+public enum WidgetType {
+	PROJECT_SUMMARY("프로젝트요약"),
+    PERSONAL_WORK("개인업무"),
+    NOTICE("공지사항"),
+    ALARM("미확인알림"),
+    PROJECT_BOOKMARK("프로젝트북마크"),
+    TODO("할일목록");
+
+    private final String label;
+    
+    WidgetType(String label) { 
+    	this.label = label; 
+    }
+    
+    public String getLabel() {
+    	return label;
+    }
+}

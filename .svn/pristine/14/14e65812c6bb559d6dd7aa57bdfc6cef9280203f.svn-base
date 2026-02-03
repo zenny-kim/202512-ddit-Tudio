@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.survey.mapper.ISurveyMapper">
+
+    <resultMap id="optionMap" type="kr.or.ddit.vo.survey.SurveyAnswerOptionVO">
+	    <id property="answerNo" column="ANSWER_NO" />
+	    <result property="questionNo" column="QUESTION_NO" />
+	    <result property="answerOrder" column="ANSWER_ORDER" />
+	    <result property="answerContent" column="ANSWER_CONTENT" />
+	</resultMap>
+	
+	<resultMap id="questionMap" type="kr.or.ddit.vo.survey.SurveyQuestionVO">
+	    <id property="questionNo" column="QUESTION_NO" />
+	    <result property="surveyNo" column="SURVEY_NO" />
+	    <result property="questionContent" column="QUESTION_CONTENT" />
+	    <result property="questionOrder" column="QUESTION_ORDER" />
+	    
+	    <collection property="optionList" resultMap="optionMap" />
+	</resultMap>
+	
+	<resultMap id="surveyMap" type="kr.or.ddit.vo.survey.SurveyVO">
+	    <id property="surveyNo" column="SURVEY_NO" />
+	    <result property="surveyWriter" column="SURVEY_WRITER" />
+	    <result property="surveyTitle" column="SURVEY_TITLE" />
+	    <result property="surveyDescription" column="SURVEY_DESCRIPTION" />
+	    <result property="surveyRegisterDate" column="SURVEY_REGISTER_DATE" />
+	    <result property="surveyStartDate" column="SURVEY_START_DATE" />
+	    <result property="surveyEndDate" column="SURVEY_END_DATE" />
+	    <result property="surveyCloseStatus" column="SURVEY_CLOSE_STATUS" />
+	    <result property="surveyDeleteStatus" column="SURVEY_DELETE_STATUS" />
+	    
+	    <collection property="questionList" resultMap="questionMap" />
+	</resultMap>
+	
+	<!-- 중복 답변 체크 -->
+	<select id="checkAlreadyParticipated" parameterType="kr.or.ddit.vo.survey.SurveyParticipationVO" resultType="int">
+	    SELECT
+	           COUNT(*)
+	    FROM SURVEY_PARTICIPATION
+	    WHERE SURVEY_NO = #{surveyNo}
+	      AND MEMBER_NO = #{memberNo}
+	</select>
+
+	<!-- 설문 조회 -->
+    <select id="getSurveyDetail" parameterType="int" resultMap="surveyMap">
+	    SELECT
+	           S.SURVEY_NO
+	         , S.SURVEY_WRITER
+	         , S.SURVEY_TITLE
+	         , S.SURVEY_DESCRIPTION
+	         , S.SURVEY_REGISTER_DATE
+	         , S.SURVEY_START_DATE
+	         , S.SURVEY_END_DATE
+	         , S.SURVEY_CLOSE_STATUS
+	         , S.SURVEY_DELETE_STATUS
+	         , Q.QUESTION_NO
+	         , Q.QUESTION_CONTENT
+	         , Q.QUESTION_ORDER
+	         , O.ANSWER_NO
+	         , O.ANSWER_ORDER
+	         , O.ANSWER_CONTENT
+	    FROM SURVEY S
+	         LEFT OUTER JOIN SURVEY_QUESTION Q
+	                      ON Q.SURVEY_NO = S.SURVEY_NO
+	         LEFT OUTER JOIN SURVEY_ANSWER_OPTION O
+	                      ON O.QUESTION_NO = Q.QUESTION_NO
+	    WHERE S.SURVEY_NO = #{surveyNo}
+	    ORDER BY
+	           Q.QUESTION_ORDER ASC
+	         , O.ANSWER_ORDER ASC
+	</select>
+
+
+
+	<!-- 설문 참여 정보저장 -->
+	<insert id="insertParticipation" parameterType="kr.or.ddit.vo.survey.SurveyParticipationVO">
+	    <selectKey keyProperty="surveyParticipationNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_SURVEY_PARTICIPATION.NEXTVAL FROM DUAL
+	    </selectKey>
+	    INSERT INTO SURVEY_PARTICIPATION (
+	          SURVEY_PARTICIPATION_NO
+	        , SURVEY_NO
+	        , MEMBER_NO
+	        , PARTICIPATION_DATE
+	    ) VALUES (
+	          #{surveyParticipationNo}
+	        , #{surveyNo}
+	        , #{memberNo}
+	        , CURRENT_TIMESTAMP
+	    )
+	</insert>
+	
+	
+	<!-- 설문 문항별 답변 저장 -->
+	<insert id="insertAnswers" parameterType="java.util.List">
+	    INSERT INTO SURVEY_ANSWER (
+	          MEMBER_ANSWER_NO
+	        , SURVEY_PARTICIPATION_NO
+	        , QUESTION_NO
+	        , SELECT_ANSWER_NO
+	    )
+	    SELECT SEQ_SURVEY_ANSWER.NEXTVAL, A.* FROM (
+	        <foreach collection="list" item="item" separator="UNION ALL">
+	            SELECT 
+	                   #{item.surveyParticipationNo}
+	                 , #{item.questionNo}
+	                 , #{item.selectAnswerNo} 
+	            FROM DUAL
+	        </foreach>
+	    ) A
+	</insert>
+
+</mapper>

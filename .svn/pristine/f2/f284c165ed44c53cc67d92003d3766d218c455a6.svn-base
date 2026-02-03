@@ -1,0 +1,67 @@
+package kr.or.ddit.notification.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.NotificationSettingVO;
+import kr.or.ddit.vo.NotificationVO;
+import kr.or.ddit.vo.project.ProjectBoardVO;
+
+@Mapper
+public interface INotificationMapper {
+
+	// 알림 테이블에 알림정보 저장하기
+	public int insertNoti(NotificationVO vo);
+
+	public int selectUnreadCount(int memberNo);
+
+	public int insertNotiEnabled(Map<String, Object> insertNotiEnabledParam);
+
+	public List<NotificationVO> notiList(Map<String, Object> notiParam);
+
+	public void updateRead(Map<String, Object> notiMarkReadParam);
+
+	public void deleteNoti(Map<String, Object> notiDeleteParam);
+	
+	public void insertSiteNoticeNoti(Map<String, Object> siteNotiParam);
+
+	// 멤버별 알림 설정 ON/OFF
+	public NotificationSettingVO notiSettingMember(String memberNo);
+
+
+	// 공지사항 알림을 킨 사람
+	public NotificationSettingVO notiSiteMember(int memberNo);
+
+	
+	// 공지사항 알림 설정은 on한 회원들
+	public List<MemberVO> notiSiteMember();
+
+	public void insertSiteNoticeNoti(NotificationVO vo);
+
+	
+	// 내가 쓴 게시글의 댓글 알림
+	public ProjectBoardVO notiCommentNoti(int boNo);
+	
+	
+	// 회원의 알림 설정 조회 
+	public NotificationSettingVO notiAllMember(int memberNo);
+	
+	// 댓글 부모, 글작성자 조회 
+	public Map<String, Object> selectNotiReply(Map<String, Object> map);
+
+
+	// 회원 권한 확인하기
+	public String selectAuthNoti(int memberNo);
+
+	
+	// 프로젝트 공지사항 알림테이블에 일괄 등록
+	public void insertProjectNoticeNoti(Map<String, Object> map);
+
+	
+	// 프로젝트 멤버 푸시 대상 조회
+	public List<Integer> selectProjectNoticeNoti(@Param("projectNo")int projectNo, @Param("writerNo")int writerNo);
+}

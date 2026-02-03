@@ -1,0 +1,13 @@
+/**
+ * 공통 알림창 함수 (SweetAlert2)
+ * @param {string} type - 'success', 'error', 'warning', 'info'
+ * @param {string} msg - 표시할 메시지
+ */
+function sweetAlert(type, msg) {
+    Swal.fire({
+        title: msg,
+        icon: type,
+        draggable: true,
+        confirmButtonColor: '#0d6efd' // 부트스트랩 프라이머리 색상과 통일
+    });
+}

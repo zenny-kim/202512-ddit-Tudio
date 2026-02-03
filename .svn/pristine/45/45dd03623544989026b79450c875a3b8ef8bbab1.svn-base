@@ -1,0 +1,43 @@
+@charset "UTF-8";
+
+/* 아코디어 방식*/
+.sub-row,
+.sub-add-row {
+    display: none;
+}
+
+.sub-row.show,
+.sub-add-row.show {
+    display: table-row; /* 또는 block */
+}
+
+.tudio-table-wrap {
+    overflow-y: scroll; /* 항상 스크롤바 공간 확보 */
+}
+
+/* 테이블 레이아웃 고정 */
+.tudio-table-card {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* 업무 상태값에 따른 cssClass - 공통코드 enum과 연결됨 */
+.status-request { /* 업무상태:요청 */
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-progress { /* 업무상태:진행 */
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-done { /* 업무상태:완료 */
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-hold { /* 업무상태:보류 */
+    background-color: #fbe9e7;
+    color: #d84315;
+}

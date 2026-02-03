@@ -1,0 +1,27 @@
+package kr.or.ddit.notification.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.vo.NotificationVO;
+
+@Mapper
+public interface INotificationMapper {
+
+	public int insertNoti(NotificationVO vo);
+
+	public int selectUnreadCount(int memberNo);
+
+	public int insertNotiEnabled(Map<String, Object> insertNotiEnabledParam);
+
+	public List<NotificationVO> notiList(Map<String, Object> notiParam);
+
+	public void updateRead(Map<String, Object> notiMarkReadParam);
+
+	public void deleteNoti(Map<String, Object> notiDeleteParam);
+	
+	public void insertSiteNoticeNoti(Map<String, Object> siteNotiParam);
+
+}

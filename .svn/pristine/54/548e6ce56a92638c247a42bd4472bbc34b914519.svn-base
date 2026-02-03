@@ -1,0 +1,25 @@
+package kr.or.ddit.projectTask.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.projectTask.mapper.IProjectTaskMapper;
+import kr.or.ddit.projectTask.service.IProjectTaskService;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : ProjectTaskServiceImpl
+ * DESC : 프로젝트 상위업무 생성, 수정, 삭제, 목록 서비스 구현클래스
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 PSE
+ * @version 1.0, 2025.01.02
+ * 
+ */
+@Service
+public class ProjectTaskServiceImpl implements IProjectTaskService {
+	
+	@Autowired
+	private IProjectTaskMapper projectTaskMapper;
+}

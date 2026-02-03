@@ -1,0 +1,76 @@
+@charset "UTF-8";
+
+/* 브레드크럼 스타일 */
+.breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #64748b;
+}
+.breadcrumb-nav .sep {
+    margin: 0 10px;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+}
+.breadcrumb-nav .text-primary {
+    color: #2563eb !important;
+}
+
+/* 카드 스타일 */
+.admin-card {
+    background: #ffffff;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+.admin-card-header {
+    padding: 1.5rem;
+    background-color: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.admin-card-header.bg-light {
+    background-color: #f8fafc !important;
+}
+
+/* 테이블 스타일 */
+.table th {
+    background-color: #f8fafc !important;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: center;
+    vertical-align: middle;
+}
+.table td {
+    color: #334155;
+    font-size: 0.95rem;
+    padding: 1rem 0.5rem;
+    vertical-align: middle;
+}
+.table td.text-center { text-align: center; }
+
+/* 링크 스타일 */
+.notice-link {
+    text-decoration: none;
+    color: #333;
+    font-weight: 600;
+    display: block;
+}
+.notice-link:hover {
+    color: #2563eb;
+}
+
+/* 배지 스타일 */
+.badge {
+    padding: 0.4em 0.6em;
+    font-weight: 500;
+    font-size: 0.75rem;
+    border-radius: 4px;
+}

@@ -1,0 +1,6 @@
+package kr.or.ddit.common.code;
+
+public interface CodeEnum {
+	int getCode();
+	String getLabel();
+}

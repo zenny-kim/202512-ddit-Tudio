@@ -1,0 +1,587 @@
+/**
+ * dashboard.js
+ * - GridStack.js
+ */
+
+const CONTEXT_PATH = document.body.dataset.contextPath;
+
+// GridStack 초기화
+let grid = GridStack.init({
+	cellHeight: 100, // 높이 단위
+	margin: 10,      // 간격
+	column: 12       // 12분할 (고정)
+});
+
+// 위젯 설정 저장 함수 
+function saveLayout() {
+	let widgetData = [];
+
+	// 현재 화면의 위젯 정보
+	grid.engine.nodes.forEach(function(node) {
+		widgetData.push({
+			widgetNo: node.el.getAttribute('gs-id'),
+			x: node.x,         // 현재 x 좌표
+			y: node.y,         // 현재 y 좌표
+			width: node.w,     // 현재 너비
+			height: node.h     // 현재 높이
+		});
+	});
+
+	$.ajax({
+		url: `${CONTEXT_PATH}/tudio/widget/saveLayout`,
+		type: 'POST',
+		contentType: 'application/json; charset=utf-8;',
+		data: JSON.stringify(widgetData),
+		success: function(res) {
+			if(res === "OK") {
+				console.log("위젯 레이아웃 저장 성공");
+			}
+		},
+		error: function(xhr, status, error) {
+			console.error("저장 실패:", error);
+			alert("위젯 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+		}
+	});
+}
+
+/**
+ * widget
+ */
+/* 프로젝트 요약 */
+function loadProjectSummary(widgetNo) {
+    $.ajax({
+        url: `${CONTEXT_PATH}/tudio/widget/projectSummary`,
+        type: "GET",
+        dataType: "json",
+        success: function(taskList) {
+            let $area = $("#project-summary-area-" + widgetNo);
+            let html = '<ul class="list-group list-group-flush small">';
+
+            if (taskList.length === 0) {
+                html += '<li class="list-group-item text-center text-muted mt-3">예정된 업무가 없습니다.</li>';
+            } else {
+                $.each(taskList, function(i, task) {
+                    // D-Day 뱃지 색상 설정
+                    let badgeClass = "bg-success";
+                    let badgeText = "D-" + task.dDay;
+                    
+                    if (task.dDay < 0) {
+                        badgeClass = "bg-danger";
+                        badgeText = "지연";
+                    } else if (task.dDay === 0) {
+                        badgeClass = "bg-danger";
+                        badgeText = "D-Day";
+                    } else if (task.dDay <= 3) {
+                        badgeClass = "bg-warning text-dark";
+                    }
+
+                    html += `
+                        <li class="list-group-item px-0 py-2 border-bottom-0">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-truncate fw-bold" style="max-width: 60%;" title="\${task.taskTitle}">
+                                    \${task.taskTitle}
+                                </span>
+                                <span class="badge \${badgeClass}">\${badgeText}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted text-truncate" style="max-width: 150px;">
+                                    \${task.projectName}
+                                </small>
+                                <small class="text-info font-weight-bold">\${task.taskProgress}%</small>
+                            </div>
+                            <div class="progress mt-1" style="height: 4px;">
+                                <div class="progress-bar bg-info" style="width: \${task.taskProgress}%"></div>
+                            </div>
+                        </li>
+                    `;
+                });
+            }
+            html += '</ul>';
+            
+            $area.html(html);
+        },
+        error: function() {
+            $("#project-summary-area-" + widgetNo).html('<p class="text-center text-danger mt-3">불러오기 실패</p>');
+        }
+    });
+}
+
+/* [위젯 2] 개인 업무 (주간 스케줄) */
+function loadPersonalWork(widgetNo) {
+    // 날짜 형식 (YYYY-MM-DD)
+    const today = new Date();
+    const toYmd = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    const sysToday = toYmd(today);
+
+    $.ajax({
+        url: `${CONTEXT_PATH}/tudio/widget/personalWork`,
+        type: "GET",
+        dataType: "json",
+        success: function(workData) {
+            // 주간 캘린더 렌더링
+            renderWeeklyCalendar(widgetNo, workData, today, toYmd);
+            
+            // 오늘 날짜 기준으로 리스트 초기화
+            renderTaskList(widgetNo, workData, sysToday);
+        },
+        error: function() {
+            $(`#pw-task-list-${widgetNo}`).html('<li class="list-group-item text-danger small">데이터 로딩 실패</li>');
+        }
+    });
+}
+
+// 주간 캘린더
+function renderWeeklyCalendar(widgetNo, workData, today, toYmdFunc) {
+    const $calBody = $(`#pw-calendar-body-${widgetNo}`);
+    const currentDay = today.getDay(); // 0(일) ~ 6(토)
+    
+    // 이번 주 일요일 계산
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - currentDay);
+
+    let html = '<tr>';
+    for (let i = 0; i < 7; i++) {
+        let tempDate = new Date(startOfWeek);
+        tempDate.setDate(startOfWeek.getDate() + i);
+        
+        let ymd = toYmdFunc(tempDate);
+        let dayNum = tempDate.getDate();
+        
+        // 해당 날짜에 업무가 있는지 확인
+        let hasWork = workData.some(task => task.WORK_DATE === ymd);
+        let dotStyle = hasWork ? "display:block;" : "display:none;";
+
+        html += `
+            <td class="p-2 clickable-date position-relative" 
+                data-date="${ymd}" 
+                id="pw-cell-${widgetNo}-${ymd}" 
+                style="cursor: pointer;">
+                
+                <div>${dayNum}</div>
+                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" 
+                      style="${dotStyle} width:8px; height:8px; transform: translate(-10px, 5px) !important;">
+                </span>
+            </td>
+        `;
+    }
+    html += '</tr>';
+    $calBody.html(html);
+
+    // 날짜 클릭 시 업무 리스트 업데이트
+    $calBody.find('.clickable-date').off('click').on('click', function() {
+        let selectedDate = $(this).data('date');
+        
+        // UI 활성화
+        $calBody.find('.clickable-date').removeClass('table-active bg-light');
+        $(this).addClass('table-active');
+
+        renderTaskList(widgetNo, workData, selectedDate);
+    });
+    
+    // (오늘) 날짜 cell 활성화
+    $(`#pw-cell-${widgetNo}-${toYmdFunc(today)}`).addClass('table-active');
+}
+
+// 선택된 날짜 업무 리스트 출력
+function renderTaskList(widgetNo, workData, dateStr) {
+    const $listArea = $(`#pw-task-list-${widgetNo}`);
+    const $titleArea = $(`#pw-date-title-${widgetNo}`);
+    
+    const dateObj = new Date(dateStr);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    let titleText = `${dateStr} ${days[dateObj.getDay()]}`;
+    
+    // 오늘 날짜인지 확인
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dateStr === todayStr) {
+        titleText += " <span class='badge bg-warning text-dark ms-1'>오늘</span>";
+    }
+    $titleArea.html(titleText);
+
+    // 업무 리스트 필터링 및 출력
+    const dailyTasks = workData.filter(task => task.WORK_DATE === dateStr);
+    let html = '';
+
+    if (dailyTasks.length === 0) {
+        html = '<li class="list-group-item text-muted small border-0 ps-0">등록된 업무가 없습니다.</li>';
+    } else {
+        dailyTasks.forEach(task => {
+            let badgeClass = (task.WORK_TYPE === 'TASK') ? 'bg-primary' : 'bg-info';
+            let typeName = (task.WORK_TYPE === 'TASK') ? '상위' : '하위';
+
+            html += `
+                <li class="list-group-item border-0 ps-0 py-1 text-truncate">
+                    <span class="badge ${badgeClass} me-2" style="font-size: 0.7rem;">${typeName}</span>
+                    <span title="${task.WORK_TITLE}">${task.WORK_TITLE}</span>
+                </li>
+            `;
+        });
+    }
+    $listArea.html(html);
+}
+
+
+/* [위젯 3] 시스템 공지사항 */
+function loadNoticeList(widgetNo) {
+    $.ajax({
+        url: `${CONTEXT_PATH}/tudio/widget/noticeList`,
+        type: "GET",
+        dataType: "json",
+        success: function(list) {
+            let $area = $(`#notice-list-area-${widgetNo}`);
+            let html = '<ul class="list-group list-group-flush">';
+
+            if (list.length === 0) {
+                html += '<li class="list-group-item text-center text-muted py-3 small">등록된 공지사항이 없습니다.</li>';
+            } else {
+                $.each(list, function(i, notice) {
+                    // 날짜 형식 포맷 (YYYY-MM-DD)
+                    let dateObj = new Date(notice.noticeRegdate);
+                    let yyyy = dateObj.getFullYear();
+                    let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    let dd = String(dateObj.getDate()).padStart(2, '0');
+                    let dateStr = `${yyyy}-${mm}-${dd}`;
+
+                    // 제목, 날짜 출력 (뱃지 X)
+                    html += `
+                        <li class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center border-bottom-0">
+                            <a href="${CONTEXT_PATH}/notice/detail?noticeNo=${notice.noticeNo}" 
+                               class="text-dark text-decoration-none text-truncate" 
+                               style="max-width: 75%; font-size: 0.9rem;">
+                                ${notice.noticeTitle}
+                            </a>
+                            <small class="text-muted" style="font-size: 0.8rem;">${dateStr}</small>
+                        </li>
+                    `;
+                });
+            }
+            html += '</ul>';
+            $area.html(html);
+        },
+        error: function() {
+            $(`#notice-list-area-${widgetNo}`).html('<p class="text-center text-danger small mt-3">로딩 실패</p>');
+        }
+    });
+}
+
+/* [위젯 4] 미확인 알림 */
+function loadAlarmList(widgetNo) {
+    $.ajax({
+        url: `${CONTEXT_PATH}/tudio/widget/alarmList`,
+        type: "GET",
+        dataType: "json",
+        success: function(list) {
+            let $area = $(`#alarm-list-area-${widgetNo}`);
+            let html = '<ul class="list-group list-group-flush">';
+
+            if (list.length === 0) {
+                html += '<li class="list-group-item text-center text-muted py-3 small">새로운 알림이 없습니다.</li>';
+            } else {
+                $.each(list, function(i, noti) {
+                    let dateObj = new Date(noti.noticeRegdate); 
+                    
+                    let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    let dd = String(dateObj.getDate()).padStart(2, '0');
+                    let hh = String(dateObj.getHours()).padStart(2, '0');
+                    let mi = String(dateObj.getMinutes()).padStart(2, '0');
+                    let dateStr = `${mm}-${dd} ${hh}:${mi}`;
+
+                    let contentHtml = '';
+                    if(noti.notiUrl) {
+                        contentHtml = `<a href="${CONTEXT_PATH}${noti.notiUrl}" class="text-dark text-decoration-none text-truncate" style="max-width: 75%; font-size: 0.9rem;">${noti.notiType}</a>`;
+                    } else {
+                        contentHtml = `<span class="text-dark text-truncate" style="max-width: 75%; font-size: 0.9rem;">${noti.notiType}</span>`;
+                    }
+
+                    html += `
+                        <li class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center border-bottom-0">
+                            ${contentHtml}
+                            <small class="text-muted" style="font-size: 0.8rem;">${dateStr}</small>
+                        </li>
+                    `;
+                });
+            }
+            html += '</ul>';
+            $area.html(html);
+        },
+        error: function() {
+            $(`#alarm-list-area-${widgetNo}`).html('<p class="text-center text-danger small mt-3">로딩 실패</p>');
+        }
+    });
+}
+
+/* [위젯 5] 프로젝트 북마크 */
+function loadBookmarkList(widgetNo) {
+    $.ajax({
+        url: `${CONTEXT_PATH}/tudio/widget/bookmarkList`,
+        type: "GET",
+        dataType: "json",
+        success: function(list) {
+            let $area = $(`#bookmark-list-area-${widgetNo}`);
+            let html = '<ul class="list-group list-group-flush">';
+
+            if (list.length === 0) {
+                html += '<li class="list-group-item text-center text-muted py-3 small">북마크한 프로젝트가 없습니다.</li>';
+            } else {
+                $.each(list, function(i, project) {
+                    // 상태값 별 뱃지 (0: 진행, 1: 완료, 2: 중단)
+                    let statusBadge = '';
+                    if(project.projectStatus === 0) statusBadge = '<span class="badge bg-primary">진행</span>';
+                    else if(project.projectStatus === 1) statusBadge = '<span class="badge bg-success">완료</span>';
+                    else if(project.projectStatus === 2) statusBadge = '<span class="badge bg-secondary">중단</span>';
+                    
+                    // 프로젝트 진척도
+                    let progress = project.projectProgress;
+                    let progressColor = (progress >= 100) ? 'bg-success' : 'bg-info';
+
+                    html += `
+						<li class="list-group-item px-0 py-2 border-bottom-0 d-flex align-items-center justify-content-between">
+					    	<div class="d-flex align-items-center" style="width: 25%; min-width: 0;">
+					            <i class="bi bi-star-fill text-warning me-2 flex-shrink-0"></i>
+					            <a href="${CONTEXT_PATH}/tudio/project/detail?projectNo=${project.projectNo}" 
+					               class="text-dark text-decoration-none fw-bold text-truncate" title="${project.projectName}"> 
+					               ${project.projectName}
+					            </a>
+					        </div>
+							<div class="d-flex align-items-center flex-grow-1 mx-2">
+					            <div class="progress w-100" style="height: 6px;">
+					                <div class="progress-bar ${progressColor}" role="progressbar" 
+					                     style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
+					                </div>
+					            </div>
+					            <small class="ms-1 text-muted" style="font-size: 0.7rem; min-width: 25px; text-align: right; margin-right: 30px">${progress}%</small>
+					        </div>
+							<div class="flex-shrink-0">
+					            ${statusBadge}
+					        </div>
+					    </li>
+                    `;
+                });
+            }
+            html += '</ul>';
+            $area.html(html);
+        },
+        error: function() {
+            $(`#bookmark-list-area-${widgetNo}`).html('<p class="text-center text-danger small mt-3">로딩 실패</p>');
+        }
+    });
+}
+
+
+/* [위젯 6] to do list */
+function loadTodoList(widgetNo) {
+    $.ajax({
+		url: `${CONTEXT_PATH}/tudio/widget/todo`,
+		type: "GET",
+		dataType: "json",
+        success: function(list) {
+            let $area = $(`#todo-list-area-${widgetNo}`);
+            let html = '<ul class="list-group list-group-flush">';
+
+            if (list.length === 0) {
+                html += '<li class="list-group-item text-center text-muted py-3 small">등록된 할 일이 없습니다.</li>';
+            } else {
+                $.each(list, function(i, todo) {
+                    let isDone = (todo.todoStatus === 'Y');
+                    let textStyle = isDone ? 'text-decoration-line-through text-muted' : '';
+                    let checked = isDone ? 'checked' : '';
+
+                    html += `
+                        <li class="list-group-item px-0 py-2 border-bottom-0 d-flex justify-content-between align-items-center group-hover">
+                            <div class="form-check text-truncate" style="max-width: 80%;">
+                                <input class="form-check-input" type="checkbox" id="todoCheck${todo.todoNo}" 
+                                       onchange="updateTodoStatus(${todo.todoNo}, '${widgetNo}', this.checked)" ${checked}>
+                                <label class="form-check-label ${textStyle}" for="todoCheck${todo.todoNo}" 
+                                       style="cursor:pointer; font-size: 0.9rem;">
+                                    ${todo.todoContent}
+                                </label>
+                            </div>
+
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-link text-secondary p-0 me-2" 
+                                        onclick="editTodoContent(${todo.todoNo}, '${widgetNo}', '${todo.todoContent}')">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="btn btn-link text-danger p-0" 
+                                        onclick="deleteTodo(${todo.todoNo}, '${widgetNo}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </li>
+                    `;
+                });
+            }
+            html += '</ul>';
+            $area.html(html);
+        },
+		error: function() {
+			$(`#todo-list-area-${widgetNo}`).html('<p class="text-center text-danger small mt-3">로딩 실패</p>');
+	    }
+    });
+}
+
+// [위젯 6-1] 할 일 추가
+// 1. 입력 줄(Input Row) 생성
+function showInputRow() {
+    const container = document.getElementById('todoListContainer');
+
+    // 이미 입력 중인 창이 있는 경우, 중복 생성 방지
+    if (document.getElementById('newTodoInput')) {
+        document.getElementById('newTodoInput').focus();
+        return;
+    }
+
+	// li 생성
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center bg-light'; // 입력 중 표시
+    li.id = 'inputRow';
+
+    li.innerHTML = `
+        <div class="d-flex align-items-center w-100">
+            <span class="me-2" style="width: 20px;">🆕</span>
+            
+            <input type="text" id="newTodoInput" class="form-control" placeholder="할 일을 입력하고 엔터를 치세요" 
+                   onkeydown="handleEnter(event)">
+        </div>
+        
+        <div class="ms-2 d-flex" style="min-width: 100px;">
+            <button class="btn btn-sm btn-success me-1" onclick="saveNewTodo()">저장</button>
+            <button class="btn btn-sm btn-secondary" onclick="cancelInput()">취소</button>
+        </div>
+    `;
+
+    // container.prependChild(li); 	// 리스트의 맨 앞에 추가
+    container.appendChild(li); 		// 리스트의 맨 끝에 추가
+    
+    // 입력창 포커스
+    document.getElementById('newTodoInput').focus();
+}
+
+// 2. 새 할 일 저장
+function saveNewTodo() {
+    const input = document.getElementById('newTodoInput');
+    const content = input.value;
+
+    if (!content.trim()) {
+        alert("내용을 입력해주세요.");
+        return;
+    }
+
+    fetch(`${CONTEXT_PATH}/tudio/todo/insert`, {
+        method: 'POST',
+        headers: { 
+			'Content-Type': 'application/json' 
+		},
+        body: JSON.stringify({ content: content, completed: false })
+    })
+    .then(response => {
+        if (response.ok) {
+            loadTodoList(); // 성공 시 투두 리스트 전체 다시 로드
+        } else {
+            alert("저장 실패");
+        }
+    });
+}
+
+// 3. 할 일 추가 취소 (입력 줄 제거)
+function cancelInput() {
+    const inputRow = document.getElementById('inputRow');
+    if (inputRow) {
+        inputRow.remove(); // li 삭제
+    }
+}
+
+// 엔터키 처리
+function handleEnter(e) {
+    if (e.key === 'Enter') {
+        saveNewTodo();
+    } else if (e.key === 'Escape') {
+        cancelInput();
+    }
+}
+
+
+// [위젯 6-2] 상태 변경 (체크/해제)
+function toggleTodo(todoNo, checkbox) {
+	let status = checkbox.checked ? 'Y' : 'N';
+	let textSpan = $(checkbox).next('span');
+
+	$.ajax({
+		url: `${CONTEXT_PATH}/tudio/todo/updateStatus`,
+		type: "POST",
+		contentType: "application/json; charset=utf-8;",
+		data: JSON.stringify({ todoNo: todoNo, todoStatus: status }),
+		success: function(res) {
+			if (res === "OK") {
+				if (status === 'Y') {
+					textSpan.addClass('text-decoration-line-through text-muted');
+				} else {
+					textSpan.removeClass('text-decoration-line-through text-muted');
+				}
+			}
+		},
+		error: function() {
+			// 실패 시 체크박스 원상복구
+			checkbox.checked = !checkbox.checked;
+			Swal.fire('오류', '상태 변경 실패', 'error');
+		}
+	});
+}
+
+/* [위젯 6-3] 투두 삭제 */
+function deleteTodo(todoNo, widgetNo) {
+    if(!confirm("이 할 일을 삭제하시겠습니까?")) return;
+
+    let data = { todoNo: todoNo };
+
+    $.ajax({
+        url: `${CONTEXT_PATH}/tudio/todo/delete`,
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(data),
+        success: function(res) {
+            if(res === "OK") {
+                loadTodoList(widgetNo); // 목록 갱신
+            } else {
+                alert("삭제 실패");
+            }
+        },
+        error: function() { alert("오류 발생"); }
+    });
+}
+
+/* [위젯 6-4] 투두 내용 수정 */
+function editTodoContent(todoNo, widgetNo, oldContent) {
+    let newContent = prompt("수정할 내용을 입력하세요:", oldContent);
+    
+    if(newContent === null) return; // 취소
+    if(!newContent.trim()) {
+        alert("내용을 입력해주세요.");
+        return;
+    }
+
+    let data = {
+        todoNo: todoNo,
+        todoContent: newContent
+    };
+
+    $.ajax({
+        url: `${CONTEXT_PATH}/tudio/widget/todo/modifyContent`,
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(data),
+        success: function(res) {
+            if(res === "OK") {
+                loadTodoList(widgetNo);
+            } else {
+                alert("수정 실패");
+            }
+        },
+        error: function() { alert("오류 발생"); }
+    });
+}

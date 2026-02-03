@@ -1,0 +1,264 @@
+@charset "UTF-8"; /* CSS 문자 인코딩 지정 */
+
+/* ===============================
+   패널(드롭다운) 기본
+   =============================== */
+#notiPanel{ /* 알림 패널 전체 */
+  width: 380px; /* 스샷과 같은 폭 */
+  border-radius: 10px; /* 모서리 둥글게 */
+  overflow: hidden; /* 안쪽 요소가 밖으로 튀지 않게 */
+}
+
+/* ===============================
+   상단 헤더 (알림 + X)
+   =============================== */
+#notiPanel .noti-top{ /* 최상단 헤더 랩 */
+  display: flex; /* 좌/우 배치 */
+  align-items: center; /* 세로 중앙 */
+  justify-content: space-between; /* 좌:제목 우:X */
+  padding: 12px 14px; /* 내부 여백 */
+  border-bottom: 1px solid #EAECF0; /* 아래 구분선 */
+  background: #fff; /* 배경 흰색 */
+}
+
+#notiPanel .noti-title{ /* "알림" 텍스트 */
+  font-weight: 800; /* 굵게 */
+  font-size: 18px; /* 글자 크기 */
+  color: #101828; /* 진한 텍스트 */
+}
+
+#notiPanel .noti-close-btn{ /* 우측 X 버튼 */
+  width: 28px; /* 클릭 영역 */
+  height: 28px; /* 클릭 영역 */
+  border: 0; /* 테두리 제거 */
+  background: transparent; /* 배경 제거 */
+  color: #667085; /* 회색 */
+  font-size: 22px; /* X 크기 */
+  display: inline-flex; /* 중앙 정렬용 */
+  align-items: center; /* 세로 중앙 */
+  justify-content: center; /* 가로 중앙 */
+  cursor: pointer; /* 포인터 */
+}
+
+#notiPanel .noti-close-btn:hover{ /* 호버 시 */
+  color: #344054; /* 조금 더 진한 회색 */
+}
+
+/* ===============================
+   상단 탭 (안읽음 / 읽음)
+   =============================== */
+#notiPanel .noti-tabs2{ /* 큰 탭 영역 */
+  display: flex; /* 좌/우 탭 */
+  background: #fff; /* 배경 */
+  border-bottom: 1px solid #EAECF0; /* 구분선 */
+}
+
+#notiPanel .noti-tab2{ /* 각 탭 버튼 */
+  flex: 1; /* 동일 너비 */
+  padding: 12px 0; /* 높이 */
+  border: 0; /* 테두리 제거 */
+  background: transparent; /* 배경 제거 */
+  color: #667085; /* 기본 회색 */
+  font-weight: 700; /* 굵게 */
+  cursor: pointer; /* 포인터 */
+  position: relative; /* 밑줄 표시 기준 */
+}
+
+#notiPanel .noti-tab2.active{ /* 활성 탭 */
+  color: #2563EB; /* 파란색(스샷 느낌) */
+}
+
+#notiPanel .noti-tab2.active::after{ /* 활성 탭 밑줄 */
+  content: ""; /* 가상요소 */
+  position: absolute; /* 밑줄 고정 */
+  left: 0; /* 왼쪽부터 */
+  right: 0; /* 오른쪽까지 */
+  bottom: 0; /* 아래 붙임 */
+  height: 2px; /* 두께 */
+  background: #2563EB; /* 색상 */
+}
+
+#notiPanel .noti-count{ /* 안읽음 숫자 배지 */
+  display: inline-flex; /* 가운데 정렬 */
+  align-items: center; /* 세로 */
+  justify-content: center; /* 가로 */
+  min-width: 18px; /* 최소 폭 */
+  height: 18px; /* 높이 */
+  padding: 0 6px; /* 좌우 여백 */
+  margin-left: 6px; /* 텍스트와 간격 */
+  border-radius: 999px; /* 동그랗게 */
+  background: #DC3545; /* 빨강 */
+  color: #fff; /* 흰색 */
+  font-size: 11px; /* 작게 */
+  line-height: 1; /* 라인 */
+}
+
+/* ===============================
+   카테고리 필터(전체/프로젝트/멘션/시스템/결재)
+   =============================== */
+#notiPanel .noti-filters{ /* 필터 줄 랩 */
+  display: flex; /* 가로 정렬 */
+  gap: 8px; /* 버튼 간격 */
+  padding: 10px 12px; /* 여백 */
+  background: #fff; /* 배경 */
+}
+
+#notiPanel .noti-filter-btn{ /* 필터 버튼 */
+  border: 1px solid #D0D5DD; /* 테두리 */
+  background: #fff; /* 흰 배경 */
+  color: #344054; /* 텍스트 */
+  border-radius: 999px; /* 알약 */
+  padding: 6px 12px; /* 크기 */
+  font-size: 12px; /* 글자 */
+  font-weight: 700; /* 굵게 */
+  cursor: pointer; /* 포인터 */
+}
+
+#notiPanel .noti-filter-btn.active{ /* 활성 필터 */
+  border-color: #2563EB; /* 파랑 */
+  color: #2563EB; /* 파랑 */
+}
+
+/* ===============================
+   리스트 영역
+   =============================== */
+#notiPanel .noti-list-wrap{ /* 스크롤 영역 */
+  max-height: 420px; /* 스샷 비슷 */
+  overflow-y: auto; /* 세로 스크롤 */
+  background: #fff; /* 배경 */
+}
+
+#notiPanel ul#notiList{ /* UL 기본 제거 */
+  margin: 0; /* 여백 제거 */
+  padding: 0; /* 여백 제거 */
+  list-style: none; /* 점 제거 */
+}
+
+/* ===============================
+   아이템 1개(최종)
+   - 오른쪽: X는 상단 고정, 날짜는 하단 고정
+   =============================== */
+#notiPanel .noti-row{ /* LI */
+  position: relative;                 /* ✅ noti-right 절대배치 기준 */
+  padding: 12px 72px 12px 12px;       /* ✅ 오른쪽(X/날짜) 자리 확보 */
+  border-bottom: 1px solid #F2F4F7;   /* 연한 구분선 */
+  cursor: pointer;                    /* 클릭 가능 */
+}
+
+#notiPanel .noti-row:hover{ /* 호버 */
+  background: #F9FAFB; /* 아주 연한 배경 */
+}
+
+/* 라벨 + (왼쪽만) */
+#notiPanel .noti-meta{ /* 라벨 줄 */
+  display: flex; /* 가로 */
+  align-items: center; /* 세로 중앙 */
+  justify-content: flex-start; /* ✅ 라벨만 왼쪽 */
+  margin-bottom: 6px; /* 아래 간격 */
+}
+
+/* 라벨(프로젝트/멘션/시스템/결재) */
+#notiPanel .noti-tag{
+  display: inline-flex; /* 정렬 */
+  align-items: center; /* 세로 */
+  justify-content: center; /* 가로 */
+  padding: 2px 8px; /* 크기 */
+  border-radius: 6px; /* 둥글게 */
+  font-size: 11px; /* 작은 글씨 */
+  font-weight: 800; /* 굵게 */
+  line-height: 1.2; /* 라인 */
+}
+
+/* 라벨 색상(스샷 느낌으로) */
+#notiPanel .tag-project{ background: #E6F0FF; color: #2563EB; } /* 프로젝트 */
+#notiPanel .tag-mention{  background: #FFE4E6; color: #E11D48; } /* 멘션 */
+#notiPanel .tag-system{   background: #F2F4F7; color: #344054; } /* 시스템 */
+#notiPanel .tag-approval{ background: #FEF3C7; color: #B45309; } /* 결재 */
+#notiPanel .tag-etc{      background: #EEF2FF; color: #4F46E5; } /* 기타 */
+
+/* 본문 타이틀/프리뷰 */
+#notiPanel .noti-headline{ /* 굵은 제목 */
+  font-size: 14px; /* 크기 */
+  font-weight: 800; /* 굵게 */
+  color: #101828; /* 진한색 */
+  margin-bottom: 4px; /* 간격 */
+  white-space: normal; /* 줄바꿈 허용 */
+  word-break: break-word; /* 긴 단어 끊기 */
+}
+
+#notiPanel .noti-preview{ /* 작은 프리뷰 */
+  font-size: 12px; /* 작게 */
+  color: #475467; /* 중간 회색 */
+  white-space: normal; /* 줄바꿈 허용 */
+  word-break: break-word; /* 줄바꿈 */
+  line-height: 1.35; /* 줄 간격 */
+}
+
+/* 읽음/안읽음 차이 */
+#notiPanel .noti-row.is-read .noti-headline{ /* 읽음 타이틀 */
+  color: #98A2B3; /* 연회색 */
+  font-weight: 700; /* 덜 진하게 */
+}
+
+#notiPanel .noti-row.is-read .noti-preview{ /* 읽음 프리뷰 */
+  color: #B0B8C4; /* 더 연하게 */
+}
+
+/* ===============================
+   오른쪽 영역: X(상단) + 날짜(하단) 고정 (최종)
+   =============================== */
+#notiPanel .noti-right{
+  position: absolute;                 /* ✅ 우측 고정 */
+  top: 10px;                          /* ✅ 아이템 상단 */
+  bottom: 10px;                       /* ✅ 아이템 하단 */
+  right: 10px;                        /* ✅ 오른쪽 끝 */
+
+  width: 56px;                        /* ✅ 오른쪽 라인 고정 */
+  display: flex;                       /* flex */
+  flex-direction: column;              /* 위->아래 */
+  align-items: flex-end;               /* 오른쪽 정렬 */
+  justify-content: space-between;      /* ✅ 위: X / 아래: 날짜 */
+}
+
+/* 아이템 X 버튼(상단) */
+#notiPanel .noti-item-x{
+  width: 22px;                         /* 크기 */
+  height: 22px;                        /* 크기 */
+  border: 0;                           /* 테두리 제거 */
+  background: transparent;             /* 배경 제거 */
+  color: #667085;                      /* 회색 */
+  font-size: 18px;                     /* 글자 크기 */
+  line-height: 1;                      /* 라인 */
+  padding: 0;                          /* 여백 제거 */
+  cursor: pointer;                     /* 포인터 */
+}
+
+#notiPanel .noti-item-x:hover{
+  color: #344054;                      /* 호버 색 */
+    background-color: #1E90FF;          /* 연한 빨강 배경 */
+  color: #00152A;                     /* 빨강 X */
+  transform: scale(1.08);             /* 살짝 커짐 */
+}
+
+/* 클릭 순간 */
+#notiPanel .noti-item-x:active{
+  transform: scale(0.96);             /* 눌리는 느낌 */
+}
+
+/* 아이템 날짜(하단) */
+#notiPanel .noti-when{
+  font-size: 12px;                     /* 작게 */
+  line-height: 1;                      /* 라인 */
+  color: #98A2B3;                      /* 연회색 */
+  white-space: nowrap;                 /* 줄바꿈 방지 */
+}
+
+/* ===============================
+   빈 상태
+   =============================== */
+#notiPanel #notiEmpty{
+  padding: 18px 12px; /* 여백 */
+  text-align: center; /* 가운데 */
+  color: #98A2B3; /* 회색 */
+  display: none; /* 기본 숨김 */
+}

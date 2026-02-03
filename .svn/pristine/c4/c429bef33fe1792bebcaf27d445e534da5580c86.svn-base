@@ -1,0 +1,11 @@
+package kr.or.ddit.faq.service;
+
+import java.util.List;
+
+import kr.or.ddit.vo.FaqVO;
+
+public interface IFaqService {
+
+	public List<FaqVO> selectFaqList();
+
+}

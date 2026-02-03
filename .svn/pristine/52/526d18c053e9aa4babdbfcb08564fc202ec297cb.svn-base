@@ -1,0 +1,371 @@
+<%@ page contentType="text/html; charset=UTF-8" %> <%-- JSP 인코딩 --%>
+
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/notification.css"> <%-- CSS 로드 --%>
+
+<input type="hidden" name="memberNo" id="memberNo" value="${loginUser.memberNo}" /> <%-- 로그인 회원 번호(필요시) --%>
+
+<!-- 알림 드롭다운 패널  -->
+<div id="notiPanel"
+     class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0"
+     style="width: 380px;"> <%-- 부트스트랩 dropdown + 스샷 폭 --%>
+
+  <!-- 상단 헤더: 알림 + X -->
+  <div class="noti-top"> <%-- 헤더 랩 --%>
+    <span class="noti-title">알림</span> <%-- 제목 --%>
+    <button type="button" class="noti-close-btn" id="notiCloseBtn" aria-label="close">×</button> <%-- 우측 X --%>
+  </div>
+
+  <!-- 큰 탭: 안읽음 / 읽음 -->
+  <div class="noti-tabs2"> <%-- 탭 랩 --%>
+
+    <button type="button"
+            class="noti-tab2 active"
+            data-tab="unread"
+            id="tabUnread"> <%-- 안읽음 탭 --%>
+      안읽음
+      <span id="unreadCountTab" class="noti-count" style="display:none;">0</span> <%-- 안읽음 카운트(0이면 숨김) --%>
+    </button>
+
+    <button type="button"
+            class="noti-tab2"
+            data-tab="read"
+            id="tabRead"> <%-- 읽음 탭 --%>
+      읽음
+    </button>
+
+  </div>
+
+  <!-- 카테고리 필터: 전체/프로젝트/멘션/시스템/결재  -->
+  <div class="noti-filters"> <%-- 필터 랩 --%>
+    <button type="button" class="noti-filter-btn active" data-filter="ALL">전체</button> <%-- 전체 --%>
+    <button type="button" class="noti-filter-btn" data-filter="PROJECT">프로젝트</button> <%-- 프로젝트 --%>
+    <button type="button" class="noti-filter-btn" data-filter="MENTION">멘션</button> <%-- 멘션 --%>
+    <button type="button" class="noti-filter-btn" data-filter="SYSTEM">시스템</button> <%-- 시스템 --%>
+    <button type="button" class="noti-filter-btn" data-filter="APPROVAL">결재</button> <%-- 결재 --%>
+  </div>
+
+  <!--  리스트(스크롤)  -->
+  <div class="noti-list-wrap"> <%-- 스크롤 랩 --%>
+    <ul id="notiList"></ul> <%-- 동적 렌더링 대상 --%>
+    <div id="notiEmpty">알림이 없습니다.</div> <%-- 빈 상태 --%>
+  </div>
+
+</div>
+
+<script>
+  /* 기본 경로 / API 베이스 */
+  const ctxPathNoti = "${pageContext.request.contextPath}"; // 컨텍스트 경로
+  const apiBaseNoti = ctxPathNoti + "/tudio/noti"; // 알림 API 베이스 (/list, /read, /delete 등)
+
+  /*  화면 상태(탭/필터) 전역 관리  */
+  const notiState = { // 현재 선택 상태
+    tab: "unread",     // "unread" | "read"
+    filter: "ALL"      // "ALL" | "PROJECT" | "MENTION" | "SYSTEM" | "APPROVAL"
+  };
+
+  /* 상단(헤더) 점/카운트 업데이트  */
+  function updateHeaderNotiDot(unreadCount) { // 헤더 종(벨) 옆 빨간점 표시/숨김
+    const $dot = $("#headerNotiDot"); // 네가 이미 쓰던 헤더 점 엘리먼트
+    if (!$dot.length) return; // 헤더 점이 없으면 종료
+    if (Number(unreadCount) > 0) $dot.removeClass("d-none"); // 있으면 보이기
+    else $dot.addClass("d-none"); // 없으면 숨기기
+  }
+
+  function updateUnreadCountTab(unreadCount) { // "안읽음 4" 형태 카운트 표시
+    const $c = $("#unreadCountTab"); // 탭 안 카운트 span
+    const n = Number(unreadCount || 0); // 숫자 보정
+    if (n > 0) { // 1개 이상이면
+      $c.text(n).show(); // 숫자 표시
+    } else { // 0이면
+      $c.text("0").hide(); // 숨김
+    }
+  }
+  
+
+  /* 목록 조회 (탭 + 필터)  */
+  function loadNotiList() { // 현재 상태 기준으로 목록 로드
+    $.ajax({ // AJAX 호출
+      url: apiBaseNoti + "/list", // 목록 API
+      method: "GET", // GET
+      dataType: "json", // JSON 응답
+      data: { // 쿼리스트링
+        tab: notiState.tab, // unread/read
+        filter: notiState.filter // ALL/PROJECT/...
+      },
+      success: function (data) { // 성공 콜백
+        // 기대 형태 예시:
+        // { notiList: [...], notiUnreadCount: 4 }
+        renderNotiList(data.notiList || []); // 리스트 렌더링
+        updateUnreadCountTab(data.notiUnreadCount || 0); // 탭 카운트 갱신
+        updateHeaderNotiDot(data.notiUnreadCount || 0); // 헤더 점 갱신
+      },
+      error: function (xhr) { // 실패 콜백
+        console.error("알림 목록 조회 실패", xhr.status, xhr.responseText); // 로그
+      }
+    });
+  }
+
+  /* 렌더링: 스샷 스타일(라벨/시간/제목/프리뷰)  */
+  function renderNotiList(list) { // 목록 렌더링
+    const $list = $("#notiList"); // UL
+    const $empty = $("#notiEmpty"); // 빈 상태
+    $list.empty(); // 기존 제거
+
+    if (!list || list.length === 0) { // 비어 있으면
+      $empty.show(); // 빈 안내 표시
+      return; // 종료
+    }
+
+    $empty.hide(); // 데이터 있으면 빈 안내 숨김
+
+    $.each(list, function (i, n) { // 각 알림 순회
+      const isUnread = (String(n.isRead || n.IS_READ || "N") === "N"); // 안읽음 여부(N이면 안읽음)
+      const stateClass = isUnread ? "is-unread" : "is-read"; // 클래스 결정
+
+      const tagInfo = getTagInfo(n); // 라벨 정보(텍스트/클래스)
+      const whenText = formatNotiTime(n.notiRegdate || n.NOTI_REGDATE); // "방금 전/30분 전/2시간 전"
+      const headline = escapeHtml(getHeadline(n)); // 굵은 제목(첫줄)
+      const preview = escapeHtml(getPreview(n)); // 아래 프리뷰(둘째줄)
+      const notiNo = n.notiNo || n.NOTI_NO; // 알림 번호
+      const notiUrl = n.notiUrl || n.NOTI_URL || ""; // 이동 URL
+
+      const html =
+    	  '' +
+    	  '<li class="noti-row ' + stateClass + '"' +
+    	  ' data-noti-no="' + escapeHtml(notiNo) + '"' +
+    	  ' data-noti-url="' + escapeHtml(notiUrl) + '">' +
+
+    	    // 🔹 오른쪽 영역 (X + 날짜)
+    	    '<div class="noti-right">' +
+    	      '<button type="button" class="noti-item-x" aria-label="delete">×</button>' +
+    	      '<div class="noti-when">' + escapeHtml(whenText) + '</div>' +
+    	    '</div>' +
+
+    	    // 🔹 왼쪽 콘텐츠
+    	    '<div class="noti-content">' +
+    	      '<div class="noti-meta">' +
+    	        '<span class="noti-tag ' + tagInfo.cls + '">' + escapeHtml(tagInfo.text) + '</span>' +
+    	      '</div>' +
+    	      '<div class="noti-headline">' + headline + '</div>' +
+    	      (preview ? ('<div class="noti-preview">"' + preview + '"</div>') : '') +
+    	    '</div>' +
+
+    	  '</li>';
+
+      $list.append($(html)); // UL에 추가
+    });
+  }
+
+  /* 라벨(프로젝트/멘션/시스템/결재) 결정 . 서버에서 category 같은 값을 주면 그걸 최우선 사용 */
+  function getTagInfo(n) { // 라벨 결정
+    const raw = String(n.category || n.CATEGORY || n.notiCategory || "").toUpperCase(); // 서버가 주는 카테고리
+    const type = String(n.notiType || n.NOTI_TYPE || n.notiMessage || n.NOTI_MESSAGE || "").toUpperCase(); // 타입(없으면 기존 notiMessage 사용)
+
+    // category 우선 매핑
+    if (raw === "PROJECT") return { text: "프로젝트", cls: "tag-project" }; // 프로젝트
+    if (raw === "MENTION") return { text: "멘션", cls: "tag-mention" }; // 멘션
+    if (raw === "SYSTEM") return { text: "시스템", cls: "tag-system" }; // 시스템
+    if (raw === "APPROVAL") return { text: "결재", cls: "tag-approval" }; // 결재
+
+    // category가 없으면 type 기반 추정(네 notiType 규칙에 맞춰 추가/수정)
+    if (type.includes("MENTION")) return { text: "멘션", cls: "tag-mention" }; // 멘션
+    if (type.includes("APPROVAL") || type.includes("DRAFT")) return { text: "결재", cls: "tag-approval" }; // 결재
+    if (type.includes("SITE") || type.includes("SYSTEM") || type.includes("NOTICE")) return { text: "시스템", cls: "tag-system" }; // 시스템
+    if (type.includes("PROJECT")) return { text: "프로젝트", cls: "tag-project" }; // 프로젝트
+
+    return { text: "기타", cls: "tag-etc" }; // 그 외
+  }
+
+  /*  제목/프리뷰 텍스트 결정
+     - 서버가 notiTitle / snapshotText 등을 주면 그대로 사용
+     - 없으면 기존 getNotiTitle(type) 같은 fallback 사용  */
+  function getHeadline(n) { // 굵은 제목(첫 줄)
+    // 서버가 이미 사람이 읽는 문구를 주는 경우(권장)
+    if (n.notiTitle) return String(n.notiTitle); // notiTitle 우선
+    if (n.NOTI_TITLE) return String(n.NOTI_TITLE); // 대문자 대응
+    if (n.displayTitle) return String(n.displayTitle); // 다른 필드명 대응
+
+    // fallback: 타입 코드 -> 짧은 제목
+    const type = String(n.notiMessage || n.NOTI_MESSAGE || n.notiType || n.NOTI_TYPE || ""); // 타입
+    return getNotiTitle(type); // 기존 매핑 사용
+  }
+
+  function getPreview(n) { // 프리뷰(둘째 줄)
+    // 서버가 "스냅샷"을 주는 구조면 이걸 쓰는 게 베스트
+    if (n.snapshotText) return String(n.snapshotText); // snapshotText
+    if (n.SNAPSHOT_TEXT) return String(n.SNAPSHOT_TEXT); // 대문자 대응
+    if (n.notiBody) return String(n.notiBody); // notiBody
+    if (n.NOTI_BODY) return String(n.NOTI_BODY); // 대문자
+    if (n.previewText) return String(n.previewText); // 다른 이름
+    return ""; // 없으면 빈 문자열
+  }
+
+  /* 7) 타입 코드 -> 짧은 제목 매핑 쓰던 switch 유지 */
+  function getNotiTitle(type) { // 타입 코드 매핑
+    switch (type) { // 분기
+      case "NOTI_TASK_COMMENT":     return "본인 업무에 댓글이 달렸습니다."; // 예시
+      case "NOTI_BO_COMMENT":       return "게시글에 댓글이 달렸습니다."; // 예시
+      case "NOTI_MANAGER":          return "새로운 업무가 배정되었습니다."; // 예시
+      case "NOTI_SCHEDULE":         return "일정 알림"; // 예시
+      case "NOTI_SITE":             return "정기 점검 안내"; // 예시
+      case "NOTI_INQUIRY_COMMENT":  return "문의 답변이 등록되었습니다."; // 예시
+      case "NOTI_DRAFT_UPLOAD":     return "기안이 등록되었습니다."; // 예시
+      case "NOTI_APPROVAL":         return "기안 승인 요청"; // 예시
+      case "NOTI_PROJECT_NOTICE":   return "프로젝트 공지"; // 예시
+      case "NOTI_CHAT":             return "채팅 알림"; // 예시
+      default:                      return String(type || ""); // 그대로
+    }
+  }
+
+     // 날짜 형식 지정
+     function formatNotiTime(notiDate) {
+       if (!notiDate) return "";
+
+       // YYYY-MM-DD HH:ss 파싱 보장
+       const dt = new Date(String(notiDate).replace(" ", "T"));
+       if (isNaN(dt.getTime())) return "";
+
+       const now = new Date();
+
+       const notiToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+       const notiThatDay = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+
+       const diffDays = Math.floor((notiToday - notiThatDay) / 86400000); // 1 day(ms)
+
+       const pad2 = (n) => String(n).padStart(2, "0");
+
+       const isToday =
+         dt.getFullYear() === now.getFullYear() &&
+         dt.getMonth() === now.getMonth() &&
+         dt.getDate() === now.getDate();
+
+       // 전년도
+       if (dt.getFullYear() < now.getFullYear()) {
+         return dt.getFullYear() + "-" + (dt.getMonth() + 1) + "-" + dt.getDate();
+       }
+
+       // 오늘이면 hh:mm AM/PM (12시간제)
+       if (isToday) {
+         const h = dt.getHours();
+         const ampm = (h < 12) ? "AM" : "PM";
+         const h12 = (h % 12) === 0 ? 12 : (h % 12); // 0시는 12로
+         return ampm + " " + pad2(h12) + ":" + pad2(dt.getMinutes());
+       }
+
+       // 오늘이 아니면 MM-DD
+       return pad2(dt.getMonth() + 1) + "-" + pad2(dt.getDate());
+     }
+
+  /* ===============================
+     9) XSS 방지: HTML 이스케이프
+     =============================== */
+  function escapeHtml(s) { // 문자열 이스케이프
+    return String(s ?? "") // null/undefined 방지
+      .replaceAll("&", "&amp;") // & 처리
+      .replaceAll("<", "&lt;") // < 처리
+      .replaceAll(">", "&gt;") // > 처리
+      .replaceAll('"', "&quot;") // " 처리
+      .replaceAll("'", "&#039;"); // ' 처리
+  }
+  
+  $(document).on("click", ".noti-item-x", function (e) {
+	  e.stopPropagation();   // ⭐ 이 한 줄이 핵심 (부모 li 클릭 막기)
+
+	  const $row = $(this).closest(".noti-row");
+	  const notiNo = $row.data("noti-no");
+
+	  $.ajax({
+	    url: apiBaseNoti + "/delete",
+	    method: "POST",
+	    dataType: "json",
+	    data: { notiNo },
+	    success: function () {
+	      $row.remove(); // 화면에서 제거
+	    }
+	  });
+	});
+
+
+  /* WebSocket: 새 알림 오면 카운트/목록 갱신 */
+  (function connectNotiWs(){ // 즉시 실행 함수
+    const scheme = (location.protocol === "https:") ? "wss" : "ws"; // https면 wss
+    const url = scheme + "://" + location.host + ctxPathNoti + "/ws/noti"; // ws 엔드포인트
+
+    const ws = new WebSocket(url); // 웹소켓 생성
+
+    ws.onopen = () => console.log("noti ws opened"); // 열림 로그
+    ws.onclose = (e) => console.log("noti ws closed", e.code, e.reason); // 닫힘 로그
+    ws.onerror = (e) => console.log("noti ws error", e); // 에러 로그
+
+    ws.onmessage = (e) => { // 메시지 수신
+      let data; // 파싱 변수
+      try { data = JSON.parse(e.data); } catch (_) { return; } // JSON 파싱 실패 방지
+
+      if (data.type === "NOTI_NEW") { // 새 알림 이벤트라면
+        updateUnreadCountTab(data.unreadCount); // 안읽음 탭 카운트 갱신
+        updateHeaderNotiDot(data.unreadCount); // 헤더 점 갱신
+        loadNotiList(); // 현재 탭/필터 기준으로 재조회
+      }
+    };
+  })();
+
+  /*   이벤트 바인딩 + 초기 로드 */
+  $(function(){ // DOM Ready
+
+    //  패널 X 클릭: 드롭다운 닫기
+    $(document).off("click", "#notiCloseBtn").on("click", "#notiCloseBtn", function(){ // 중복 바인딩 방지
+      $("#notiPanel").removeClass("show"); // 부트스트랩 dropdown 숨김 처리(단순)
+    });
+
+    // 큰 탭 클릭: 안읽음/읽음 전환
+    $(document).off("click", ".noti-tab2").on("click", ".noti-tab2", function(){ // 탭 클릭
+      $(".noti-tab2").removeClass("active"); // 기존 활성 제거
+      $(this).addClass("active"); // 현재 활성
+
+      notiState.tab = $(this).data("tab"); // 상태 갱신(unread/read)
+      loadNotiList(); // 재조회
+    });
+
+    //  필터 클릭: 전체/프로젝트/멘션/시스템/결재
+    $(document).off("click", ".noti-filter-btn").on("click", ".noti-filter-btn", function(){ // 필터 클릭
+      $(".noti-filter-btn").removeClass("active"); // 활성 제거
+      $(this).addClass("active"); // 활성 부여
+
+      notiState.filter = $(this).data("filter"); // 상태 갱신
+      loadNotiList(); // 재조회
+    });
+
+    // 아이템 클릭: 안읽음이면 읽음 처리 후 URL 이동
+    $(document).off("click", "#notiList .noti-row").on("click", "#notiList .noti-row", function(){ // 행 클릭
+      const $row = $(this); // 현재 row
+      const notiNo = $row.data("noti-no"); // 알림 번호
+      const url = $row.data("noti-url"); // 이동 URL
+
+      // 안읽음 -> 읽음 처리(비동기)
+      if ($row.hasClass("is-unread")) { // 안읽음이면
+        $.ajax({ // 읽음 처리 요청
+          url: apiBaseNoti + "/read", // read API
+          method: "POST", // POST
+          dataType: "json", // JSON
+          data: { notiNo: notiNo }, // 파라미터
+          success: function(res){ // 성공
+            $row.removeClass("is-unread").addClass("is-read"); // UI 읽음 처리
+            if (res && typeof res.notiUnreadCount !== "undefined") { // 카운트가 오면
+              updateUnreadCountTab(res.notiUnreadCount); // 탭 카운트 반영
+              updateHeaderNotiDot(res.notiUnreadCount); // 헤더 점 반영
+            } else { // 카운트가 안 오면(예비)
+              // 그대로 두거나, 다음 조회에서 맞춰짐
+            }
+          }
+        });
+      }
+
+      // URL 이동(읽음/안읽음 상관 없이)
+      if (url) window.location.href = url; // 페이지 이동
+    });
+
+    // 최초 로드: "안읽음" 탭부터
+    notiState.tab = "unread"; // 초기 탭
+    loadNotiList(); // 최초 목록 로드
+  });
+</script>

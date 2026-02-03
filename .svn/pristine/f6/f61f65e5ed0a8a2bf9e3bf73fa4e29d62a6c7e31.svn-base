@@ -1,0 +1,8 @@
+package kr.or.ddit.drive.mapper;
+
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface IDriveMapper {
+
+}

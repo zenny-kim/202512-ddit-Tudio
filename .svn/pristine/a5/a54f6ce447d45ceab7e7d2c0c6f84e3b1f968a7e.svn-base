@@ -1,0 +1,112 @@
+package kr.or.ddit.siteAdmin.service.impl;
+
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.siteAdmin.mapper.INoticeMapper;
+import kr.or.ddit.siteAdmin.service.INoticeService;
+import kr.or.ddit.vo.MemberAuthVO;
+import kr.or.ddit.vo.NoticeVO;
+import kr.or.ddit.vo.PageResult;
+
+@Service
+public class NoticeServiceImpl implements INoticeService {
+	
+	@Autowired
+	private INoticeMapper noticeMapper;
+
+	/**
+	 * 공지사항 목록 조회 (페이징 포함)
+	 * 리액트가 받을 데이터: { dataList: [...], pageInfo: {...} }
+	 */
+	@Override
+	public PageResult<NoticeVO> retrieveNoticeList(NoticeVO noticeVO) {
+		
+		int totalRecordCount = noticeMapper.selectNoticeCount(noticeVO);
+		noticeVO.setTotalRecordCount(totalRecordCount); // 페이징 계산
+		
+		List<NoticeVO> noticeList = null;
+		
+		if(totalRecordCount > 0) {
+			noticeList = noticeMapper.selectNoticeList(noticeVO);
+		} else {
+			noticeList = Collections.emptyList();
+		}
+		
+		// ★ Map 대신 PageResult 객체 반환
+		return new PageResult<>(noticeList, noticeVO);
+	}
+
+	/**
+	 * 공지사항 등록
+	 */
+	@Override
+	public String createNotice(NoticeVO noticeVO) {
+		int result = noticeMapper.insertNotice(noticeVO);
+		return result > 0 ? "SUCCESS" : "FAIL";
+	}
+
+	/**
+	 * 공지사항 수정 (제목, 내용, 핀)
+	 */
+	@Override
+	public String modifyNotice(NoticeVO vo) {
+		int result = noticeMapper.updateNotice(vo);
+		return result > 0 ? "SUCCESS" : "FAIL";
+	}
+
+	/**
+	 * 상단 고정(핀) 상태 변경
+	 */
+	@Override
+	public String modifyPin(NoticeVO noticeVO) {
+		int result = noticeMapper.updateNoticePin(noticeVO);
+		return result > 0 ? "SUCCESS" : "FAIL";
+	}
+
+	/**
+	 * 공지사항 삭제
+	 */
+	@Override
+	public String removeNotice(int noticeNo) {
+		int result = noticeMapper.deleteNotice(noticeNo);
+		return result > 0 ? "SUCCESS" : "FAIL";
+	}
+
+	/**
+	 * 상세 조회 
+	 */
+	@Override
+	public NoticeVO retrieveNotice(int noticeNo, int viewerNo) {
+		
+		boolean isAdmin = false;
+
+		// 1. 로그인한 사용자라면 권한 확인
+		if (viewerNo > 0) {
+			// 해당 회원의 권한 목록 가져오기
+			List<MemberAuthVO> authList = noticeMapper.selectMemberAuthList(viewerNo);
+			
+			if(authList != null) {
+				for(MemberAuthVO authVO : authList) {
+					// DB에 저장된 관리자 권한명 확인
+					if("ROLE_ADMIN".equals(authVO.getAuth())) {
+						isAdmin = true;
+						break; 
+					}
+				}
+			}
+		}
+
+		// 2. 관리자가 아닐 경우에만 조회수 증가
+		if (!isAdmin) {
+			noticeMapper.incrementHit(noticeNo);
+		}
+
+		// 3. 상세 내용 가져오기 
+		return noticeMapper.selectNoticeDetail(noticeNo);
+	}
+
+}

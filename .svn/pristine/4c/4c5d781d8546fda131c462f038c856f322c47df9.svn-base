@@ -1,0 +1,28 @@
+package kr.or.ddit.chat.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : ChattingController
+ * DESC : 실시간 채팅 컨트롤러 클래스
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 KJS
+ * @version 1.0, 2025.12.26
+ * 
+ */
+
+@Slf4j
+@Controller
+public class ChatController {
+	
+	@GetMapping("/chat")
+	public String chat() {
+		return "chat/chat";
+	}
+}

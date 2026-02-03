@@ -1,0 +1,291 @@
+package kr.or.ddit.projectTask.service.impl;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.file.service.IFileService;
+import kr.or.ddit.projectTask.mapper.IProjectTaskMapper;
+import kr.or.ddit.projectTask.service.IProjectTaskService;
+import kr.or.ddit.vo.FileDetailVO;
+import kr.or.ddit.vo.project.ProjectTaskManagerVO;
+import kr.or.ddit.vo.project.ProjectTaskSubVO;
+import kr.or.ddit.vo.project.ProjectTaskVO;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : ProjectTaskServiceImpl
+ * DESC : 프로젝트 상위업무 생성, 수정, 삭제, 목록 서비스 구현클래스
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 PSE
+ * @version 1.0, 2025.01.02
+ * 
+ */
+@Service
+@Slf4j
+public class ProjectTaskServiceImpl implements IProjectTaskService {
+	
+	@Autowired
+	private IProjectTaskMapper projectTaskMapper;
+	
+	@Autowired
+	private IFileService fileService;
+
+	/**
+	 * 업무 전체 리스트 조회
+	 * @param int projectNo
+	 */
+	@Override
+	public List<ProjectTaskVO> selectTaskList(int projectNo) {
+		List<ProjectTaskVO> taskList = projectTaskMapper.selectTaskList(projectNo);
+		List<ProjectTaskSubVO> subTaskList = projectTaskMapper.selectSubTaskList(projectNo);
+		List<ProjectTaskManagerVO> managerList = projectTaskMapper.selectTaskManagerList(projectNo);
+		
+		// 상위업무별 하위업무 리스트를 담는 Map (key: taskId)
+		Map<Integer, List<ProjectTaskSubVO>> subTaskMap = new HashMap<>();
+		for(ProjectTaskSubVO subTask : subTaskList) {
+			// subTaskMap에 subTask.getTaskId()인 키에대한 리스트 값이 없으면 새로 생성해서 넣고 반환
+			subTaskMap.computeIfAbsent(subTask.getTaskId(), key -> new ArrayList<>())
+									.add(subTask);
+		}
+		
+		// 상위업무별 담당자를 담는 Map (key: workId=taskId)
+		Map<Integer, List<ProjectTaskManagerVO>> taskManagerMap = new HashMap<>();
+		// 하위업무별 담당자를 담는 Map (key: workId=subId)
+		Map<Integer, List<ProjectTaskManagerVO>> subManagerMap = new HashMap<>();
+		for(ProjectTaskManagerVO manager : managerList) {
+			if(manager.getWorkType().equals("T")) {				// 업무 타입이 상위업무인 경우
+				taskManagerMap.computeIfAbsent(manager.getWorkId(), key -> new ArrayList<>())
+											.add(manager);
+			} else if(manager.getWorkType().equals("S")) {		// 업무 타입이 하위업무인 경우
+				subManagerMap.computeIfAbsent(manager.getWorkId(), key -> new ArrayList<>())
+											.add(manager);
+			}
+		}
+		
+		// 뷁 - 추후 추가되는 값인데 Collections.emptyList()로 할지 ArrayList로 할지 추후 고민...
+		// 하위업무 담당자 세팅
+		for(ProjectTaskSubVO subTask : subTaskList) {	// Collections.emptyList(): 불변의 emptyList 객체
+			subTask.setSubManagers(subManagerMap.getOrDefault(subTask.getSubId(), Collections.emptyList()));
+		}
+		
+		for(ProjectTaskVO projectTask : taskList) {
+			int taskId = projectTask.getTaskId();
+			
+			// 상위업무 담당자 세팅
+			projectTask.setTaskManagers(taskManagerMap.getOrDefault(taskId, Collections.emptyList()));
+			
+			// 상위업무에 종속된 하위업무 세팅
+			projectTask.setSubTasks(subTaskMap.getOrDefault(taskId, Collections.emptyList()));
+		}
+		
+		return taskList;
+	}
+
+	@Override
+	@Transactional
+	public ServiceResult createTask(ProjectTaskVO projectTaskVO, int writerNo) {
+		
+		if (projectTaskVO.getTaskStatus() == 0) projectTaskVO.setTaskStatus(201);
+        if (projectTaskVO.getTaskPriority() == 0) projectTaskVO.setTaskPriority(212);
+        
+        // 상위업무 생성
+		int status = projectTaskMapper.insertTask(projectTaskVO);
+		
+		if(status > 0) {
+			// 상위업무 담당자 생성
+			List<Integer> taskManagerNos = projectTaskVO.getTaskManagerNos();
+			if(taskManagerNos != null && !taskManagerNos.isEmpty()) {
+				Map<String, Object> tManager = new HashMap<>();
+				tManager.put("workId", projectTaskVO.getTaskId());
+				tManager.put("taskManagerNos", taskManagerNos);
+				projectTaskMapper.insertTaskManager(tManager);
+			}
+			
+			// 종속된 하위업무 생성
+			if(projectTaskVO.getSubTasks() != null) {
+				for(ProjectTaskSubVO sub : projectTaskVO.getSubTasks()) {
+					sub.setTaskId(projectTaskVO.getTaskId());
+					sub.setSubWriter(writerNo);
+					
+					if (sub.getSubStatus() == 0) sub.setSubStatus(201);
+					if (sub.getSubPriority() == 0) sub.setSubPriority(212);
+					
+					projectTaskMapper.insertSubTask(sub);
+					
+					// 하위업무 담당자 생성
+					List<Integer> subManagerNos = sub.getSubManagerNos();
+					if (subManagerNos != null && !subManagerNos.isEmpty()) {
+						Map<String, Object> sManager = new HashMap<>();
+						sManager.put("workId", sub.getSubId());
+						sManager.put("subManagerNos", subManagerNos);
+						projectTaskMapper.insertSubManager(sManager);
+					}
+				}
+			}
+			return ServiceResult.OK;
+		}
+		return ServiceResult.FAILED;
+	}
+
+	@Override
+	public ServiceResult createSubTask(ProjectTaskSubVO subVO, int writerNo) {
+		if (subVO.getSubStatus() == 0) subVO.setSubStatus(201);
+		if (subVO.getSubPriority() == 0) subVO.setSubPriority(212);
+		
+		int status = projectTaskMapper.insertSubTask(subVO);
+		
+		if(status > 0) {
+			List<Integer> subManagerNos = subVO.getSubManagerNos();
+			if(subManagerNos != null && !subManagerNos.isEmpty()) {
+				Map<String, Object> subManager = new HashMap<>();
+				subManager.put("workId", subVO.getSubId());
+				subManager.put("subManagerNos", subManagerNos);
+				projectTaskMapper.insertSubManager(subManager);
+			}
+			
+			syncParentTask(subVO.getTaskId());
+			
+			return ServiceResult.OK;
+		}
+		return ServiceResult.FAILED;
+	}
+
+	@Override
+	public ProjectTaskVO getTaskDetail(int taskId) {
+		// 상위업무 상세정보 조회
+		ProjectTaskVO taskVO = projectTaskMapper.selectTaskDetail(taskId);
+		
+		if(taskVO != null) {
+			// 종속된 파일 정보 조회
+			if(taskVO.getFileGroupNo() > 0) {
+				List<FileDetailVO> fileList = fileService.selectFileDetailList(taskVO.getFileGroupNo());
+				taskVO.setFileList(fileList);
+			}
+			
+			// 담당자 조회
+			List<ProjectTaskManagerVO> managers = projectTaskMapper.selectTaskManagers(taskId);
+			taskVO.setTaskManagers(managers);
+			
+			// 종속된 하위업무 목록 조회
+			List<ProjectTaskSubVO> subList = projectTaskMapper.selectSubListByTaskId(taskId);
+			
+			// 종속된 하위업무 담당자 조회
+			if(subList != null && !subList.isEmpty()) {
+				for(ProjectTaskSubVO sub : subList) {
+					List<ProjectTaskManagerVO> subManagers = projectTaskMapper.selectSubTaskManagers(sub.getSubId());
+					sub.setSubManagers(subManagers);		
+				}
+			}
+			taskVO.setSubTasks(subList);
+		}
+		return taskVO;
+	}
+
+	@Override
+	public ProjectTaskSubVO getSubTaskDetail(int subId) {
+		ProjectTaskSubVO subVO = projectTaskMapper.selectSubTaskDetail(subId);
+		
+		if(subVO != null) {
+			// 파일 정보 조회
+			if(subVO.getFileGroupNo() > 0) {
+				List<FileDetailVO> fileList = fileService.selectFileDetailList(subVO.getFileGroupNo());
+				subVO.setFileList(fileList);
+			}
+			// 담당자 조회
+			List<ProjectTaskManagerVO> managers = projectTaskMapper.selectSubTaskManagers(subId);
+			subVO.setSubManagers(managers);
+		}
+		
+		return subVO;
+	}
+	
+	@Override
+	public ServiceResult updateSubTaskRate(int subId, int subRate) {
+		ProjectTaskSubVO subVO = projectTaskMapper.selectSubTaskDetail(subId);
+		if(subVO == null) return ServiceResult.FAILED;
+		
+		// 규칙을 적용한 후의 업무 상태값
+		int newStatus = determineStatus(subRate, subVO.getSubEnddate(), subVO.getSubStatus());
+		
+		// 진척도와 상태 업데이트
+		subVO.setSubRate(subRate);
+		subVO.setSubStatus(newStatus);
+		
+		int cnt = projectTaskMapper.updateSubTask(subVO);
+		
+		if(cnt > 0) {
+			syncParentTask(subVO.getTaskId());
+			return ServiceResult.OK;
+		}
+		return ServiceResult.FAILED;
+	}
+	
+	/**
+	 * 상위업무 진척도 및 상태값 업데이트 - 종속된 하위업무 진척도의 평균값으로 업데이트
+	 * @param taskId
+	 */
+	private void syncParentTask(int taskId) {
+		List<ProjectTaskSubVO> subList = projectTaskMapper.selectSubListByTaskId(taskId);
+		
+		int avgRate = 0;
+		if(subList != null && !subList.isEmpty()) {
+			int total = 0;
+			
+			for(ProjectTaskSubVO sub : subList) {
+				total += sub.getSubRate();
+			}
+			avgRate = (int) Math.round(total / subList.size());
+		}
+		
+		ProjectTaskVO parentTaskVO = projectTaskMapper.selectTaskDetail(taskId);
+		if(parentTaskVO == null) return;
+		
+		parentTaskVO.setTaskRate(avgRate);
+		
+		int newParentStatus = determineStatus(avgRate, parentTaskVO.getTaskEnddate(), parentTaskVO.getTaskStatus());
+		parentTaskVO.setTaskStatus(newParentStatus);
+		
+		projectTaskMapper.updateTask(parentTaskVO);
+	}
+	
+	/**
+	 * 진척도와 마감일 기반 상태 업데이트 메서드
+	 * @param rate : 업무 진행도
+	 * @param endDate : 업무 마감일
+	 * @param currentStatus : 사용자 지정 업무 상태
+	 * @return status : 업데이트 되는 업무 상태
+	 */
+	private int determineStatus(int rate, Date endDate, int currentStatus) {
+		int newStatus = 201;	// default: 요청 (0%)
+		
+		if(rate == 100) {
+			newStatus = 203;	// 완료 (100%)
+		} else if(rate > 0) {
+			newStatus = 202;	// 진행 (5% ~ 95%)
+		}
+		
+		if(currentStatus != 204 && endDate != null) {
+			Date now = new Date();
+			if(now.after(endDate)) {
+				if(newStatus != 203) {
+					newStatus = 205;
+				}
+			}
+		}
+		return newStatus;
+	}
+
+
+}

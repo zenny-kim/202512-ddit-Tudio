@@ -1,0 +1,88 @@
+package kr.or.ddit.projectTask.service.impl;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.projectTask.mapper.IProjectTaskMapper;
+import kr.or.ddit.projectTask.service.IProjectTaskService;
+import kr.or.ddit.vo.project.ProjectTaskManagerVO;
+import kr.or.ddit.vo.project.ProjectTaskSubVO;
+import kr.or.ddit.vo.project.ProjectTaskVO;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : ProjectTaskServiceImpl
+ * DESC : 프로젝트 상위업무 생성, 수정, 삭제, 목록 서비스 구현클래스
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 PSE
+ * @version 1.0, 2025.01.02
+ * 
+ */
+@Service
+public class ProjectTaskServiceImpl implements IProjectTaskService {
+	
+	@Autowired
+	private IProjectTaskMapper projectTaskMapper;
+
+	/**
+	 * 업무 전체 리스트 조회
+	 * @param int projectNo
+	 */
+	@Override
+	public List<ProjectTaskVO> selectTaskList(int projectNo) {
+		List<ProjectTaskVO> taskList = projectTaskMapper.selectTaskList(projectNo);
+		List<ProjectTaskSubVO> subTaskList = projectTaskMapper.selectSubTaskList(projectNo);
+		List<ProjectTaskManagerVO> managerList = projectTaskMapper.selectTaskManagerList(projectNo);
+		
+		// 상위업무별 하위업무 리스트를 담는 Map (key: taskId)
+		Map<Integer, List<ProjectTaskSubVO>> subTaskMap = new HashMap<>();
+		for(ProjectTaskSubVO subTask : subTaskList) {
+			// subTaskMap에 subTask.getTaskId()인 키에대한 리스트 값이 없으면 새로 생성해서 넣고 반환
+			subTaskMap.computeIfAbsent(subTask.getTaskId(), key -> new ArrayList<>())
+									.add(subTask);
+		}
+		
+		// 상위업무별 담당자를 담는 Map (key: workId=taskId)
+		Map<Integer, List<ProjectTaskManagerVO>> taskManagerMap = new HashMap<>();
+		// 하위업무별 담당자를 담는 Map (key: workId=subId)
+		Map<Integer, List<ProjectTaskManagerVO>> subManagerMap = new HashMap<>();
+		for(ProjectTaskManagerVO manager : managerList) {
+			if(manager.getWorkType().equals("T")) {				// 업무 타입이 상위업무인 경우
+				taskManagerMap.computeIfAbsent(manager.getWorkId(), key -> new ArrayList<>())
+											.add(manager);
+			} else if(manager.getWorkType().equals("S")) {		// 업무 타입이 하위업무인 경우
+				subManagerMap.computeIfAbsent(manager.getWorkId(), key -> new ArrayList<>())
+											.add(manager);
+			}
+		}
+		
+		// 뷁 - 추후 추가되는 값인데 Collections.emptyList()로 할지 ArrayList로 할지 추후 고민...
+		// 하위업무 담당자 세팅
+		for(ProjectTaskSubVO subTask : subTaskList) {	// Collections.emptyList(): 불변의 emptyList 객체
+			subTask.setSubManagers(subManagerMap.getOrDefault(subTask.getSubId(), Collections.emptyList()));
+		}
+		
+		for(ProjectTaskVO projectTask : taskList) {
+			int taskId = projectTask.getTaskId();
+			
+			// 상위업무 담당자 세팅
+			projectTask.setTaskManagers(taskManagerMap.getOrDefault(taskId, Collections.emptyList()));
+			
+			// 상위업무에 종속된 하위업무 세팅
+			projectTask.setSubTasks(subTaskMap.getOrDefault(taskId, Collections.emptyList()));
+		}
+		
+		return taskList;
+	}
+	
+	
+	
+}

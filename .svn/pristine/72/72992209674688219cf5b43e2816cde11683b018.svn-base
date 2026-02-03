@@ -1,0 +1,226 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- 
+    파일명: approval_create.jsp
+    설명: 스타일은 외부 CSS(style.css)에 위임하고, 구조와 기능만 남긴 버전
+--%>
+
+<div class="container-fluid">
+    
+    <h2 class="mb-4 fw-bold">기안서 작성</h2>
+
+    <div class="card shadow p-4">
+        <form id="draftForm" action="/draft/insert.do" method="post" enctype="multipart/form-data">
+            
+            <div class="mb-4">
+                <label for="draftTitle" class="form-label fw-bold">기안명 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-lg" id="draftTitle" name="draftTitle" placeholder="기안서 제목을 입력하세요" required>
+            </div>
+            
+            <div class="mb-4">
+                <label for="draftCreator" class="form-label fw-bold">작성자</label>
+                <input type="text" class="form-control" id="draftCreator" value="${sessionScope.user.name != null ? sessionScope.user.name : '김사용'}" readonly>
+            </div>
+
+            <div class="mb-4 border p-3 rounded bg-light">
+                <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-lines-fill me-2"></i> 결재 라인 설정 <span class="text-danger small">*</span></h5>
+                
+                <ul class="list-group list-group-flush mb-3" id="approvalLineList">
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-2" draggable="true">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-grip-vertical drag-handle"></i>
+                            <span class="fw-bold me-3 text-secondary sequence-order">1순서:</span>
+                            <span>김사용 (PM)</span>
+                            <input type="hidden" name="approverIds" value="user_001">
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeApprover(this)"><i class="bi bi-x"></i></button>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-2" draggable="true">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-grip-vertical drag-handle"></i>
+                            <span class="fw-bold me-3 text-secondary sequence-order">2순서:</span>
+                            <span>이디자인 (이사)</span>
+                            <input type="hidden" name="approverIds" value="user_002">
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeApprover(this)"><i class="bi bi-x"></i></button>
+                    </li>
+                </ul>
+                
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="approverSearch" placeholder="이름 검색">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#approverModal"><i class="bi bi-search"></i> 검색</button>
+                    <button class="btn btn-success" type="button" onclick="addApproverBySearch()"><i class="bi bi-plus-lg"></i> 추가</button>
+                </div>
+                <div class="form-text mt-2">드래그 앤 드롭으로 결재 순서를 변경할 수 있습니다.</div>
+            </div>
+
+            <div class="mb-4">
+                <label for="draftContent" class="form-label fw-bold">내용 <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="draftContent" name="draftContent" rows="15" placeholder="상세 내용을 입력하세요." required></textarea>
+            </div>
+
+            <div class="mb-4 border-top pt-4">
+                <label class="form-label fw-bold">첨부 파일</label>
+                <input class="form-control" type="file" id="formFileMultiple" name="attachments" multiple>
+            </div>
+
+            <div class="d-flex justify-content-end border-top pt-4 mt-4">
+                <a href="#" class="btn btn-secondary me-2" onclick="history.back(); return false;">취소</a>
+                <button type="button" class="btn btn-outline-secondary me-3"><i class="bi bi-floppy me-1"></i> 임시 저장</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-send-fill me-1"></i> 결재 요청
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="approverModal" tabindex="-1" aria-labelledby="approverModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"> 
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="approverModalLabel">결재자 검색</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        박개발 (사원)
+                        <button class="btn btn-sm btn-primary" onclick="selectApprover('박개발 (사원)', 'user_003')">선택</button>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        최외부 (협력사)
+                        <button class="btn btn-sm btn-primary" onclick="selectApprover('최외부 (협력사)', 'ext_001')">선택</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const approvalLineList = document.getElementById('approvalLineList');
+        
+        // 초기화
+        addDragListeners();
+        updateSequenceOrder();
+
+        // 1. 순서 텍스트 업데이트
+        function updateSequenceOrder() {
+            const items = approvalLineList.querySelectorAll('li');
+            items.forEach((li, index) => {
+                const span = li.querySelector('.sequence-order');
+                if (span) {
+                    span.textContent = (index + 1) + "순서:";
+                }
+            });
+        }
+
+        // 2. 결재자 삭제
+        window.removeApprover = function(button) {
+            button.closest('li').remove();
+            updateSequenceOrder();
+        };
+
+        // 3. 결재자 추가 (UI 생성)
+        window.addApprover = function(name, id) {
+            const itemHtml = `
+                <li class="list-group-item d-flex justify-content-between align-items-center p-2" draggable="true">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-grip-vertical drag-handle"></i>
+                        <span class="fw-bold me-3 text-secondary sequence-order">순서:</span>
+                        <span>\${name}</span>
+                        <input type="hidden" name="approverIds" value="\${id}">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeApprover(this)"><i class="bi bi-x"></i></button>
+                </li>
+            `;
+            approvalLineList.insertAdjacentHTML('beforeend', itemHtml);
+            updateSequenceOrder();
+            addDragListeners(); 
+        };
+
+        // 4. 모달 선택
+        window.selectApprover = function(name, id) {
+            addApprover(name, id || 'temp_id');
+            const modalEl = document.getElementById('approverModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if(modal) modal.hide();
+        };
+
+        // 5. 검색 추가
+        window.addApproverBySearch = function() {
+            const searchInput = document.getElementById('approverSearch');
+            const val = searchInput.value.trim();
+            if(val) {
+                addApprover(val + " (검색됨)", 'temp_' + Date.now());
+                searchInput.value = '';
+            } else {
+                alert("이름을 입력하세요.");
+            }
+        };
+
+        // ------------------------------------------
+        // Drag & Drop 로직 (CSS 클래스는 style.css에서 처리됨)
+        // ------------------------------------------
+        let dragSrcEl = null;
+
+        function handleDragStart(e) {
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            this.classList.add('dragging'); // style.css의 .dragging 스타일 적용됨
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter() {
+            this.classList.add('over'); // style.css의 .over 스타일 적용됨
+        }
+
+        function handleDragLeave() {
+            this.classList.remove('over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) e.stopPropagation();
+
+            if (dragSrcEl !== this) {
+                const srcHTML = dragSrcEl.innerHTML;
+                dragSrcEl.innerHTML = this.innerHTML;
+                this.innerHTML = srcHTML;
+            }
+            return false;
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            const items = approvalLineList.querySelectorAll('li');
+            items.forEach(item => item.classList.remove('over'));
+            updateSequenceOrder();
+        }
+
+        function addDragListeners() {
+            const items = approvalLineList.querySelectorAll('li');
+            items.forEach(item => {
+                item.removeEventListener('dragstart', handleDragStart);
+                item.removeEventListener('dragenter', handleDragEnter);
+                item.removeEventListener('dragover', handleDragOver);
+                item.removeEventListener('dragleave', handleDragLeave);
+                item.removeEventListener('drop', handleDrop);
+                item.removeEventListener('dragend', handleDragEnd);
+
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('dragleave', handleDragLeave);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+        }
+    });
+</script>

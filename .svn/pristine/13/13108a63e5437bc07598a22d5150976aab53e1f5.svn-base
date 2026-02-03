@@ -1,0 +1,256 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="jakarta.tags.core" prefix="c"%>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt"%>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn"%>
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Tudio - My Task</title>
+	<jsp:include page="/WEB-INF/views/include/common.jsp" />
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/project_common.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/my_task.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+	<jsp:include page="/WEB-INF/views/include/headerUser.jsp"/>
+	
+	<div class="d-flex flex-grow-1">
+	
+		<jsp:include page="../include/sidebarUser.jsp">
+	          <jsp:param name="menu" value="myTask" />
+	    </jsp:include>
+		
+		<main class="main-content-wrap flex-grow-1 px-4 pt-4 pb-5">
+		    <div class="container-fluid">
+		        
+		        <div class="d-flex justify-content-between align-items-center mb-4">
+		            <div>
+		                <h3 class="fw-bold text-primary-dark m-0">
+		                	<i class="bi bi-collection me-2"></i>내 업무 모아보기
+		                </h3>
+		                <p class="text-muted mb-0 small mt-2">참여 중인 모든 프로젝트의 업무를 한눈에 확인하세요.</p>
+		            </div>
+		            <button class="tudio-btn tudio-btn-primary" data-bs-toggle="modal" data-bs-target="#newTaskModal">
+		                <i class="bi bi-plus-lg"></i> 새 업무 등록
+		            </button>
+		        </div>
+		
+		        <div class="tudio-section mb-5">
+		            <div class="tudio-section-header">
+		                <div class="d-flex align-items-center gap-2">
+		                    <i class="bi bi-pin-angle-fill text-danger"></i>
+		                    <span class="fw-bold text-primary-dark">중요 고정 업무</span>
+		                </div>
+		            </div>
+		            <div class="p-0"> <table class="tudio-table-card mb-0">
+		                    <thead>
+		                        <tr>
+		                            <th class="col-pin">고정</th>
+		                            <th class="col-title">업무명</th>
+		                            <th class="col-priority">중요도</th>
+		                            <th class="col-status">상태</th>
+		                            <th class="col-progress">진척도</th>
+		                            <th class="col-assignee">담당자</th>
+		                            <th class="col-date">마감일</th>
+		                        </tr>
+		                    </thead>
+		                    <tbody>
+		                        <tr onclick="openTaskDetail('TUDIO-001')" style="cursor: pointer;">
+		                            <td><i class="bi bi-pin-angle-fill pin-icon active"></i></td>
+		                            <td>
+		                                <span class="badge bg-light text-secondary border me-1">Tudio 런칭</span>
+		                                <span class="fw-bold text-dark text-truncate-custom">프론트엔드 기본 구조 설계</span>
+		                            </td>
+		                            <td><span class="tudio-badge task-priority-urgent">긴급</span></td>
+		                            <td><span class="tudio-badge task-status-progress">진행 중</span></td>
+		                            <td>
+		                                <div class="d-flex align-items-center justify-content-center gap-2">
+		                                    <div class="progress" style="height: 6px; width: 60px;">
+		                                        <div class="progress-bar bg-primary" style="width: 60%"></div>
+		                                    </div>
+		                                    <span class="small text-muted">60%</span>
+		                                </div>
+		                            </td>
+		                            <td><span class="small text-muted">박개발</span></td>
+		                            <td><span class="small text-danger fw-bold">D-3</span></td>
+		                        </tr>
+		                    </tbody>
+		                </table>
+		            </div>
+		        </div>
+		
+		        <div id="projectTaskContainer" class="d-flex flex-column gap-4"></div>
+		
+		    </div>
+		</main>
+	</div> <div id="taskDetailPanel" class="task-detail-panel">
+	    <div class="panel-header">
+	        <h5 class="fw-bold mb-0 text-primary-dark">업무 상세 정보</h5>
+	        <button type="button" class="btn-close" onclick="closeTaskPanel()"></button>
+	    </div>
+	    <div class="panel-body">
+	        <form id="taskEditForm">
+	            <div class="mb-4"><label class="form-label small fw-bold text-muted">업무 제목</label><input type="text" class="form-control fw-bold" id="detailTitle" style="font-size: 1.1rem;"></div>
+	            <div class="row mb-4">
+	                <div class="col-6"><label class="form-label small fw-bold text-muted">진행 상태</label><select class="form-select" id="detailStatus"><option value="request">요청</option><option value="in_progress">진행 중</option><option value="done">완료</option></select></div>
+	                <div class="col-6"><label class="form-label small fw-bold text-muted">우선순위</label><select class="form-select" id="detailPriority"><option value="urgent">긴급</option><option value="normal">보통</option></select></div>
+	            </div>
+	            <div class="row mb-4">
+	                <div class="col-6"><label class="form-label small fw-bold text-muted">담당자</label><input type="text" class="form-control" id="detailAssignee" readonly></div>
+	                <div class="col-6"><label class="form-label small fw-bold text-muted">마감일</label><input type="date" class="form-control" id="detailEndDate"></div>
+	            </div>
+	            <div class="mb-4"><label class="form-label small fw-bold text-muted">진척도</label><input type="range" class="form-range" id="detailProgress" min="0" max="100" step="5"></div>
+	            <div class="mb-4"><label class="form-label small fw-bold text-muted">내용</label><textarea class="form-control" id="detailContent" rows="8"></textarea></div>
+	        </form>
+	    </div>
+	    <div class="panel-footer">
+	        <button type="button" class="tudio-btn tudio-btn-outline-danger">삭제</button>
+	        <button type="button" class="tudio-btn tudio-btn-primary">변경사항 저장</button>
+	    </div>
+	</div>
+
+	<div class="modal fade" id="newTaskModal" tabindex="-1">
+	    <div class="modal-dialog modal-dialog-centered tudio-modal">
+	        <div class="modal-content">
+	            <div class="modal-header tudio-modal-header"><h5 class="modal-title tudio-modal-title fw-bold">새 업무 등록</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+	            <div class="modal-body">
+	                <form><div class="mb-3"><label class="form-label small fw-bold text-muted">업무명</label><input type="text" class="form-control"></div></form>
+	            </div>
+	            <div class="modal-footer tudio-modal-footer">
+	                <button type="button" class="tudio-btn tudio-btn-outline" data-bs-dismiss="modal">취소</button>
+	                <button type="button" class="tudio-btn tudio-btn-primary">등록하기</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+	<jsp:include page="../chat/main.jsp"/>
+	<jsp:include page="/WEB-INF/views/include/footer.jsp"/>
+</body>
+<script>
+    /* ========== 기존 스크립트 로직 유지 ========== */
+    const myTasksData = [
+        { id: 'MKT-015', title: '마케팅 캠페인 슬로건 시안 작성', project: '마케팅 캠페인', priority: 'normal', status: 'request', progress: 0, assignee: '김사용', dueDate: '2025-12-31' },
+        { id: 'MKT-018', title: 'SNS 광고 소재 제작 및 컨펌', project: '마케팅 캠페인', priority: 'high', status: 'in_progress', progress: 30, assignee: '김사용', dueDate: '2025-12-25' },
+        { id: 'TUDIO-102', title: '로그인 페이지 UI 퍼블리싱', project: 'Tudio 런칭', priority: 'urgent', status: 'in_progress', progress: 45, assignee: '김사용', dueDate: '2025-12-18' },
+        { id: 'ALPHA-005', title: '알파 프로젝트 기획서 초안 작성', project: 'Alpha 신규', priority: 'low', status: 'hold', progress: 10, assignee: '김사용', dueDate: '2026-01-15' },
+        { id: 'TUDIO-105', title: 'API 연동 테스트 (User Service)', project: 'Tudio 런칭', priority: 'high', status: 'done', progress: 100, assignee: '김사용', dueDate: '2025-12-24' }
+    ];
+
+    const priorityClassMap = {
+        low: { class: 'task-priority-low', label: '낮음' },
+        normal: { class: 'task-priority-normal', label: '보통' },
+        high: { class: 'task-priority-high', label: '높음' },
+        urgent: { class: 'task-priority-urgent', label: '긴급' }
+    };
+
+    const statusClassMap = {
+        request: { class: 'task-status-request', label: '요청' },
+        todo: { class: 'task-status-request', label: '할 일' },
+        in_progress: { class: 'task-status-progress', label: '진행 중' },
+        done: { class: 'task-status-done', label: '완료' },
+        hold: { class: 'task-status-hold', label: '보류' },
+        delayed: { class: 'task-status-delayed', label: '지연' }
+    };
+
+    function getDday(dateString) {
+        const today = new Date('2025-12-17'); 
+        const target = new Date(dateString);
+        return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+    }
+
+    function renderTasks() {
+        const container = document.getElementById('projectTaskContainer');
+        container.innerHTML = ''; 
+
+        const tasksByProject = {};
+        myTasksData.forEach(task => {
+            if (!tasksByProject[task.project]) tasksByProject[task.project] = [];
+            tasksByProject[task.project].push(task);
+        });
+
+        Object.keys(tasksByProject).sort().forEach(projectName => {
+            const tasks = tasksByProject[projectName];
+            tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            let rowsHtml = '';
+            tasks.forEach(task => {
+                const dDay = getDday(task.dueDate);
+                let dDayHtml = dDay === 0 ? `<span class="text-danger fw-bold">D-Day</span>` : 
+                               dDay < 0 ? `<span class="text-danger fw-bold">D+\${Math.abs(dDay)}</span>` : 
+                               dDay <= 7 ? `<span class="text-danger fw-bold">D-\${dDay}</span>` : `<span class="text-muted small">D-\${dDay}</span>`;
+
+                const pInfo = priorityClassMap[task.priority] || priorityClassMap['normal'];
+                const sInfo = statusClassMap[task.status] || statusClassMap['request'];
+
+                rowsHtml += `
+                    <tr onclick="openTaskDetail('\${task.id}')" style="cursor: pointer;">
+                        <td><i class="bi bi-pin-angle pin-icon text-muted"></i></td>
+                        <td>
+                            <span class="fw-bold text-dark text-truncate-custom">\${task.title}</span>
+                        </td>
+                        <td><span class="tudio-badge \${pInfo.class}">\${pInfo.label}</span></td>
+                        <td><span class="tudio-badge \${sInfo.class}">\${sInfo.label}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <div class="progress" style="height: 6px; width: 60px;">
+                                    <div class="progress-bar \${task.progress === 100 ? 'bg-success' : 'bg-primary'}" style="width: \${task.progress}%"></div>
+                                </div>
+                                <span class="small text-muted" style="width: 30px;">\${task.progress}%</span>
+                            </div>
+                        </td>
+                        <td><span class="small text-muted">\${task.assignee}</span></td>
+                        <td>\${dDayHtml}</td>
+                    </tr>
+                `;
+            });
+
+            // p-0와 mb-0 클래스 추가로 카드 내부 여백 제거
+            const sectionHtml = `
+                <div class="tudio-section">
+                    <div class="tudio-section-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-folder2-open text-primary-dark"></i>
+                            <span class="fw-bold text-primary-dark">\${projectName}</span>
+                            <span class="tudio-badge bg-light text-secondary border">\${tasks.length}</span>
+                        </div>
+                    </div>
+                    <div class="p-0">
+                        <table class="tudio-table-card mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="col-pin">고정</th>
+                                    <th class="col-title">업무명</th>
+                                    <th class="col-priority">중요도</th>
+                                    <th class="col-status">상태</th>
+                                    <th class="col-progress">진척도</th>
+                                    <th class="col-assignee">담당자</th>
+                                    <th class="col-date">마감일</th>
+                                </tr>
+                            </thead>
+                            <tbody>\${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += sectionHtml;
+        });
+    }
+
+    function openTaskDetail(id) { document.getElementById('taskDetailPanel').classList.add('open'); }
+    function closeTaskPanel() { document.getElementById('taskDetailPanel').classList.remove('open'); }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderTasks();
+        document.addEventListener('click', function(e) {
+            if(e.target.classList.contains('pin-icon')) {
+                e.stopPropagation();
+                e.target.classList.toggle('active');
+                e.target.classList.toggle('bi-pin-angle');
+                e.target.classList.toggle('bi-pin-angle-fill');
+            }
+        });
+    });
+</script>
+</html>

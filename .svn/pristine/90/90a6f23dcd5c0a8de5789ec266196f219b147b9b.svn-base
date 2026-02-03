@@ -1,0 +1,180 @@
+package kr.or.ddit.dashboard.controller;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.SessionAttribute;
+
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.dashboard.service.ITodoService;
+import kr.or.ddit.dashboard.service.IWidgetService;
+import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.NoticeVO;
+import kr.or.ddit.vo.NotificationVO;
+import kr.or.ddit.vo.TodoVO;
+import kr.or.ddit.vo.WidgetVO;
+import kr.or.ddit.vo.project.ProjectTaskVO;
+import kr.or.ddit.vo.project.ProjectVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Controller
+@RequestMapping("/tudio")
+public class WidgetController {
+	
+	@Autowired
+	private IWidgetService widgetService;
+	
+	/**
+	 * 사용자 메인 대시보드
+	 * @param loginMember
+	 * @param model
+	 * @return dashboard.jsp
+	 */
+	@GetMapping("/dashboard")
+	public String mainDashboard(@SessionAttribute("loginUser") MemberVO loginMember, Model model) {
+		log.info("mainDashboard() 실행...!");
+
+		List<WidgetVO> widgetList = widgetService.selectWidgetList(loginMember.getMemberNo());
+		model.addAttribute("widgetList", widgetList);
+		
+	    return "dashboard";
+	}
+	
+	/**
+	 * 위젯 레이아웃 설정 저장
+	 * @param widgetList
+	 * @param loginMember
+	 * @return
+	 */
+	@PostMapping("/widget/saveLayout")
+	@ResponseBody
+	public ResponseEntity<ServiceResult> widgetLayout(@RequestBody List<WidgetVO> widgetList, 
+			@SessionAttribute("loginUser") MemberVO loginMember) {
+		log.info("widgetLayout() 실행...!");
+		
+		if (widgetList == null || widgetList.isEmpty()) {
+            return new ResponseEntity<>(ServiceResult.FAILED, HttpStatus.BAD_REQUEST);
+        }
+		
+		try {
+			for(WidgetVO widget : widgetList) {
+				widget.setMemberNo(loginMember.getMemberNo());
+			}			
+			widgetService.updateWidgetLayout(widgetList);
+			return new ResponseEntity<>(ServiceResult.OK, HttpStatus.OK);
+		} catch(Exception e) {
+			e.printStackTrace();
+			log.error("위젯 설정 저장 중 에러 발생: ", e);
+            return new ResponseEntity<>(ServiceResult.ERROR, HttpStatus.INTERNAL_SERVER_ERROR);	// 500 error
+		}
+	}
+	
+	// 위젯 상태 변경 (사용여부)
+	@PostMapping("/widget/updateStatus")
+	@ResponseBody
+	public ResponseEntity<ServiceResult> updateWidgetStatus(@RequestBody Map<String, Object> params) {
+	    // map: widgetNo, widgetStatus
+	    try {
+	        int cnt = widgetService.updateWidgetStatus(params);
+	        if(cnt > 0) {
+	        	return new ResponseEntity<>(ServiceResult.OK, HttpStatus.OK);	        	
+	        } else {       	
+	        	return new ResponseEntity<>(ServiceResult.FAILED, HttpStatus.BAD_REQUEST);	        	
+	        }
+	    } catch (Exception e) {
+	        return new ResponseEntity<>(ServiceResult.ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
+	    }
+	}
+	
+	/**
+	 * [위젯 1] 프로젝트 요약 (상위업무 d-day 기준 상위 5개 출력)
+	 * @param loginMember
+	 * @return
+	 */
+	@GetMapping("/widget/projectSummary")
+	@ResponseBody
+	public List<ProjectTaskVO> projectSummary(@SessionAttribute("loginUser") MemberVO loginMember) {
+		log.info("projectSummary() 실행...!");
+	    return widgetService.selectDeadlineTask(loginMember.getMemberNo());
+	}
+	
+	/**
+     * [위젯 2] 개인 업무 (주간 스케줄)
+     * @param loginMember
+     * @return List<Map<String, Object>>
+     */
+    @GetMapping("/widget/personalWork")
+    @ResponseBody
+    public List<Map<String, Object>> getPersonalWorkWidget(@SessionAttribute("loginUser") MemberVO loginMember) {
+        log.info("getPersonalWorkWidget() 실행...!");
+
+        // 날짜 계산 (이번 주 일요일 ~ 토요일)
+        LocalDate today = LocalDate.now();
+        LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+        LocalDate endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("memberNo", loginMember.getMemberNo());
+        params.put("startDate", startOfWeek.toString());
+        params.put("endDate", endOfWeek.toString());
+
+        return widgetService.selectWeeklyWorkList(params);
+    }
+    
+    /**
+     * [위젯 3] 공지사항 (최신 3건)
+     */
+    @GetMapping("/widget/noticeList")
+    @ResponseBody
+    public List<NoticeVO> getNoticeWidgetList() {
+        log.info("getNoticeWidgetList() 실행...!");
+        return widgetService.getWidgetNoticeList();
+    }
+	
+    /**
+     * [위젯 4] 미확인 알림 
+     */
+    @GetMapping("/widget/alarmList")
+    @ResponseBody
+    public List<NotificationVO> getAlarmWidgetList(@SessionAttribute("loginUser") MemberVO loginMember) {
+        log.info("getAlarmWidgetList() 실행...!");
+    	return widgetService.getWidgetNotiList(loginMember.getMemberNo());
+    }
+    
+    /**
+     * [위젯 5] 북마크 프로젝트 
+     */
+    @GetMapping("/widget/bookmarkList")
+    @ResponseBody
+    public List<ProjectVO> getBookmarkWidgetList(@SessionAttribute("loginUser") MemberVO loginMember) {
+        log.info("getBookmarkWidgetList() 실행...!");
+        return widgetService.getWidgetBookmarkList(loginMember.getMemberNo());
+    }
+    
+    /**
+     * [위젯 6] 투두 리스트 (최대 10건 조회)
+     */
+    @GetMapping("/widget/todo")
+    @ResponseBody
+    public List<TodoVO> getTodoWidgetList(@SessionAttribute("loginUser") MemberVO loginMember) {
+        log.info("getTodoWidgetList() 실행...!");
+        return widgetService.getWidgetTodoList(loginMember.getMemberNo());
+    }
+
+}

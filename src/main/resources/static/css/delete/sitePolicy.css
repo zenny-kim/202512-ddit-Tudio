@@ -1,0 +1,58 @@
+@charset "UTF-8";
+
+/* =========================================
+   [공통] 레이아웃 & 애니메이션
+   ========================================= */
+:root {
+    --admin-color: #334155;
+}
+
+/* 섹션 전환 애니메이션 */
+.admin-section {
+    display: none;
+}
+.admin-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 카드 컨테이너 스타일 */
+.admin-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: #fff;
+    margin-bottom: 20px;
+}
+.admin-card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* =========================================
+   [전용] 이용약관 에디터 스타일
+   ========================================= */
+/* 약관 내용 박스 (기본: 읽기 전용 상태) */
+#term-content {
+    background-color: #f8fafc; /* 읽기 모드일 때 배경색 (연한 회색) */
+    color: #334155;            /* 글자색 */
+    line-height: 1.6;          /* 가독성을 위한 줄 간격 */
+    resize: vertical;          /* 세로 크기 조절만 허용 */
+    min-height: 450px;         /* 기본 높이 설정 (HTML의 rows 속성 대체) */
+    transition: all 0.2s ease-in-out;
+}
+
+/* 수정 모드 스타일 (JS로 readonly 속성이 제거되었을 때 적용) */
+#term-content:not([readonly]) {
+    background-color: #ffffff; /* 수정 모드일 때 배경색 (흰색) */
+    border-color: #86b7fe;     /* 테두리 강조 (Bootstrap Primary Focus Color) */
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* 포커스 효과 */
+    outline: none;
+}

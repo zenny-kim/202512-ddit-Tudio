@@ -1,0 +1,38 @@
+@charset "UTF-8";
+
+/* 칸반 보드 스타일 */
+.kanban-board-layout {
+    overflow-x: auto;
+    gap: 1.5rem;
+}
+.kanban-column {
+    background-color: #f8f9fc;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    height: 100%;
+}
+.kanban-items-list {
+    min-height: 200px;
+}
+.task-card {
+    cursor: grab;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.task-card:active {
+    cursor: grabbing;
+}
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+/* SortableJS 드래그 효과 */
+.sortable-ghost {
+    background-color: #e2e6ea;
+    border: 2px dashed #cbd3da;
+    opacity: 0.5;
+}
+.sortable-drag {
+    background-color: #fff;
+    opacity: 1;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+}

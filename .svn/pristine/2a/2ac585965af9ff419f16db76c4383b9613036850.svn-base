@@ -1,0 +1,296 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Insert title here</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <!-- GridStack.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/gridstack.js/7.2.3/gridstack.min.css" rel="stylesheet" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gridstack.js/7.2.3/gridstack-all.js"></script>
+    
+	<!-- layout css -->    
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/header.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/sidebar.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/footer.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/dashboard.css">
+</head>
+<body data-context-path="${pageContext.request.contextPath}"
+	class="d-flex flex-column min-vh-100">
+	<jsp:include page="./include/header_user.jsp"/>
+    
+    <jsp:include page="./include/sidebar_user.jsp">
+    	<jsp:param name="menu" value="dashboard" />
+    </jsp:include>
+
+	<main class="main-content-wrap" id="mainContent">
+		<div class="container-fluid">
+			<div class="d-flex justify-content-between align-items-center mb-4 title-padding">
+				<div>
+					<h2 class="fw-bold text-primary-dark mb-2">대시보드</h2>
+					<p class="text-muted small m-0">Tudio와 함께 활기차게 업무를 시작해보세요 !</p>
+				</div>
+				
+				<div class="d-flex align-items-center gap-2">
+					<div class="bg-white rounded-pill px-3 py-2 d-flex align-items-center border shadow-sm gap-3">
+						<div class="form-check form-switch m-0">
+							<input class="form-check-input" type="checkbox" id="editModeSwitch" style="cursor: pointer;" onchange="toggleEditMode(this.checked)">
+							<label class="form-check-label small fw-bold ms-2" for="editModeSwitch" style="cursor: pointer; margin-top: 2px;">위젯 편집</label>
+						</div>
+					</div>
+					<div id="saveButtonArea">
+						<button id="btn-save-layout" class="btn btn-sm btn-primary rounded-pill px-3 py-2 fw-bold shadow-sm d-none" 
+						   	onclick="saveLayoutAndExit()">
+							<i class="bi bi-check-lg me-1"></i> 저장
+					    </button>
+					</div>   					
+				</div>
+			</div>
+			
+			<div id="dashboard-container">
+				<div class="grid-stack">
+					<c:forEach items="${widgetList}" var="widget">
+						<c:if test="${widget.widgetStatus eq 'Y'}">
+							<div class="grid-stack-item" gs-id="${widget.widgetNo}"
+								gs-x="${widget.x}" gs-y="${widget.y}" gs-w="${widget.width}" gs-h="${widget.height}">
+		
+								<div class="grid-stack-item-content">
+									<%-- <h5>${widget.widgetType}</h5> --%>
+									<i class="bi bi-x-lg btn-close-widget" onclick="removeWidget(this)"></i>
+		
+									<c:choose>
+										<c:when test="${widget.widgetType eq 'PROJECT_SUMMARY'}">
+											<div class="h-100 d-flex flex-column">
+												<h6 class="font-weight-bold text-gray-800">
+													<i class="bi bi-stopwatch text-danger"></i> 마감 임박 업무
+												</h6>
+		
+												<div id="project-summary-area-${widget.widgetNo}"
+													class="flex-grow-1 overflow-auto widget-content">
+													<div class="text-center mt-4">
+														<div class="spinner-border text-primary" role="status">
+															<span class="visually-hidden">Loading...</span>
+														</div>
+													</div>
+												</div>
+											</div>
+		
+											<script>
+												$(document).ready(function() {
+											    	loadProjectSummary('${widget.widgetNo}');
+											    });
+											</script>
+										</c:when>
+		
+										<c:when test="${widget.widgetType eq 'PERSONAL_WORK'}">
+											<div class="h-100 d-flex flex-column">
+												<h6 class="font-weight-bold text-gray-800">
+													<i class="bi bi-calendar-week text-primary"></i> 개인 업무
+												</h6>
+		
+												<div class="flex-grow-1 d-flex flex-column justify-content-between widget-content">
+		
+													<div class="mb-2">
+														<div id="pw-date-title-${widget.widgetNo}" class="fw-bold small mb-2 text-primary">
+															<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 
+															Loading...
+														</div>
+		
+														<ul id="pw-task-list-${widget.widgetNo}" class="list-group list-group-flush small overflow-auto" style="max-height: 130px;">
+															<div class="text-center py-3">
+																<div class="spinner-border spinner-border-sm text-primary" role="status">
+																	<span class="visually-hidden">Loading...</span>
+																</div>
+															</div>
+														</ul>
+													</div>
+		
+													<div>
+														<div class="d-flex align-items-end mb-3">
+															<small class="text-muted schedule-title">주간 스케줄</small>
+														</div>
+														<div id="pw-calendar-wrapper-${widget.widgetNo}" class="zen-calendar-strip d-flex justify-content-between text-center pb-1" style="gap: 6px;">
+															<div class="w-100 py-3">
+																<span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+		
+											<script>
+										        $(document).ready(function() {
+										            loadPersonalWork('${widget.widgetNo}');
+										        });
+										    </script>
+										</c:when>
+		
+										<c:when test="${widget.widgetType eq 'NOTICE'}">
+											<div class="h-100 d-flex flex-column">
+												<div class="d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #f8f9fa;">
+													<h6 class="font-weight-bold text-gray-800 mb-0">
+														<i class="bi bi-megaphone-fill text-warning"></i> 시스템 공지사항
+													</h6>
+													<!-- 공지사항 목록 -->
+													<a href="${pageContext.request.contextPath}/tudio/notice/list" class="text-muted small text-decoration-none widget-icon"> 
+														<!-- <i class="bi bi-plus-lg"></i> -->
+														<i class="bi bi-arrow-up-right text-primary fw-bold"></i>
+													</a>
+												</div>
+		
+												<div id="notice-list-area-${widget.widgetNo}" class="flex-grow-1 overflow-auto widget-content">
+													<div class="text-center mt-4">
+														<div class="spinner-border spinner-border-sm text-warning" role="status">
+															<span class="visually-hidden">Loading...</span>
+														</div>
+													</div>
+												</div>
+											</div>
+		
+											<script>
+										        $(document).ready(function() {
+										            loadNoticeList('${widget.widgetNo}');
+										        });
+										    </script>
+										</c:when>
+		
+										<c:when test="${widget.widgetType eq 'ALARM'}">
+											<div class="h-100 d-flex flex-column">
+												<h6 class="font-weight-bold text-gray-800">
+													<i class="bi bi-bell-fill text-danger me-1"></i> 미확인 알림
+												</h6>
+		
+												<div id="alarm-list-area-${widget.widgetNo}" class="flex-grow-1 overflow-auto widget-content">
+													<div class="text-center mt-4">
+														<div class="spinner-border spinner-border-sm text-danger" role="status">
+															<span class="visually-hidden">Loading...</span>
+														</div>
+													</div>
+												</div>
+											</div>
+		
+											<script>
+										        $(document).ready(function() {
+										            loadAlarmList('${widget.widgetNo}');
+										        });
+										    </script>
+										</c:when>
+		
+										<c:when test="${widget.widgetType eq 'PROJECT_BOOKMARK'}">
+											<div class="h-100 d-flex flex-column">
+												<h6 class="font-weight-bold text-gray-800">
+													<i class="bi bi-bookmark-star-fill text-info"></i> 북마크 프로젝트
+												</h6>
+												
+												<div id="bookmark-list-area-${widget.widgetNo}" class="flex-grow-1 overflow-auto widget-content">
+													<div class="text-center mt-4">
+														<div class="spinner-border spinner-border-sm text-info" role="status">
+															<span class="visually-hidden">Loading...</span>
+														</div>
+													</div>
+												</div>
+											</div>
+		
+											<script>
+										        $(document).ready(function() {
+										            loadBookmarkList('${widget.widgetNo}');
+										        });
+										    </script>
+										</c:when>
+		
+										<c:when test="${widget.widgetType eq 'TODO'}">
+											<div class="h-100 d-flex flex-column">
+												<div class="d-flex justify-content-between align-items-center">
+													<h6 class="font-weight-bold text-gray-800 mb-0">
+														<i class="bi bi-check2-square text-primary me-1"></i> To Do List
+													</h6>
+													<button class="btn" onclick="showInputRow('${widget.widgetNo}')"><i class="bi bi-plus-lg"></i></button>
+												</div>
+												
+												<div id="todo-list-area-${widget.widgetNo}" class="flex-grow-1 overflow-auto widget-content">
+													<div class="text-center mt-4">
+														<div class="spinner-border spinner-border-sm text-primary" role="status">
+															<span class="visually-hidden">Loading...</span>
+														</div>
+													</div>
+												</div>
+											</div>
+		
+											<script>
+										        $(document).ready(function() {
+										            loadTodoList('${widget.widgetNo}');
+										        });
+										    </script>
+										</c:when>
+		
+										<c:otherwise>
+											<div class="d-flex align-items-center justify-content-center h-100 text-muted">
+												준비 중 (${widget.widgetType})
+											</div>
+										</c:otherwise>
+									</c:choose>
+								</div>
+							</div>
+						</c:if>
+					</c:forEach>
+				</div>
+			</div>
+		</div>
+	</main>
+	
+	<div class="widget-drawer shadow-lg" id="widgetDrawer">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+	    	<h5 class="fw-bold m-0">
+	        	<i class="bi bi-box-seam me-2"></i> 위젯 보관함
+	    	</h5> 
+	        <button class="btn-close" onclick="closeDrawerManually()"></button>
+	    </div>
+	    <div class="alert alert-light border small text-muted mb-3">
+	        <i class="bi bi-info-circle me-1"></i> 사용하지 않는 위젯 그리드에서 삭제하면 이곳에 보관됩니다.
+	    </div>    
+		<div id="sidebar-content" class="d-flex flex-column gap-2">
+		    <c:forEach items="${widgetList}" var="widget">
+		        <c:if test="${widget.widgetStatus eq 'N'}">
+		            <div class="sidebar-item grid-stack-item" gs-id="${widget.widgetNo}" 
+		                 gs-w="${widget.width}" gs-h="${widget.height}">		                
+		                <div class="grid-stack-item-content">
+		                    <span>
+		                        <c:choose>
+									<c:when test="${widget.widgetType eq 'PROJECT_SUMMARY'}">마감 임박 업무</c:when>
+									<c:when test="${widget.widgetType eq 'PERSONAL_WORK'}">개인 업무</c:when>
+									<c:when test="${widget.widgetType eq 'NOTICE'}">시스템 공지사항</c:when>
+									<c:when test="${widget.widgetType eq 'ALARM'}">미확인 알림</c:when>
+									<c:when test="${widget.widgetType eq 'PROJECT_BOOKMARK'}">북마크 프로젝트</c:when>
+									<c:when test="${widget.widgetType eq 'TODO'}">To Do List</c:when>
+									<c:otherwise>위젯 ${widget.widgetNo}</c:otherwise>
+		                        </c:choose>
+		                    </span>
+		                    <i class="bi bi-grip-vertical text-muted"></i>
+		                </div>
+					</div>
+		        </c:if>
+		    </c:forEach>
+		</div>		
+	</div>
+	
+	<svg width="0" height="0" style="position: absolute;">
+	  <filter id="filter-svg">
+	    <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+	    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" />
+	    <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+	  </filter>
+	</svg>
+	
+	<jsp:include page="./include/footer.jsp"/>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/js/footer.js"></script>
+    <script src="${pageContext.request.contextPath}/js/dashboard.js"></script>
+</body>
+</html>

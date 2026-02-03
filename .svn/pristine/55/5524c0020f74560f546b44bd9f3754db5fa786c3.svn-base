@@ -1,0 +1,173 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. Folder Cards (상단 카드 영역)
+   ========================================= */
+.folder-card {
+    background: #fff;
+    border: 1px solid #e6edf6;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    height: 100%;
+}
+
+.folder-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    border-color: #3b82f6; 
+}
+
+.folder-icon {
+    font-size: 2rem;
+    color: #FFC107; 
+}
+
+.folder-info h6 { 
+    margin: 0; 
+    font-weight: 700; 
+    color: #334155; 
+}
+
+.folder-info span { 
+    font-size: 0.8rem; 
+    color: #94a3b8; 
+}
+
+/* =========================================
+   2. Drive Table Styles (테이블 영역)
+   ========================================= */
+.drive-table {
+    border-collapse: separate;
+    border-spacing: 0 8px; 
+    width: 100%;
+}
+
+.drive-row, 
+.drive-row > td,
+.drive-row > td > *,
+.file-name-link {
+    cursor: pointer !important;
+    user-select: none; 
+}
+
+.drive-row td {
+    background-color: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 14px 12px;
+    vertical-align: middle;
+    transition: background-color 0.2s;
+    color: #334155;
+}
+
+.drive-row td:first-child {
+    border-left: 1px solid #e2e8f0;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    text-align: center;
+}
+
+.drive-row td:last-child {
+    border-right: 1px solid #e2e8f0;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.drive-row:hover td {
+    background-color: #f8fbff;
+    border-color: #BFDBFE;
+}
+
+.drive-row:hover .drive-name-td span,
+.drive-row:hover .file-name-link {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.file-name-link { 
+    text-decoration: none; 
+    color: #334155; 
+    font-weight: 600; 
+    display: block;
+}
+
+.file-icon-cell { 
+    font-size: 1.4rem; 
+    color: #64748B; 
+    text-align: center; 
+    width: 50px; 
+}
+
+.drive-icon-td i {
+    font-size: 1.4rem;
+}
+
+/* =========================================
+   3. Breadcrumb Styles (경로 네비게이션) 
+   ========================================= */
+
+/* 일반적인 경로 아이템 */
+.breadcrumb-item:not(.active) {
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: 500;
+    cursor: pointer !important;
+}
+
+/* 현재 위치 */
+.breadcrumb-item.active {
+    font-size: 0.95rem;
+    color: #1e293b;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: default !important;
+}
+
+.breadcrumb-item:hover:not(.active) {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    font-family: Arial, sans-serif; 
+    color: #cbd5e1;
+    font-size: 1.1em;
+    vertical-align: middle;
+}
+
+/* [핵심 수정사항] Root Folder (Project Drive) 전용 스타일 
+   data-folder-id="0" 인 요소는 무조건 파란색으로 고정합니다.
+*/
+.breadcrumb-item[data-folder-id="0"],
+.breadcrumb-item[data-folder-id="0"] i,
+.breadcrumb-item[data-folder-id="0"] span {
+    color: #3b82f6 !important; /* Main Blue */
+    font-weight: 700 !important;
+}
+
+/* =========================================
+   4. Icon Colors & Helpers
+   ========================================= */
+.icon-pdf { color: #F40F02 !important; }
+.icon-xls { color: #1D6F42 !important; }
+.icon-ppt { color: #D04423 !important; }
+.icon-zip { color: #78797D !important; }
+.icon-img { color: #B64AFF !important; }
+
+.text-warning { color: #ffc107 !important; }
+.text-danger { color: #dc3545 !important; }
+.text-success { color: #198754 !important; }
+.text-primary { color: #0d6efd !important; }
+.text-info { color: #0dcaf0 !important; }
+.text-secondary { color: #6c757d !important; }
+
+.drag-over {
+    border: 2px dashed #3b82f6 !important;
+    background-color: rgba(59, 130, 246, 0.05) !important;
+}

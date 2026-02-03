@@ -1,0 +1,75 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
+<div class="modal fade tudio-modal" id="commonTaskDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header tudio-modal-header flex-column align-items-start border-bottom-0 pb-0">
+                
+                <div id="parentLinkArea" class="mb-2" style="display:none;">
+                    <a href="#" id="btnGoParent" class="text-decoration-none text-muted small">
+                        <i class="bi bi-arrow-return-right"></i> <span id="detailParentTitle">상위업무 제목</span>
+                    </a>
+                </div>
+
+                <div class="d-flex w-100 justify-content-between align-items-start">
+                    <div>
+                        <div class="mb-2">
+                            <span class="badge" id="detailTaskStatusBadge">상태</span>
+                            <span class="badge bg-light text-dark border ms-1" id="detailTaskPriority">우선순위</span>
+                        </div>
+                        <h4 class="modal-title fw-bold" id="detailTitle">업무 제목</h4>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between text-muted small mb-4 border-bottom pb-3">
+                    <div>
+                        <span class="me-3"><i class="bi bi-person"></i> <span id="detailWriter">작성자</span></span>
+                        <span><i class="bi bi-calendar-event"></i> <span id="detailRegDate">등록일</span></span>
+                    </div>
+                    <div>
+                        <i class="bi bi-calendar-range"></i> <span id="detailPeriod">시작일 ~ 마감일</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="fw-bold text-dark mb-2">내용</label>
+                    <div class="p-3 bg-light rounded" id="detailContent" style="min-height: 100px; white-space: pre-wrap;"></div>
+                </div>
+                
+                <div class="mb-4">
+                     <label class="fw-bold text-dark mb-1">진척도</label>
+                     <div class="d-flex align-items-center">
+                         <div class="progress flex-grow-1 me-2" style="height: 10px;">
+                             <div id="detailProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                         </div>
+                         <span id="detailRateText" class="small fw-bold text-success">0%</span>
+                     </div>
+                </div>
+
+                <div class="mb-4">
+                     <label class="fw-bold text-dark mb-2"><i class="bi bi-paperclip"></i> 첨부파일</label>
+                     <ul class="list-group list-group-flush border rounded" id="detailFileList">
+                         </ul>
+                </div>
+
+                <div id="subTaskListArea" class="mt-4" style="display:none;">
+                    <label class="fw-bold text-dark mb-2">하위 업무 목록</label>
+                    <div id="detailSubListGroup" class="list-group">
+                        </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer tudio-modal-footer">
+                <div id="detailBtnGroup" style="display:none;">
+                    <button type="button" class="btn btn-outline-danger" id="btnDeleteTask">삭제</button>
+                    <button type="button" class="btn btn-primary" id="btnModifyTask">수정</button>
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>

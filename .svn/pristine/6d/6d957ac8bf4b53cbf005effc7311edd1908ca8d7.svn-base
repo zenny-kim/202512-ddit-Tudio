@@ -1,0 +1,13 @@
+package kr.or.ddit.project.service;
+
+import java.util.List;
+import java.util.Map;
+
+import kr.or.ddit.vo.ProjectVO;
+
+public interface IProjectService {
+	public void createProject(ProjectVO projectVO);
+	public List<ProjectVO> list();
+	// 이메일 목록을 받아 유효/무효 결과를 분류해 반환
+	public Map<String, Object> checkEmailList(List<String> emailList);
+}

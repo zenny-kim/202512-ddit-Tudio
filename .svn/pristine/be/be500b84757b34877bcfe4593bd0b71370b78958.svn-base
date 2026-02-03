@@ -1,0 +1,191 @@
+package kr.or.ddit.projectBoard.controller;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import kr.or.ddit.projectBoard.service.IProjectBoardService;
+import kr.or.ddit.vo.PaginationInfoVO;
+import kr.or.ddit.vo.project.ProjectBoardVO;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : projectBoard
+ * DESC : 프로젝트 게시판 게시글 목록, 수정, 조회, 삭제 컨트롤러
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 KMS
+ * @version 1.0, 2025.12.27
+ * 
+ */
+@Slf4j
+@Controller
+@RequestMapping("/tudio/project/{projectNo}")
+public class ProjectBoardController {
+	
+	
+	@Autowired
+	private IProjectBoardService service;
+	
+
+	
+	
+	/**
+	 * 프로젝트 게시판 리스트
+	 * @return
+	 */
+	@GetMapping("/tab/board")
+    public String listBoard(@PathVariable int projectNo, 
+    		PaginationInfoVO<kr.or.ddit.vo.project.ProjectBoardVO> page, Model model) {
+		
+		log.info("listBoard() 메서드 실행");
+
+			// List<ProjectBoardListVO> list = service.list(projectNo, page);
+		 	  
+			/*
+			 * model.addAttribute("list", list); //dataList model.addAttribute("page",
+			 * page); // 페이징 정보는 page가 들고 있음. totalRecord
+			 */		
+			service.list(projectNo, page);     // void로 page 채움
+			model.addAttribute("page", page);
+			
+        return "project/tabs/tab_board"; 
+    }
+	
+	/**
+	 *  비동기 목록 (테이블 tbody+pager)만 반환
+	 * @return
+	 */
+	@GetMapping("/tab/board/partial")
+	public String listBoardPartial(
+	        @PathVariable int projectNo,
+	        PaginationInfoVO<ProjectBoardVO> page,
+	        @RequestParam(required = false) String categoryName,
+	        @RequestParam(required = false) String searchType,
+	        @RequestParam(required = false) String searchWord,
+	        Model model
+	) {
+	    log.info("listBoardPartial() projectNo={}, category={}, searchType={}, searchWord={}",
+	            projectNo, categoryName, searchType, searchWord);
+
+	    if (page.getCurrentPage() <= 0) page.setCurrentPage(1);
+	    
+	    
+	    // 검색 조건 세팅
+	    page.setSearchType(searchType);
+	    page.setSearchWord(searchWord);
+
+	    // 서비스 호출 (category는 분리된 파라미터)
+	    service.listBoardPartial(projectNo, page, categoryName);
+
+	    model.addAttribute("page", page);
+	    return "projectboard/boardListPartial";
+	}
+
+
+	//@ModelAttribute는 HTTP 요청 파라미터를 객체에 묶어서(Model에 담아서) 전달하는 역할
+	
+	
+	
+	/**
+	 * 프로젝트 게시글 등록화면
+	 * @return
+	 */
+	@GetMapping("/insertForm")
+	public String insertForm(@PathVariable int projectNo) {
+		log.info("insertForm() 메서드 실행");
+		
+		
+		
+		return "projectboard/boardinsertform";
+	}
+	
+	/**
+	 * 프로젝트 게시글 등록기능
+	 * @return
+	 */
+	@PostMapping("/insert")
+	public String insertBoard(@PathVariable int projectNo) {
+		log.info("insertBoard() 메서드 실행");
+		
+		
+		String page="";
+		
+		return page;
+	}
+	
+	
+	
+	
+	/**
+	 * 프로젝트 게시글 수정 화면. 상태 u 보내기.
+	 * boNo은 디테일에서 히든으로 넘겨준 것
+	 * @return
+	 */
+	@GetMapping("/update")
+	public String updateBoardForm(@PathVariable int projectNo, Model model) {
+		log.info("updateBoardForm() 메서드 실행");
+		
+		/*
+		 *  디테일 폼에서 받은 boNo으로 기존 정보 뿌리기
+		 *  form.jsp에서 value에 ${데이터}를 해도 등록 폼과는 관련이 없다.
+		 *  왜냐면 등록 컨트롤러에서 등록 폼으로 갈 땐 데이터가 없기 때문에 아무것도 입력되지 않음
+		 */
+		
+		model.addAttribute("status", "u");
+
+		return "projectboard/boardinsert";
+	}
+	
+	
+	/**
+	 * 프로젝트 게시글 수정 기능
+	 * @return
+	 */
+	@PostMapping("/update")
+	public String updateBoard(@PathVariable int projectNo, Model model) {
+		log.info("updateBoard() 메서드 실행");
+		
+		String page="";
+		
+		return page;
+	}
+	
+	
+	
+	/*
+	 * 	프로젝트 게시글 상세정보 
+	 */
+	@GetMapping("/select")
+	public String selectBoard(@PathVariable int projectNo) {
+		log.info("selectBoard() 메서드 실행");
+		
+		return "projectboard/boardselect";
+	}
+	
+	
+	/*
+	 * 	프로젝트 게시글 삭제하기 
+	 */
+	@GetMapping("/delete")
+	public String deleteBoard(@PathVariable int projectNo) {
+		log.info("selectBoard() 메서드 실행");
+		
+		String page="";
+		
+		return page;
+	}
+	
+	
+	
+	
+	
+
+}
+

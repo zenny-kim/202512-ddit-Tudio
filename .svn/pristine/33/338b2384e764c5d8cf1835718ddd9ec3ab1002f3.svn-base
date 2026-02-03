@@ -1,0 +1,209 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- 
+    파일명: task_detail.jsp
+    설명: 업무 상세 보기 및 진척도 수정 기능
+--%>
+
+<div class="main-content-wrap flex-grow-1">
+    <div class="container-fluid">
+        
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <nav aria-label="breadcrumb" class="flex-grow-1">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="project_detail.jsp">Tudio 런칭 프로젝트</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">TUDIO-001: 프론트엔드 기본 구조 설계</li>
+                </ol>
+            </nav>
+            <div class="task-action-buttons">
+                <button class="btn btn-outline-secondary btn-sm me-2" onclick="location.href='task_edit.jsp'"><i class="bi bi-pencil me-1"></i> 수정</button>
+                <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash me-1"></i> 삭제</button>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="card shadow p-4">
+                    
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h1 class="h3 fw-bold mb-0 lh-base me-3" style="word-break: break-all;">TUDIO-001: 프론트엔드 기본 구조 설계</h1>
+                        
+                        <div class="progress-control-container flex-shrink-0 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="progressRange" class="form-label small fw-bold mb-0 text-secondary">
+                                    <i class="bi bi-bar-chart-fill me-1"></i> 진척도
+                                </label>
+                                <span class="h6 fw-bold text-primary mb-0" id="progressText">60%</span>
+                            </div>
+                            <div class="position-relative" style="height: 12px;">
+                                <div class="progress" style="height: 8px; margin-top: 2px;">
+                                    <div id="progressBar" class="progress-bar bg-primary" role="progressbar" style="width: 60%; transition: width 0.1s;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <input type="range" class="form-range custom-range-overlay" id="progressRange" min="0" max="100" step="5" value="60" title="드래그하여 진척도 수정 (담당자만 가능)">
+                            </div>
+                            <div id="progressWarning" class="text-danger" style="font-size: 0.65rem; display: none; margin-top: 2px;">
+                                <i class="bi bi-exclamation-circle"></i> 담당자만 수정 가능합니다.
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="small text-muted border-bottom pb-3 mb-4 d-flex flex-wrap align-items-center gap-3">
+                        <span class="badge bg-primary fs-6">진행 중</span>
+                        <span class="badge bg-danger fs-6">Critical</span>
+                        
+                        <span id="assigneeList">
+                            <i class="bi bi-person-fill me-1"></i> 담당: 
+                            <span class="badge bg-primary" data-user="김사용">김사용</span> 
+                            <span class="badge bg-info" data-user="박개발">박개발</span>
+                        </span>
+                        
+                        <span><i class="bi bi-calendar-event me-1"></i> 시작일: 2025-12-15</span>
+                        <span><i class="bi bi-calendar-check me-1"></i> 마감: <span class="fw-bold text-danger">2025-12-20</span></span>
+                    </p>
+
+                    <h5 class="text-primary fw-bold">설명</h5>
+                    <div class="card p-3 bg-light mb-4">
+                        <p class="mb-0">SPA 구조 및 초기 API 연동 방식을 정의해야 합니다. 컴포넌트 간의 데이터 흐름에 대한 명확한 문서를 첨부해 주세요.</p>
+                    </div>
+
+                    <h5 class="text-primary fw-bold mt-4 mb-3">하위 업무 (5건 중 3건 완료)</h5>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center"><input class="form-check-input me-2" type="checkbox" checked> 뷰 라우터 설정 완료</div>
+                            <small class="text-muted">담당: 박개발</small>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center"><input class="form-check-input me-2" type="checkbox"> API 연동 테스트 환경 구성</div>
+                            <small class="text-muted text-danger">담당: 김사용 (~12/23)</small>
+                        </li>
+                        <li class="list-group-item list-group-item-action text-primary" role="button"
+                            data-bs-toggle="modal" data-bs-target="#newSubTaskModal"> <i class="bi bi-plus me-1"></i> 하위 업무 추가
+                        </li>
+                    </ul>
+                    
+                    <h5 class="text-primary fw-bold mb-3">첨부파일 (2개)</h5>
+                    <ul class="list-group list-group-flush small mb-5">
+                         <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center"><i class="bi bi-file-earmark-code me-2 text-info"></i> Initial_API_Spec.json</div>
+                            <div class="text-end"><span class="text-muted small me-3">120 KB</span><a href="#" class="text-decoration-none text-secondary"><i class="bi bi-download"></i></a></div>
+                         </li>
+                         <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center"><i class="bi bi-file-earmark-image me-2 text-success"></i> UI_Mockup_v2.png</div>
+                             <div class="text-end"><span class="text-muted small me-3">3.5 MB</span><a href="#" class="text-decoration-none text-secondary"><i class="bi bi-download"></i></a></div>
+                         </li>
+                    </ul>
+                    
+                    <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                        <button class="btn btn-success btn-lg"><i class="bi bi-check-circle me-2"></i> 업무 완료 처리</button>
+                    </div>
+                    
+                    <h5 class="text-primary fw-bold mt-4 mb-3 d-flex justify-content-between align-items-center border-top pt-4">
+                        <span><i class="bi bi-chat-dots me-1"></i> 댓글 (35건)</span>
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#fullActivityModal" data-view-type="comments">전체 보기</button>
+                    </h5>
+                    
+                    <div> 
+                        <div class="d-flex mb-4">
+                            <div class="profile-img-wrap flex-shrink-0 me-2" style="width: 38px; height: 38px; line-height: 38px; background-color: #6c757d;">P</div> 
+                            <textarea class="form-control" rows="2" placeholder="댓글을 입력하세요..."></textarea>
+                            <button class="btn btn-primary ms-2 flex-shrink-0" style="height: 52px;">등록</button>
+                        </div>
+                        <div class="comment-item mb-4 rounded" data-comment-id="C-001">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="fw-bold text-primary">김사용</span>
+                                <span class="text-muted">1분 전</span>
+                            </div>
+                            <p class="mb-1 small">이 API 연동 테스트는 23일 전에 완료될 것 같습니다. 스크립트 먼저 공유할게요.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card shadow p-4">
+                    <h5 class="text-primary fw-bold mb-3 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-clock-history me-1"></i> 활동 기록 (121건)</span>
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#fullActivityModal" data-view-type="log">전체 보기</button>
+                    </h5>
+                    
+                    <div class="activity-log">
+                        <div class="activity-log-item text-muted">**박개발**님이 상태를 'TO DO'에서 **'IN PROGRESS'**로 변경했습니다. (5분 전)</div>
+                        <div class="activity-log-item text-muted">**김사용**님이 담당자에 **'박개발'**을 추가했습니다. (1시간 전)</div>
+                        <div class="activity-log-item text-muted">**이디자인**님이 첨부파일 2개를 추가했습니다. (3시간 전)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // -------------------------------------------------------------
+        // [핵심] 진척도 수정 로직 (담당자 권한 체크)
+        // -------------------------------------------------------------
+        // TODO: 실제 서버 세션에서 사용자명을 가져와야 합니다. 예: const currentUser = "${sessionScope.user.name}";
+        const currentUser = '김사용'; 
+        
+        const progressRange = document.getElementById('progressRange');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const progressWarning = document.getElementById('progressWarning');
+        const assigneeContainer = document.getElementById('assigneeList');
+        
+        // 1. 담당자 목록 추출
+        const assignees = Array.from(assigneeContainer.querySelectorAll('.badge')).map(el => el.getAttribute('data-user'));
+        
+        // 2. 권한 확인 (현재 사용자가 담당자에 포함되어 있는지)
+        const isAssignee = assignees.includes(currentUser);
+
+        if (isAssignee) {
+            // 담당자라면: 슬라이더 활성화 및 이벤트 연결
+            progressRange.disabled = false;
+            
+            progressRange.addEventListener('input', function() {
+                const value = this.value;
+                
+                // UI 업데이트
+                progressBar.style.width = value + '%';
+                progressBar.setAttribute('aria-valuenow', value);
+                progressText.textContent = value + '%';
+                
+                // 100% 도달 시 색상 변경
+                if (value == 100) {
+                    progressBar.classList.remove('bg-primary');
+                    progressBar.classList.add('bg-success');
+                    progressText.classList.remove('text-primary');
+                    progressText.classList.add('text-success');
+                } else {
+                    progressBar.classList.add('bg-primary');
+                    progressBar.classList.remove('bg-success');
+                    progressText.classList.add('text-primary');
+                    progressText.classList.remove('text-success');
+                }
+                
+                // TODO: 여기에 AJAX 호출을 추가하여 서버에 진척도 업데이트 요청
+                // updateTaskProgress(taskId, value);
+            });
+
+        } else {
+            // 담당자가 아니라면: 슬라이더 비활성화 및 경고 표시
+            progressRange.disabled = true;
+            progressRange.title = "업무 담당자만 진척도를 수정할 수 있습니다.";
+            progressWarning.style.display = 'block'; 
+        }
+
+        // -------------------------------------------------------------
+        // 기타 모달 이벤트 리스너 (필요 시 구현)
+        // -------------------------------------------------------------
+        const fullActivityModal = document.getElementById('fullActivityModal');
+        if (fullActivityModal) {
+            fullActivityModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget; 
+                const viewType = button.getAttribute('data-view-type'); 
+                // 모달 내용 로드 로직 구현
+            });
+        }
+    });
+</script>

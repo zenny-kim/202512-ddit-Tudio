@@ -1,0 +1,79 @@
+package kr.or.ddit.drive.controller;
+
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import jakarta.servlet.http.HttpSession;
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.drive.service.IDriveService;
+import kr.or.ddit.vo.DriveFolderVO;
+import kr.or.ddit.vo.MemberVO;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : DriveController
+ * DESC : 자료실 조회, 폴더 생성, 파일 업로드, 휴지통 이동 컨트롤러
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 PSE
+ * @version 1.0, 2025.01.03
+ * 
+ */
+@Controller
+@Slf4j
+@RequestMapping("/tudio")
+public class DriveController {
+	
+	@Autowired
+	private IDriveService driveService;
+	
+	// 반복되는 리터럴 문자열을 final 변수로 만듦
+	private static final String LOGIN_USER = "loginUser";
+	
+	@GetMapping("/project/drive/list")
+	public String projectDriveList(
+								@RequestParam int projectNo,
+								HttpSession session,
+								Model model) {
+		MemberVO loginUser = (MemberVO) session.getAttribute("loginUser");
+		log.info("projectDriveList() 실행~ projectNo={}, loginUser={}", projectNo, loginUser);
+		
+		Map<String, Object> result = driveService.getDriveList(projectNo, 0);
+		model.addAttribute("driveList", result.get("driveList"));
+		model.addAttribute("currentFolderId", result.get("currentFolderId"));
+		log.info("myLog: " + result.toString());
+
+		if (loginUser == null) return "redirect:/tudio/login";
+		
+		return "project/tabs/drive/driveList";
+	}
+	
+	
+	@GetMapping("/drive")
+	public String driveList() {
+		log.info("driveList() 실행~");
+		return "drive/driveList";
+	}
+	
+	public ResponseEntity<ServiceResult> insertFolder(DriveFolderVO driveFolderVO, HttpSession session){
+		ServiceResult result = null;
+		MemberVO loginUser = (MemberVO) session.getAttribute(LOGIN_USER);
+		if(loginUser != null) {
+			driveFolderVO.setMemberNo(loginUser.getMemberNo());
+//			result = driveService.insertFolder();
+		}
+		return new ResponseEntity<ServiceResult>(result, HttpStatus.OK);
+	}
+	
+}

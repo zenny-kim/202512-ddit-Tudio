@@ -1,0 +1,470 @@
+/**
+ * myTask.js
+ * 내 업무 모아보기 전용 스크립트 (버전 1.2 - 토글 저장 및 상태 동기화)
+ */
+
+const STATUS_MAP = { 201: 'REQUEST', 202: 'PROGRESS', 203: 'DONE', 204: 'HOLD', 205: 'DELAYED' };
+const PRIORITY_MAP = { 211: 'LOW', 212: 'NORMAL', 213: 'HIGH', 214: 'URGENT' };
+
+document.addEventListener("DOMContentLoaded", function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type');
+    
+    document.querySelectorAll('.btn-group label').forEach(l => l.classList.remove('active'));
+    document.querySelectorAll('.btn-group input').forEach(r => r.checked = false);
+
+    let targetId = 'typeAll'; 
+    if (typeParam === 'writer') targetId = 'typeWriter';
+    else if (typeParam === 'manager') targetId = 'typeManager';
+
+    const targetInput = document.getElementById(targetId);
+    if (targetInput) {
+        targetInput.checked = true; 
+        document.querySelector('label[for="' + targetId + '"]').classList.add('active');
+    }
+
+    initMyTaskEvents();
+    
+    // [중요] 페이지 로드 시 토글 상태 복원 (약간의 지연을 주어 DOM 렌더링 확보)
+    setTimeout(restoreToggleState, 50);
+});
+
+function initMyTaskEvents() {
+    const toggleAllBtn = document.getElementById('toggleAllCheckbox');
+    if(toggleAllBtn){
+        toggleAllBtn.addEventListener('change', function(){
+            const isChecked = this.checked;
+            document.querySelectorAll('.sub-row').forEach(row => row.style.display = isChecked ? 'table-row' : 'none');
+            document.querySelectorAll('.toggle-btn i').forEach(icon => {
+                icon.classList.replace(isChecked ? 'bi-caret-right-fill' : 'bi-caret-down-fill', isChecked ? 'bi-caret-down-fill' : 'bi-caret-right-fill');
+            });
+            // 전체 토글 시 개별 저장 상태 초기화
+            sessionStorage.removeItem('myTaskExpandedRows');
+        });
+    }
+
+    document.getElementById('btnSaveDetail').addEventListener('click', updateTask);
+    document.getElementById('btnDeleteDetail').addEventListener('click', deleteTask);
+    
+    // 슬라이더 이벤트
+    const slider = document.getElementById('detailRate');
+    slider.addEventListener('input', function() {
+        const val = Number(this.value);
+        document.getElementById('detailRateVal').innerText = val + '%';
+        updateSliderColor(this); 
+        syncStatusWithRate(val);
+    });
+
+    // 상태 Select 이벤트
+    const statusSelect = document.getElementById('detailStatus');
+    statusSelect.addEventListener('change', function() {
+        const selectedStatus = this.value;
+        const slider = document.getElementById('detailRate');
+        const currentRate = Number(slider.value);
+        
+        if (selectedStatus === 'DONE') {
+            slider.value = 100;
+        } else if (selectedStatus === 'REQUEST') {
+            slider.value = 0;
+        } else if (selectedStatus === 'PROGRESS') {
+            if (currentRate === 100) slider.value = 95;
+            else if (currentRate === 0) slider.value = 5;
+        }
+        document.getElementById('detailRateVal').innerText = slider.value + '%';
+        updateSliderColor(slider);
+    });
+}
+
+function saveToggleState(taskId, isOpen) {
+    let expandedRows = [];
+    try {
+        expandedRows = JSON.parse(sessionStorage.getItem('myTaskExpandedRows')) || [];
+    } catch(e) {
+        expandedRows = [];
+    }
+    
+    if (isOpen) {
+        if (!expandedRows.includes(taskId)) expandedRows.push(taskId);
+    } else {
+        expandedRows = expandedRows.filter(id => id !== taskId);
+    }
+    sessionStorage.setItem('myTaskExpandedRows', JSON.stringify(expandedRows));
+}
+
+function restoreToggleState() {
+    let expandedRows = [];
+    try {
+        expandedRows = JSON.parse(sessionStorage.getItem('myTaskExpandedRows')) || [];
+    } catch(e) {
+        return;
+    }
+    
+    if(expandedRows.length === 0) return;
+
+    // 모든 토글 버튼을 순회하며 상태 복원
+    const allToggleBtns = document.querySelectorAll('.toggle-btn');
+    
+    allToggleBtns.forEach(btn => {
+        // onclick 속성 파싱: onclick="toggleSubTasks('123', this)..."
+        const onClickStr = btn.getAttribute('onclick');
+        if (onClickStr) {
+            // 숫자만 추출 (taskId)
+            const match = onClickStr.match(/'(\d+)'/); 
+            if (match && match[1]) {
+                const taskId = match[1];
+                if (expandedRows.includes(taskId)) {
+                    // 펼치기
+                    const subRows = document.querySelectorAll('.sub-group-' + taskId);
+                    subRows.forEach(row => row.style.display = 'table-row');
+                    
+                    // 아이콘 변경
+                    const icon = btn.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('bi-caret-right-fill');
+                        icon.classList.add('bi-caret-down-fill');
+                    }
+                }
+            }
+        }
+    });
+}
+
+function toggleSubTasks(taskId, btnElement) {
+    const subRows = document.querySelectorAll('.sub-group-' + taskId);
+    const icon = btnElement.querySelector('i');
+    
+    let isVisible = false;
+    if(subRows.length > 0) isVisible = (window.getComputedStyle(subRows[0]).display !== 'none');
+    
+    // 상태 반전
+    const newState = !isVisible;
+    
+    subRows.forEach(row => row.style.display = newState ? 'table-row' : 'none');
+    
+    if(newState) {
+        icon.classList.replace('bi-caret-right-fill', 'bi-caret-down-fill');
+    } else {
+        icon.classList.replace('bi-caret-down-fill', 'bi-caret-right-fill');
+    }
+    
+    saveToggleState(taskId, newState);
+}
+
+function syncStatusWithRate(rate) {
+    const statusSelect = document.getElementById('detailStatus');
+    const currentStatus = statusSelect.value;
+    const isExceptionState = (currentStatus === 'HOLD' || currentStatus === 'DELAYED');
+
+    if (rate == 0) {
+        if (currentStatus !== 'DELAYED') statusSelect.value = 'REQUEST'; 
+    } else if (rate == 100) {
+        statusSelect.value = 'DONE';
+    } else {
+        if (!isExceptionState) statusSelect.value = 'PROGRESS';
+    }
+}
+
+function updateSliderColor(input) {
+    const val = input.value;
+    input.style.background = `linear-gradient(to right, #3B82F6 ${val}%, #dee2e6 ${val}%)`;
+}
+
+// ... (이후 openDetailPanel, loadProjectMembers, fillDetailForm 등 기존 로직 동일) ...
+// (기존 코드 그대로 유지하시되, 맨 위 restoreToggleState 호출 부분과 saveToggleState 함수만 유의해서 교체해주세요)
+
+function openDetailPanel(id, type) {
+    const panel = document.getElementById('taskDetailPanel');
+    const form = document.getElementById('taskEditForm');
+    
+    panel.classList.add('open');
+    form.reset();
+    document.getElementById('detailTitle').value = "데이터 불러오는 중...";
+    document.getElementById('selectedAssigneeArea').innerHTML = ''; 
+    document.getElementById('assigneeDropdownBtn').innerText = "로딩 중...";
+    document.getElementById('assigneeDropdownList').innerHTML = '';
+
+    const url = type === 'T' 
+        ? `/tudio/project/task/detail/${id}` 
+        : `/tudio/project/task/sub/detail/${id}`;
+
+    fetch(url)
+        .then(res => {
+            if(!res.ok) throw new Error("Network Error");
+            return res.json();
+        })
+        .then(data => {
+            if(!data.projectNo) {
+                console.error("ProjectNo is missing", data);
+                Swal.fire('오류', '데이터 오류: 프로젝트 번호 누락', 'error');
+                return;
+            }
+            loadProjectMembers(data.projectNo, function() {
+                fillDetailForm(data, type);
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('실패', '정보 로드 실패', 'error');
+            closeTaskPanel();
+        });
+}
+
+function loadProjectMembers(projectNo, callback) {
+    fetch(`/tudio/project/member/list/json/${projectNo}`)
+        .then(res => res.json())
+        .then(members => {
+            const listContainer = document.getElementById('assigneeDropdownList');
+            listContainer.innerHTML = ''; 
+            if(!members || members.length === 0) {
+                listContainer.innerHTML = '<li class="p-2 text-muted small">멤버가 없습니다.</li>';
+            } else {
+                members.forEach(m => {
+                    const li = document.createElement('li');
+                    li.className = 'form-check dropdown-item'; 
+                    li.innerHTML = `
+                        <input class="form-check-input assignee-checkbox" type="checkbox" 
+                               value="${m.memberNo}" 
+                               id="assignee_${m.memberNo}"
+                               data-name="${m.memberName}">
+                        <label class="form-check-label w-100" for="assignee_${m.memberNo}" style="cursor:pointer;">
+                            ${m.memberName} <small class="text-muted">(${m.projectRole})</small>
+                        </label>
+                    `;
+                    li.addEventListener('click', function(e) { e.stopPropagation(); });
+                    listContainer.appendChild(li);
+                });
+            }
+            if(callback) callback();
+        })
+        .catch(err => {
+            console.error("멤버 로딩 실패", err);
+            document.getElementById('assigneeDropdownBtn').innerText = "멤버 로딩 실패";
+        });
+}
+
+function fillDetailForm(data, type) {
+    document.getElementById('detailId').value = (type === 'T' ? data.taskId : data.subId);
+    document.getElementById('detailType').value = type;
+    document.getElementById('detailProjectNo').value = data.projectNo;
+    document.getElementById('detailProjectName').value = data.projectName || '-';
+    document.getElementById('detailTitle').value = (type === 'T' ? data.taskTitle : data.subTitle);
+    
+    const content = (type === 'T' ? data.taskContent : data.subContent);
+    document.getElementById('detailContent').value = content || '';
+
+    // 1. 상태 값 추출
+    const statusObj = (type === 'T' ? data.taskStatus : data.subStatus);
+    const priorityObj = (type === 'T' ? data.taskPriority : data.subPriority);
+
+    let statusVal = "REQUEST"; 
+    if (statusObj) {
+        if (typeof statusObj === 'object' && statusObj.code) statusVal = STATUS_MAP[statusObj.code] || "REQUEST";
+        else statusVal = statusObj;
+    }
+
+    let priorityVal = "NORMAL";
+    if (priorityObj) {
+        if (typeof priorityObj === 'object' && priorityObj.code) priorityVal = PRIORITY_MAP[priorityObj.code] || "NORMAL";
+        else priorityVal = priorityObj;
+    }
+
+    setSelectValue('detailStatus', statusVal);
+    setSelectValue('detailPriority', priorityVal);
+
+    // 2. [지연 상태 제약 적용]
+    const statusSelect = document.getElementById('detailStatus');
+    const options = statusSelect.options;
+
+    // 초기화: 모든 옵션 활성화
+    for (let i = 0; i < options.length; i++) {
+        options[i].disabled = false;
+        options[i].hidden = false;
+    }
+
+    if (statusVal === 'DELAYED') {
+        // '지연' 상태 -> 보류, 완료, 지연만 선택 가능
+        for (let i = 0; i < options.length; i++) {
+            const val = options[i].value;
+            if (val !== 'HOLD' && val !== 'DONE' && val !== 'DELAYED') {
+                options[i].disabled = true; 
+            }
+        }
+    } else {
+        // '지연' 아님 -> 지연 선택 불가 (자동 상태이므로)
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === 'DELAYED') {
+                options[i].disabled = true;
+                options[i].hidden = true; 
+            }
+        }
+    }
+
+    // 날짜
+    const start = (type === 'T' ? data.taskStartdate : data.subStartdate);
+    const end = (type === 'T' ? data.taskEnddate : data.subEnddate);
+    document.getElementById('detailStart').value = formatDate(start);
+    document.getElementById('detailEnd').value = formatDate(end);
+
+    // 진척도
+    const rate = (type === 'T' ? data.taskRate : data.subRate) || 0;
+    const rateInput = document.getElementById('detailRate');
+    rateInput.value = rate;
+    document.getElementById('detailRateVal').innerText = rate + '%';
+    updateSliderColor(rateInput);
+
+    // 담당자
+    const managers = (type === 'T' ? data.taskManagers : data.subManagers);
+    document.querySelectorAll('.assignee-checkbox').forEach(chk => chk.checked = false);
+    const selectedArea = document.getElementById('selectedAssigneeArea');
+    selectedArea.innerHTML = ''; 
+
+    if (managers && managers.length > 0) {
+        managers.forEach(m => {
+            const chk = document.getElementById(`assignee_${m.memberNo}`);
+            if (chk) {
+                chk.checked = true;
+                addBadge(m.memberName);
+            }
+        });
+        updateDropdownLabel(managers.length);
+    } else {
+        updateDropdownLabel(0);
+    }
+
+    bindCheckboxEvents();
+}
+
+function addBadge(name) {
+    const area = document.getElementById('selectedAssigneeArea');
+    const span = document.createElement('span');
+    span.className = "badge bg-light text-dark border me-1";
+    span.innerText = name;
+    area.appendChild(span);
+}
+
+function updateDropdownLabel(count) {
+    const btn = document.getElementById('assigneeDropdownBtn');
+    btn.innerText = count > 0 ? `${count}명 선택됨` : "담당자 선택";
+}
+
+function bindCheckboxEvents() {
+    const checkboxes = document.querySelectorAll('.assignee-checkbox');
+    checkboxes.forEach(chk => {
+        chk.onclick = function(e) {
+            const area = document.getElementById('selectedAssigneeArea');
+            area.innerHTML = ''; 
+            let count = 0;
+            document.querySelectorAll('.assignee-checkbox:checked').forEach(c => {
+                addBadge(c.getAttribute('data-name'));
+                count++;
+            });
+            updateDropdownLabel(count);
+        };
+    });
+}
+
+function updateTask() {
+    const type = document.getElementById('detailType').value;
+    const id = document.getElementById('detailId').value;
+    const url = type === 'T' ? '/tudio/project/task/update' : '/tudio/project/task/sub/update';
+
+    const formData = new FormData();
+    formData.append(type === 'T' ? 'taskId' : 'subId', id);
+    formData.append('projectNo', document.getElementById('detailProjectNo').value);
+    
+    formData.append(type === 'T' ? 'taskTitle' : 'subTitle', document.getElementById('detailTitle').value);
+    formData.append(type === 'T' ? 'taskContent' : 'subContent', document.getElementById('detailContent').value);
+    formData.append(type === 'T' ? 'taskStatus' : 'subStatus', document.getElementById('detailStatus').value);
+    formData.append(type === 'T' ? 'taskPriority' : 'subPriority', document.getElementById('detailPriority').value);
+    formData.append(type === 'T' ? 'taskRate' : 'subRate', document.getElementById('detailRate').value);
+    formData.append(type === 'T' ? 'taskStartdate' : 'subStartdate', document.getElementById('detailStart').value);
+    formData.append(type === 'T' ? 'taskEnddate' : 'subEnddate', document.getElementById('detailEnd').value);
+
+    const paramName = (type === 'T' ? 'taskManagerNos' : 'subManagerNos');
+    document.querySelectorAll('.assignee-checkbox:checked').forEach(chk => {
+        formData.append(paramName, chk.value); 
+    });
+    
+    fetch(url, { method: 'POST', body: formData })
+    .then(res => res.text())
+    .then(result => {
+        if(result === 'SUCCESS' || result === 'OK') {
+            Swal.fire({
+                icon: 'success',
+                title: '성공',
+                text: '저장되었습니다.',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload(); // 새로고침 되어도 sessionStorage 덕분에 토글 유지됨!
+            });
+        } else {
+            Swal.fire('실패', '저장에 실패했습니다.', 'error');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        Swal.fire('오류', '서버 오류가 발생했습니다.', 'error');
+    });
+}
+
+function deleteTask() {
+    Swal.fire({
+        title: '정말 삭제하시겠습니까?',
+        text: "이 작업은 되돌릴 수 없습니다.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: '삭제',
+        cancelButtonText: '취소'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            executeDelete();
+        }
+    });
+}
+
+function executeDelete() {
+    const type = document.getElementById('detailType').value;
+    const id = document.getElementById('detailId').value;
+    const url = '/tudio/project/task/delete';
+
+    const formData = new FormData();
+    formData.append('workId', id); 
+    formData.append('type', type);
+
+    fetch(url, { method: 'POST', body: formData })
+    .then(res => res.text())
+    .then(res => {
+        if(res === 'SUCCESS') {
+            Swal.fire({
+                icon: 'success',
+                title: '삭제됨',
+                text: '업무가 삭제되었습니다.',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                closeTaskPanel();
+                location.reload();
+            });
+        } else {
+            Swal.fire('실패', '삭제에 실패했습니다.', 'error');
+        }
+    })
+    .catch(() => Swal.fire('오류', '오류가 발생했습니다.', 'error'));
+}
+
+function closeTaskPanel() { 
+    document.getElementById('taskDetailPanel').classList.remove('open'); 
+}
+
+function formatDate(dateStr) {
+    if(!dateStr) return '';
+    return dateStr.length >= 10 ? dateStr.substring(0, 10) : dateStr;
+}
+
+function setSelectValue(id, val) {
+    const el = document.getElementById(id);
+    if(el && val) el.value = val;
+}

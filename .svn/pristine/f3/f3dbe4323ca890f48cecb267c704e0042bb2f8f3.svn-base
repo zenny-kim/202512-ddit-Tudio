@@ -1,0 +1,77 @@
+package kr.or.ddit.projectMember.service.impl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.projectMember.mapper.IProjectMemberMapper;
+import kr.or.ddit.projectMember.service.IProjectMemberService;
+import kr.or.ddit.vo.project.ProjectMemberVO;
+import lombok.extern.slf4j.Slf4j;
+
+
+@Slf4j
+@Service
+public class ProjectMemberServiceImpl implements IProjectMemberService {
+
+	@Autowired
+	private IProjectMemberMapper mapper;
+
+	
+	/**
+	 *  구성원 목록 조회
+	 */
+	@Override
+	public List<ProjectMemberVO> list(int projectNo) {
+		
+		return mapper.list(projectNo);
+	}
+
+	
+	/**
+	 * 구성원 정보 조회
+	 */
+	@Override
+	public ProjectMemberVO modalList(ProjectMemberVO vo) {
+		ProjectMemberVO memberInfo = mapper.modalList(vo);   // 이름/이메일/참여일 등
+		ProjectMemberVO cnt = mapper.workCount(vo);          // total/ing/done
+
+		    if (memberInfo == null) return null;
+
+		    // cnt가 null일 수 있으니 방어
+		    memberInfo.setTotalCnt(cnt == null ? 0 : cnt.getTotalCnt());
+		    memberInfo.setIngCnt(cnt == null ? 0 : cnt.getIngCnt());
+		    memberInfo.setDoneCnt(cnt == null ? 0 : cnt.getDoneCnt());
+		    memberInfo.setTaskCnt(cnt == null ? 0 : cnt.getTaskCnt());
+		    memberInfo.setTaskSubCnt(cnt == null ? 0 : cnt.getTaskSubCnt());
+
+		    return memberInfo;
+	}
+
+	
+	/**
+	 *  프로젝트 내 구성원 수
+	 */
+	@Override
+	public int tabMemberCount(int projectNo) {
+		return mapper.tabMemberCount(projectNo);
+	}
+
+
+	@Override
+	public ProjectMemberVO workCount(ProjectMemberVO vo) {
+		// TODO Auto-generated method stub
+		return mapper.workCount(vo);
+	}
+
+
+	@Override
+	public List<ProjectMemberVO> chartList(int projectNo) {
+		// TODO Auto-generated method stub
+		return mapper.chartList(projectNo);
+	}
+
+}
+	
+

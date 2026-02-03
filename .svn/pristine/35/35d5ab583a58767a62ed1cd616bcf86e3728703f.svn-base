@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.inquiry.mapper.IInquiryMapper">
+	
+	<resultMap id="inquiryMap" type="kr.or.ddit.vo.InquiryVO">
+	    <id property="inquiryNo" column="INQUIRY_NO"/>
+	    <result property="userNo" column="USER_NO"/>
+	    <result property="userName" column="USER_NAME"/>
+	    <result property="inquiryTitle" column="INQUIRY_TITLE"/>
+	    <result property="inquiryContent" column="INQUIRY_CONTENT"/>
+	    <result property="inquiryType" column="INQUIRY_TYPE"/>
+	    <result property="inquiryRegdate" column="INQUIRY_REGDATE"/>
+	    <result property="inquiryUpddate" column="INQUIRY_UPDDATE"/>
+	    <result property="inquiryHit" column="INQUIRY_HIT"/>
+	
+	    <!-- 관리자 답변 -->
+	    <result property="replyNo" column="REPLY_NO"/>
+	    <result property="adminNo" column="ADMIN_NO"/>
+	    <result property="replyContent" column="REPLY_CONTENT"/>
+	    <result property="replyDate" column="REPLY_DATE"/>
+	    <result property="replyStatus" column="REPLY_STATUS"/>
+	
+	    <!-- 파일 그룹 -->
+	    <result property="fileGroupNo" column="FILE_GROUP_NO"/>
+	</resultMap>
+		
+	
+	<!-- 사용자 문의 등록 -->
+	<insert id="insertInquiry" parameterType="InquiryVO" useGeneratedKeys="true" keyProperty="inquiryNo">
+		<selectKey keyProperty="inquiryNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_INQUIRY.NEXTVAL FROM DUAL
+	    </selectKey>
+		insert into inquiry(
+			INQUIRY_NO, USER_NO, INQUIRY_TITLE, INQUIRY_CONTENT, 
+			INQUIRY_TYPE, INQUIRY_REGDATE, INQUIRY_HIT, REPLY_STATUS, FILE_GROUP_NO
+		)values(
+			SEQ_INQUIRY.NEXTVAL, #{userNo}, #{inquiryTitle},#{inquiryContent},
+			#{inquiryType}, CURRENT_TIMESTAMP, 0, 'N', #{fileGroupNo}
+		)	
+	</insert>
+	
+	<!-- 목록 조회(사용자 측면) -->
+	<select id="selectInquiryListByUser" parameterType="int" resultMap="inquiryMap">
+	    SELECT
+	        I.INQUIRY_NO,
+	        I.USER_NO,
+	        M.MEMBER_NAME AS USER_NAME,
+	        I.INQUIRY_TITLE,
+	        I.INQUIRY_TYPE,
+	        I.INQUIRY_REGDATE,
+	        I.INQUIRY_HIT,
+	        I.REPLY_STATUS
+	    FROM INQUIRY I
+	    JOIN MEMBER M ON I.USER_NO = M.MEMBER_NO
+	    WHERE I.USER_NO = #{userNo}
+	    ORDER BY INQUIRY_NO DESC
+	</select>
+
+	<!-- 문의글 상세조회 -->
+	<select id="selectInquiryDetail" parameterType="int" resultMap="inquiryMap">
+	    SELECT
+	        I.INQUIRY_NO,
+	        I.USER_NO,
+	        M.MEMBER_NAME AS USER_NAME,
+	        I.INQUIRY_TITLE,
+	        I.INQUIRY_CONTENT,
+	        I.INQUIRY_TYPE,
+	        I.INQUIRY_REGDATE,
+	        I.INQUIRY_UPDDATE,
+	        I.INQUIRY_HIT,
+	        I.REPLY_NO,
+	        I.ADMIN_NO,
+	        I.REPLY_CONTENT,
+	        I.REPLY_DATE,
+	        I.REPLY_STATUS,
+	        I.FILE_GROUP_NO
+	    FROM INQUIRY I
+	    LEFT JOIN MEMBER M ON I.USER_NO = M.MEMBER_NO
+	    WHERE I.INQUIRY_NO = #{inquiryNo}
+	</select>
+
+	<!-- 사용자 문의 수정 -->
+	<update id="updateInquiry" parameterType="InquiryVO">
+	    UPDATE INQUIRY
+	    SET
+	        INQUIRY_TITLE   = #{inquiryTitle},
+	        INQUIRY_CONTENT = #{inquiryContent},
+	        INQUIRY_TYPE    = #{inquiryType},
+	        INQUIRY_UPDDATE = CURRENT_TIMESTAMP,
+	        FILE_GROUP_NO = #{fileGroupNo}
+	    where
+	        INQUIRY_NO = #{inquiryNo}
+	        and USER_NO = #{userNo}
+	        and REPLY_STATUS = 'N'
+	</update>
+	
+	<!-- 사용자 문의 삭제 (작성자가 답변완료전 삭제)-->
+	<delete id="deleteInquiryByUser">
+	    delete from INQUIRY
+	    where
+	        INQUIRY_NO = #{inquiryNo}
+	        and USER_NO = #{userNo}
+	        and REPLY_STATUS = 'N'
+	</delete>
+	
+	<!-- 사이트 관리자 전체 목록 조회 -->
+	<select id="selectInquiryListAll" resultMap="inquiryMap">
+	    SELECT
+	        I.INQUIRY_NO,
+	        I.USER_NO,
+	        M.MEMBER_NAME AS USER_NAME,
+	        I.INQUIRY_TITLE,
+	        I.INQUIRY_TYPE,
+	        I.INQUIRY_REGDATE,
+	        I.REPLY_STATUS
+	    FROM INQUIRY I
+	    LEFT JOIN MEMBER M ON I.USER_NO = M.MEMBER_NO
+	    ORDER BY INQUIRY_NO DESC
+	</select>		
+	
+	<update id="incrementInquiryHit" parameterType="int">
+	    UPDATE INQUIRY
+	    SET INQUIRY_HIT = INQUIRY_HIT + 1
+	    WHERE INQUIRY_NO = #{inquiryNo}
+	</update>
+		
+	<!-- 사이트 관리자 답변 등록(댓글형식) -->
+	<update id="updateInquiryReply" parameterType="InquiryVO">
+	    UPDATE INQUIRY
+	    SET
+	    	REPLY_NO      = SEQ_INQUIRY_REPLY.NEXTVAL,
+	        REPLY_CONTENT = #{replyContent},
+	        ADMIN_NO      = #{adminNo},
+	        REPLY_DATE    = CURRENT_TIMESTAMP,
+	        REPLY_STATUS  = 'Y'
+	    WHERE
+	        INQUIRY_NO = #{inquiryNo}
+	        AND REPLY_STATUS = 'N'
+	</update>
+	
+	<!-- 문의글 삭제 (사이트관리자 권한으로 게시글 관리 차원에서 삭제) -->
+	<delete id="deleteInquiryByAdmin" parameterType="int">
+	    delete from INQUIRY
+	    where INQUIRY_NO = #{inquiryNo}
+	</delete>
+	
+	<!-- 파일 그룹 생성 -->
+	<insert id="insertInquiryFileGroup" parameterType="kr.or.ddit.vo.FileGroupVO">
+	    <selectKey keyProperty="fileGroupNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_FILE_GROUP.NEXTVAL FROM DUAL
+	    </selectKey>
+	    INSERT INTO FILE_GROUP (
+	        FILE_GROUP_NO,
+	        FILE_GROUP_TYPE,
+	        MEMBER_NO,
+	        FILE_GROUP_REGDATE
+	    ) VALUES (
+	        #{fileGroupNo},
+	        '02',           <!-- 문의사항 -->
+	        #{memberNo},
+	        CURRENT_TIMESTAMP
+	    )
+	</insert>
+	
+	<!-- 파일 상세 -->
+	<insert id="insertInquiryFileDetail"
+	        parameterType="kr.or.ddit.vo.FileDetailVO">
+	    INSERT INTO FILE_DETAIL (
+	        FILE_NO,
+	        FILE_GROUP_NO,
+	        FILE_ORIGINAL_NAME,
+	        FILE_SAVE_NAME,
+	        FILE_PATH,
+	        FILE_SIZE,
+	        FILE_EXTENSION,
+	        FILE_MIME,
+	        FILE_REGDATE,
+	        FILE_DOWNLOAD_CNT,
+	        FILE_DELETE
+	    ) VALUES (
+	        SEQ_FILE.NEXTVAL,
+	        #{fileGroupNo},
+	        #{fileOriginalName},
+	        #{fileSaveName},
+	        #{filePath},
+	        #{fileSize},
+	        #{fileExtension},
+	        #{fileMime},
+	        CURRENT_TIMESTAMP,
+	        0,
+	        'N'
+	    )
+	</insert>
+		
+		
+</mapper>

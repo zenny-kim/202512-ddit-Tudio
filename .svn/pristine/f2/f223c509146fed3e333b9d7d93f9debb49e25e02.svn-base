@@ -1,0 +1,19 @@
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top tudio-header border-bottom border-secondary">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand tudio-brand" href="#">
+                <span class="text-primary">Tudio</span>
+                <span class="badge bg-secondary ms-1" style="font-size: 0.7rem; font-weight: normal;">Admin</span>
+            </a>
+
+            <div class="d-flex align-items-center ms-auto">
+                <div class="text-white small me-3 opacity-75">
+                    <i class="bi bi-shield-lock-fill me-1"></i> 관리자(Master)
+                </div>
+                <button class="btn btn-header-outline btn-sm">
+                    로그아웃
+                </button>
+            </div>
+        </div>
+    </nav>
+</header>

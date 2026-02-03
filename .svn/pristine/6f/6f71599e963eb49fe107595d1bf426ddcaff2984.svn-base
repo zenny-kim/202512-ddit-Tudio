@@ -1,0 +1,15 @@
+package kr.or.ddit.projectTask.service;
+
+import java.util.List;
+
+import kr.or.ddit.vo.project.ProjectTaskSubVO;
+
+public interface IKanbanService {
+	
+	List<ProjectTaskSubVO> getKanbanTaskList(int projectNo);
+    boolean modifyTaskStatus(int taskId, int taskStatus);
+    int updateTaskRate(int taskId, int taskRate);
+	void updateTaskPin(String taskId, String pinYn);
+	String getProjectRole(int projectNo, int loginMemberNo);
+	
+}

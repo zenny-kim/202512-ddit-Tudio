@@ -1,0 +1,221 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+<style>
+/* [1] 웹 화면용 스타일 (상세보기 화면) */
+#pdfArea.detail-view-container {
+    background: #fff;
+    padding: 30px;
+    border: 1.5px solid var(--border-blue);
+    border-radius: 16px;
+}
+
+/* 웹 화면에서의 테이블 스타일 (게시판 느낌) */
+.pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.pdf-table th {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: var(--dark-navy);
+    width: 150px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.pdf-table td {
+    border: 1px solid #e2e8f0;
+    padding: 15px;
+    color: var(--text-main);
+}
+
+.pdf-main-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--dark-navy);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.content-cell {
+    min-height: 200px;
+    vertical-align: top;
+    line-height: 1.6;
+}
+
+/* [2] PDF 출력 전용 스타일 (saveAsPdf 호출 시에만 작동) */
+/* PDF 저장 시 버튼 영역 숨기기 */
+.is-pdf-mode .no-print {
+    display: none !important;
+}
+.is-pdf-mode { 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.is-pdf-mode .pdf-border-box {
+    background: #fff !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 auto !important;
+    padding: 25mm 20mm !important;
+    border: none !important;
+}
+
+.is-pdf-mode .pdf-main-title {
+    font-size: 32pt !important;
+    letter-spacing: 15px !important;
+    border-bottom: 3px double var(--main-blue) !important;
+    display: inline-block !important;
+    padding-bottom: 5mm !important;
+    margin-bottom: 15mm !important;
+}
+
+.is-pdf-mode .pdf-table th {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    font-size: 11pt !important;
+}
+
+.is-pdf-mode .pdf-table td {
+    border: 1px solid #cbd5e1 !important;
+    font-size: 11pt !important;
+}
+
+.is-pdf-mode .result-cell {
+    background-color: #f0f9ff !important; /* 결과 영역 강조 */
+}
+
+</style>
+
+<section >
+
+
+    <div id="pdfArea" class="detail-view-container">
+    	<div class="tudio-section-header no-print d-flex gap-2 justify-content-end">
+            <c:if test="${board.categoryNo == 3}">
+                <button class="tudio-btn tudio-btn-primary" onclick="saveAsPdf()">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF 저장
+                </button>
+            </c:if>
+            <button class="tudio-btn" id="btnBackToList">목록</button>
+        </div>
+    
+        <div class="pdf-border-box">
+            <div class="pdf-header" style="text-align: center;">
+                <h1 class="pdf-main-title">
+                    <c:choose>
+                        <c:when test="${board.categoryNo == 3}">회 의 록</c:when>
+                        <c:when test="${board.categoryNo == 1}">공 지 사 항</c:when>
+                        <c:otherwise>게 시 글</c:otherwise>
+                    </c:choose>
+                </h1>
+            </div>
+        
+            <table class="pdf-table">
+                <tbody>
+                    <tr>
+                        <th>제목</th>
+                        <td colspan="3" style="font-weight: 800; font-size: 1.1rem;">${board.boTitle}</td>
+                    </tr>
+                    <tr>
+                        <th>작성자</th>
+                        <td style="width: 35%;">${board.memberVO.memberName}</td>
+                        <th style="width: 15%;">작성일</th>
+                        <td style="width: 35%;">${fn:substring(board.boRegdate, 0, 10)}</td>
+                    </tr>
+
+                    <c:if test="${board.categoryNo == 3}">
+                        <tr>
+                            <th>회의 일시</th>
+                            <td>
+								${fn:replace(board.boardMinutesVO.meetingDate, 'T', ' ')}
+							</td>
+                            <th>참석자</th>
+                            <td>
+                                <c:forEach items="${board.meetingMemberList}" var="meetMem" varStatus="vs">
+                                    <c:forEach items="${memberList}" var="allMem">
+                                        <c:if test="${meetMem.memberNo == allMem.memberNo}">
+                                            ${allMem.memberName}${!vs.last ? ', ' : ''}
+                                        </c:if>
+                                    </c:forEach>
+                                </c:forEach>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>회의 목표</th>
+                            <td colspan="3">${board.boardMinutesVO.meetingGoal}</td>
+                        </tr>
+                    </c:if>
+                    
+                    <tr>
+                        <th colspan="4" style="text-align: left; background-color: #f1f5f9; white-space: pre-wrap;">
+                            <i class="bi bi-card-text"></i> 내용
+                        </th>
+                    </tr>
+                    <tr>
+                        <td colspan="4" class="content-cell" style="padding-left: 70px; white-space: pre-wrap;">${board.boContent}</td>
+                    </tr>
+
+                    <c:if test="${board.categoryNo == 3}">
+                        <tr>
+                            <th colspan="4" style="text-align: left; background-color: #f1f5f9;  white-space: pre-wrap;">
+                                <i class="bi bi-check-circle"></i> 회의 결과 및 결정사항
+                            </th>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="content-cell result-cell" style="font-weight: 400; padding-left: 70px; white-space: pre-wrap;">${board.boardMinutesVO.meetingResult}</td>
+                        </tr>
+                    </c:if>
+                </tbody>
+            </table>
+            </div>
+            
+			<div class="d-flex justify-content-center gap-2 mt-4 no-print">
+			    <c:if test="${loginUser.memberNo == board.memberVO.memberNo}">
+			        <button type="button" class="tudio-btn tudio-btn-outline" 
+			                onclick="goUpdate('${projectNo}', '${board.boNo}')">
+			            <i class="bi bi-pencil-square" style="color: var(--main-blue);"></i> 수정
+			        </button>
+			        <button type="button" class="tudio-btn tudio-btn-outline-danger" 
+			                onclick="deleteBoard('${board.boNo}')">
+			            <i class="bi bi-trash"></i> 삭제
+			        </button>
+			    </c:if>
+			</div>
+			
+    </div>
+    
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+function saveAsPdf() {
+    const element = document.getElementById('pdfArea');
+    element.classList.add('is-pdf-mode');
+
+    const options = {
+        margin: 0,
+        filename: '회의록_${board.boTitle}.pdf',
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: { 
+            scale: 3, 
+            useCORS: true,
+            scrollY: 0,
+            letterRendering: true
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(options).from(element).save().then(() => {
+        element.classList.remove('is-pdf-mode');
+    });
+}
+</script>

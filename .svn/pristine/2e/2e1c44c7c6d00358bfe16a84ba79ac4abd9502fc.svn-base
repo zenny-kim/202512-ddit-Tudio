@@ -1,0 +1,37 @@
+package kr.or.ddit.member.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import kr.or.ddit.member.mapper.MemberMapper;
+import kr.or.ddit.vo.MemberVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class UserDetailServiceImpl implements UserDetailsService {
+
+	@Autowired
+	MemberMapper memberMapper;
+	
+	//스프링 시큐리티에서는 사용자아이디는 username, 비밀번호는 password
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		log.info("loadUserByUsername-> username : {}", username);
+		
+		//사용자가 작성한 아이디 : memberId 를 검색
+		String memberId = username;
+		log.info("loadUserByUsername->memberId : {}",memberId);
+		
+		//2) 스프링 시큐리티의 User 객체의 정보로 넣어줌
+		MemberVO memberVO = this.memberMapper.findByMemberId(memberId);
+		log.info("loadUserByUsername->memberVO : {}",memberVO);
+		
+		//CustomUser : 사용자 정의 유저 정보. extends User를 상속받고 있음
+		return memberVO==null?null:new CustomUser(memberVO);
+	}
+
+	
+}

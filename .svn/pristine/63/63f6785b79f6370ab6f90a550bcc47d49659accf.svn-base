@@ -1,0 +1,39 @@
+@charset "UTF-8";
+
+/* 간트 차트 전용 스타일 */
+.gantt-wrapper {
+    display: flex;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    height: 500px;
+    background-color: #fff;
+}
+.gantt-sidebar {
+    flex: 0 0 300px;
+    overflow-y: auto;
+    border-right: 1px solid #eee;
+}
+.gantt-chart-area {
+    flex: 1;
+    overflow-x: auto;
+    padding: 15px;
+    position: relative;
+}
+.gantt-bars-container {
+    min-width: 1000px;
+    height: 100%;
+}
+.gantt-bar-row {
+    height: 38px;
+    position: relative;
+}
+/* 현재 시점 라인 */
+.current-time-line {
+    position: absolute;
+    left: 300px; 
+    top: 0; bottom: 0; 
+    width: 2px; 
+    background-color: #dc3545; 
+    opacity: 0.5; 
+    z-index: 10;
+}

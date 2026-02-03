@@ -1,0 +1,42 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
+<div class="tab-content-card">
+
+	<div class="d-flex justify-content-between align-items-center mb-3">
+	    <div class="d-flex align-items-center">
+	        <input type="text" class="form-control form-control-sm me-2" placeholder="파일명 또는 내용 검색..." style="width: 250px;">
+	        <button class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-funnel me-1"></i> 필터</button>
+	        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#folderManagementModal">
+	            <i class="bi bi-folder-fill me-1"></i> 폴더 관리
+	        </button>
+	    </div>
+	    <div>
+	        <button class="btn btn-primary btn-sm"><i class="bi bi-cloud-arrow-up me-1"></i> 파일 업로드</button>
+	    </div>
+	</div>
+	
+	<div class="table-responsive shadow-sm rounded">
+	    <table class="table table-hover table-striped mb-0 bg-white">
+	        <thead class="table-light">
+	            <tr>
+	                <th style="width: 30%;">파일명</th>
+	                <th style="width: 25%;">파일 경로 (업로드 출처)</th>
+	                <th style="width: 10%;">업로더</th>
+	                <th style="width: 10%;">크기</th>
+	                <th style="width: 15%;">업로드 일자</th>
+	                <th style="width: 10%;" class="text-center">다운로드</th>
+	            </tr>
+	        </thead>
+	        <tbody>
+	            <tr>
+	                <td><i class="bi bi-file-earmark-code me-2 text-primary"></i> API_Spec_v1.0.pdf</td>
+	                <td><span class="badge bg-secondary me-1">업무</span> 소셜 로그인 공통 처리</td>
+	                <td>정순호</td>
+	                <td>1.2 MB</td>
+	                <td>2025-09-02</td>
+	                <td class="text-center">45</td>
+	            </tr>
+	        </tbody>
+	    </table>
+	</div>
+</div>

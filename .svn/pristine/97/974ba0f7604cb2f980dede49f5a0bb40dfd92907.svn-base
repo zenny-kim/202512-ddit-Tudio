@@ -1,0 +1,13 @@
+@charset "UTF-8";
+
+/* 캘린더 컨테이너 스타일 */
+.calendar-container {
+    flex: 1; 
+    border: 1px solid #ddd; 
+    border-radius: 8px; 
+    overflow: hidden;
+}
+/* FullCalendar 커스텀 (필요시) */
+.fc-event {
+    cursor: pointer;
+}

@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.projectInsight.mapper.IProjectInsightMapper">
+
+    <select id="getProjectInsight" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectInsightVO">
+	    WITH ALL_WORK AS (
+	        /* 1. 상위 업무 추출 */
+	        SELECT 
+	            PROJECT_NO,
+	            'T' AS WORK_TYPE,
+	            TASK_STATUS AS STATUS,
+	            TASK_RATE AS RATE,
+	            TASK_ENDDATE AS END_DATE,
+	            TASK_FINISHDATE AS FINISH_DATE
+	        FROM PROJECT_TASK
+	        WHERE PROJECT_NO = #{projectNo}
+	        
+	        UNION ALL
+	        
+	        /* 2. 단위 업무 추출 */
+	        SELECT 
+	            T.PROJECT_NO,
+	            'S' AS WORK_TYPE,
+	            S.SUB_STATUS AS STATUS,
+	            S.SUB_RATE AS RATE,
+	            S.SUB_ENDDATE AS END_DATE,
+	            S.SUB_FINISHDATE AS FINISH_DATE
+	        FROM PROJECT_TASK_SUB S
+	        JOIN PROJECT_TASK T ON S.TASK_ID = T.TASK_ID
+	        WHERE T.PROJECT_NO = #{projectNo}
+	    )
+	    SELECT 
+	        /* 프로젝트 설명 및 D-Day (기존 로직 유지) */
+	        (SELECT PROJECT_DESC FROM PROJECT WHERE PROJECT_NO = #{projectNo}) AS projectDesc,
+	        
+	        S.totalTaskCount,
+	        S.parentTaskCount,  /* 상위 업무 수 */
+	        S.subTaskCount,     /* 단위 업무 수 */
+	        S.overallProgress,
+	        S.delayedTaskCount,
+	        S.todoCount,
+	        S.inProgressCount,
+	        S.reviewCount,
+	        S.doneCount,
+	        S.earlyDoneCount,
+	        S.onTimeDoneCount,
+	        S.lateDoneCount,
+	
+	        (SELECT 
+	            CASE 
+	                WHEN (TRUNC(PROJECT_ENDDATE) - TRUNC(SYSDATE)) > 0 THEN 'D-' || (TRUNC(PROJECT_ENDDATE) - TRUNC(SYSDATE))
+	                WHEN (TRUNC(PROJECT_ENDDATE) - TRUNC(SYSDATE)) = 0 THEN 'D-Day'
+	                ELSE '만료'
+	            END 
+	         FROM PROJECT WHERE PROJECT_NO = #{projectNo}) AS projectDday
+	    FROM (
+	        /* 2. 합쳐진 데이터에서 집계 함수만 따로 계산 (ORA-00937 방지) */
+	        SELECT 
+	            COUNT(*) AS totalTaskCount,
+	            COUNT(CASE WHEN WORK_TYPE = 'T' THEN 1 END) AS parentTaskCount,
+	            COUNT(CASE WHEN WORK_TYPE = 'S' THEN 1 END) AS subTaskCount,
+	            NVL(ROUND(AVG(CASE WHEN WORK_TYPE = 'T' THEN RATE END), 1), 0) AS overallProgress,
+	            COUNT(CASE WHEN TRUNC(END_DATE) &lt; TRUNC(SYSDATE) AND STATUS != 203 THEN 1 END) AS delayedTaskCount,
+	            COUNT(CASE WHEN STATUS = 201 THEN 1 END) AS todoCount,
+	            COUNT(CASE WHEN STATUS = 202 THEN 1 END) AS inProgressCount,
+	            COUNT(CASE WHEN STATUS = 204 THEN 1 END) AS reviewCount,
+	            COUNT(CASE WHEN STATUS = 203 THEN 1 END) AS doneCount,
+	            COUNT(CASE WHEN STATUS = 203 AND TRUNC(FINISH_DATE) &lt; TRUNC(END_DATE) THEN 1 END) AS earlyDoneCount,
+	            COUNT(CASE WHEN STATUS = 203 AND TRUNC(FINISH_DATE) = TRUNC(END_DATE) THEN 1 END) AS onTimeDoneCount,
+	            COUNT(CASE WHEN STATUS = 203 AND TRUNC(FINISH_DATE) > TRUNC(END_DATE) THEN 1 END) AS lateDoneCount
+	        FROM ALL_WORK
+	    ) S
+	</select>
+
+    <select id="getMemberContributionList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+        SELECT 
+            M.MEMBER_NO,
+            U.MEMBER_NAME AS memberName,
+            U.MEMBER_POSITION AS memberPosition,
+            COUNT(T.TASK_ID) AS totalTaskCnt,
+            COUNT(CASE WHEN T.TASK_STATUS = 202 THEN 1 END) AS ingCnt,
+            COUNT(CASE WHEN T.TASK_STATUS = 203 THEN 1 END) AS doneCnt,
+            COUNT(CASE WHEN TRUNC(T.TASK_ENDDATE) &lt; TRUNC(SYSDATE) AND T.TASK_STATUS != 203 THEN 1 END) AS delayCnt,
+            
+            NVL(ROUND((COUNT(CASE WHEN T.TASK_STATUS = 203 THEN 1 END) / 
+                   NULLIF((SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = #{projectNo} AND TASK_STATUS = 203), 0)) * 100, 1), 0) AS contributionRate
+        FROM PROJECT_MEMBER M
+        JOIN MEMBER U ON (M.MEMBER_NO = U.MEMBER_NO)
+        /* 담당자 테이블(PTM)을 거쳐서 실제 배정된 업무(T)를 조인합니다 */
+        LEFT JOIN PROJECT_TASK_MANAGER PTM ON (M.MEMBER_NO = PTM.MEMBER_NO AND PTM.WORK_TYPE = 'T')
+        LEFT JOIN PROJECT_TASK T ON (PTM.WORK_ID = T.TASK_ID AND M.PROJECT_NO = T.PROJECT_NO)
+        WHERE M.PROJECT_NO = #{projectNo}
+          AND M.PROJECT_MEM_STATUS = 'Y'
+        GROUP BY M.MEMBER_NO, U.MEMBER_NAME, U.MEMBER_POSITION
+        ORDER BY contributionRate DESC
+    </select>
+    
+  <select id="selectPriorityDistribution" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectInsightVO">
+	    WITH base AS (
+		  SELECT 211 AS PRIORITY_CODE, '낮음' AS PRIORITY_LABEL FROM DUAL UNION ALL
+		  SELECT 212, '보통' FROM DUAL UNION ALL
+		  SELECT 213, '높음' FROM DUAL UNION ALL
+		  SELECT 214, '긴급' FROM DUAL
+		),
+		all_work AS (
+		
+		  SELECT t.TASK_PRIORITY AS PRIORITY_CODE
+		  FROM PROJECT_TASK t
+		  WHERE t.PROJECT_NO = #{projectNo}
+		
+		  UNION ALL
+		
+		  SELECT s.SUB_PRIORITY AS PRIORITY_CODE
+		  FROM PROJECT_TASK_SUB s
+		  JOIN PROJECT_TASK t ON t.TASK_ID = s.TASK_ID
+		  WHERE t.PROJECT_NO = #{projectNo}
+		),
+		agg AS (
+		  SELECT PRIORITY_CODE, COUNT(*) AS priorityCnt
+		  FROM all_work
+		  WHERE PRIORITY_CODE IN (211, 212, 213, 214)
+		  GROUP BY PRIORITY_CODE
+		),
+		total AS (
+		  SELECT COUNT(*) AS TOTAL_CNT
+		  FROM all_work
+		  WHERE PRIORITY_CODE IN (211, 212, 213, 214)
+		)
+		SELECT
+		  b.PRIORITY_CODE,
+		  b.PRIORITY_LABEL,
+		  NVL(a.priorityCnt, 0) AS priorityCnt,
+		  CASE 
+		    WHEN t.TOTAL_CNT = 0 THEN 0
+		    ELSE ROUND(NVL(a.priorityCnt, 0) / t.TOTAL_CNT * 100, 1)
+		  END AS priorityPct
+		FROM base b
+		LEFT JOIN agg a ON a.PRIORITY_CODE = b.PRIORITY_CODE
+		CROSS JOIN total t
+		ORDER BY b.PRIORITY_CODE DESC
+    </select>
+    
+    <select id="selectProgressPct" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectInsightVO">
+
+		<![CDATA[
+		WITH prj AS (
+		    SELECT
+		        p.project_no,
+		        TRUNC(CAST(p.project_startdate AS DATE)) AS start_dt,
+		        TRUNC(CAST(p.project_enddate   AS DATE)) AS end_dt,
+		        LEAST(TRUNC(CAST(p.project_enddate AS DATE)), TRUNC(SYSDATE)) AS cap_end_dt
+		    FROM project p
+		    WHERE p.project_no = #{projectNo}
+		),
+		
+		all_work AS (
+		    SELECT
+		        t.project_no,
+		        t.task_status AS status_code,
+		        TRUNC(CAST(t.task_finishdate AS DATE)) AS finish_dt
+		    FROM project_task t
+		    WHERE t.project_no = #{projectNo}
+		
+		    UNION ALL
+		
+		    SELECT
+		        t.project_no,
+		        s.sub_status AS status_code,
+		        TRUNC(CAST(s.sub_finishdate AS DATE)) AS finish_dt
+		    FROM project_task_sub s
+		    JOIN project_task t ON t.task_id = s.task_id
+		    WHERE t.project_no = #{projectNo}
+		),
+		
+		total_cnt AS (
+		    SELECT COUNT(*) AS total_cnt
+		    FROM all_work
+		    WHERE status_code IN (202,203,204,205)
+		),
+		
+		
+		weeks AS (
+		    SELECT LEVEL AS week_no
+		    FROM prj
+		    CONNECT BY LEVEL <= GREATEST(1, CEIL(((end_dt + 13) - start_dt + 1) / 7))
+		),
+		
+		
+		weekly_done AS (
+		    SELECT
+		        FLOOR((aw.finish_dt - pr.start_dt) / 7) + 1 AS week_no,
+		        COUNT(*) AS done_cnt
+		    FROM all_work aw
+		    JOIN prj pr ON pr.project_no = aw.project_no
+		    WHERE aw.status_code = 203
+		      AND aw.finish_dt IS NOT NULL
+		      AND aw.finish_dt >= pr.start_dt
+		      AND aw.finish_dt <= pr.cap_end_dt
+		    GROUP BY FLOOR((aw.finish_dt - pr.start_dt) / 7) + 1
+		),
+		
+		weekly AS (
+		    SELECT w.week_no, NVL(d.done_cnt, 0) AS done_cnt
+		    FROM weeks w
+		    LEFT JOIN weekly_done d ON d.week_no = w.week_no
+		),
+		
+		biweekly AS (
+		    SELECT CEIL(week_no / 2) AS bi_no, SUM(done_cnt) AS done_cnt_2w
+		    FROM weekly
+		    GROUP BY CEIL(week_no / 2)
+		),
+		
+		cum AS (
+		    SELECT bi_no,
+		           SUM(done_cnt_2w) OVER (ORDER BY bi_no) AS cum_done
+		    FROM biweekly
+		),
+		
+		max_bi AS (
+		    SELECT MAX(bi_no) AS max_bi_no
+		    FROM cum
+		),
+		
+		
+		today_bi AS (
+		    SELECT
+		        CASE
+		            WHEN cap_end_dt < start_dt THEN 0
+		            ELSE CEIL(((cap_end_dt - start_dt) + 1) / 14)
+		        END AS today_bi_no
+		    FROM prj
+		),
+		
+		
+		done_upto_today AS (
+		    SELECT COUNT(*) AS done_cnt
+		    FROM all_work aw
+		    JOIN prj pr ON pr.project_no = aw.project_no
+		    WHERE aw.status_code = 203
+		      AND aw.finish_dt IS NOT NULL
+		      AND aw.finish_dt >= pr.start_dt
+		      AND aw.finish_dt <= pr.cap_end_dt
+		),
+		
+		
+		bi_points AS (
+		    SELECT
+		        CASE
+		            WHEN c.bi_no = mb.max_bi_no THEN pr.end_dt
+		            ELSE pr.start_dt + ((c.bi_no - 1) * 14)
+		        END AS point_dt,
+		
+		        CASE
+		            WHEN c.bi_no = mb.max_bi_no THEN
+		                CASE
+		                    WHEN EXTRACT(YEAR FROM pr.end_dt) = EXTRACT(YEAR FROM SYSDATE)
+		                    THEN TO_CHAR(pr.end_dt, 'MM-DD')
+		                    ELSE TO_CHAR(pr.end_dt, 'YYYY-MM-DD')
+		                END
+		            ELSE
+		                CASE
+		                    WHEN EXTRACT(YEAR FROM (pr.start_dt + ((c.bi_no - 1) * 14))) = EXTRACT(YEAR FROM SYSDATE)
+		                    THEN TO_CHAR(pr.start_dt + ((c.bi_no - 1) * 14), 'MM-DD')
+		                    ELSE TO_CHAR(pr.start_dt + ((c.bi_no - 1) * 14), 'YYYY-MM-DD')
+		                END
+		        END AS progressLabel,
+		
+		        CASE
+		            WHEN c.bi_no > tb.today_bi_no THEN NULL       
+		            WHEN t.total_cnt = 0 THEN 0
+		            ELSE ROUND(c.cum_done / t.total_cnt * 100, 1)
+		        END AS progressPct,
+		
+		        0 AS is_today
+		    FROM cum c
+		    JOIN prj pr ON 1=1
+		    CROSS JOIN total_cnt t
+		    CROSS JOIN max_bi mb
+		    CROSS JOIN today_bi tb
+		),
+		
+		
+		today_point AS (
+		    SELECT
+		        pr.cap_end_dt AS point_dt,
+		        CASE
+		            WHEN EXTRACT(YEAR FROM pr.cap_end_dt) = EXTRACT(YEAR FROM SYSDATE)
+		            THEN TO_CHAR(pr.cap_end_dt, 'MM-DD')
+		            ELSE TO_CHAR(pr.cap_end_dt, 'YYYY-MM-DD')
+		        END AS progressLabel,
+		        CASE
+		            WHEN pr.cap_end_dt < pr.start_dt THEN 0
+		            WHEN t.total_cnt = 0 THEN 0
+		            ELSE ROUND(d.done_cnt / t.total_cnt * 100, 1)
+		        END AS progressPct,
+		        1 AS is_today
+		    FROM prj pr
+		    CROSS JOIN total_cnt t
+		    CROSS JOIN done_upto_today d
+		),
+		
+		
+		merged AS (
+		    SELECT * FROM bi_points
+		    UNION ALL
+		    SELECT * FROM today_point
+		),
+		dedup AS (
+		    SELECT
+		        point_dt,
+		        MAX(progressLabel) KEEP (DENSE_RANK LAST ORDER BY is_today) AS progressLabel,
+		        MAX(progressPct)   KEEP (DENSE_RANK LAST ORDER BY is_today) AS progressPct
+		    FROM merged
+		    GROUP BY point_dt
+		)
+		
+		SELECT progressLabel, progressPct
+		FROM dedup
+		ORDER BY point_dt
+		]]>
+    </select>
+    
+</mapper>

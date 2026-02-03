@@ -1,0 +1,145 @@
+package kr.or.ddit.chatbot.controller;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import kr.or.ddit.chatbot.tool.ChatbotTool;
+
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : ChatbotController
+ * DESC : 챗봇 컨트롤러 클래스
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 KJS
+ * @version 1.0, 2025.01.25
+ * 
+ */
+@Slf4j
+@Controller
+@RequestMapping("/tudio/bot")
+public class ChatbotController {
+	
+	@Autowired
+	private ChatbotTool chatbotTool;
+	
+	// AI 가 전달해준 json 문자열을 Map으로 변환할 때 사용
+	@Autowired
+	private ObjectMapper objectMapper;
+	
+	private final ChatClient chatClient;
+
+	public ChatbotController(ChatClient.Builder builder) {
+		// AI 기본 설정을 위한 프롬프트 
+		String systemPrompt = """
+		        당신은 Tudio 프로젝트 관리 시스템의 AI 비서입니다.
+		        사용자의 입력을 분석하여 **반드시 아래의 JSON 형식으로만** 응답하세요.
+		        응답 앞뒤에 Markdown 태그(```json)나 잡담을 절대 붙이지 마세요.
+		        
+		        ---
+		        
+		        ### [판단 기준 및 응답 형식]
+		        
+		        **상황 1. 사용자가 '기안서', '결재', '문서' 등을 '작성'하거나 '써달라'고 요청하는 경우 (페이지 이동)**
+		        사용자의 요청 내용을 바탕으로, **실제 결재를 올리는 직원이 된 것처럼 구체적이고 창의적인 내용**을 작성하여 아래 JSON을 반환하세요.
+				단순한 텍스트 나열이 아니라, 해당 문서 양식에 맞는 **목차(개요, 상세내용, 기대효과 등)**를 갖춰서 작성해야 합니다.
+		        
+		        {
+		          "type": "COMMAND",
+		          "action": "NAVIGATE",
+		          "targetUrl": "/approval/form",
+		          "fillData": {
+		             "docTitle": "사용자 요청을 요약한 간결하고 명확한 전문적인 제목 (예: [요청] 1팀 서버 증설 건)",
+		             "docType": "양식코드(아래 매핑표 참고)",
+		             "content": "사용자 요청 내용을 바탕으로 정리한 기안 본문 (HTML 태그 사용 가능)"
+		          }
+		        }
+		        
+		        * [양식코드 매핑표]
+		        - 인력, 자원, 장비 구매 -> 'resource'
+		        - 일정 변경, 기간 연장, 스케줄 조정, 조기 종료 -> 'schedule'
+		        - 예산, 비용, 금액 관련 -> 'budget'
+		        - 검수, 보고, 산출물 확인 -> 'check'
+		        - 최종 완료, 종료 보고 -> 'report'
+		        - 휴가, 반차, 기타 일반 요청 -> 'other'
+		        
+		        ---
+		        
+		        **상황 2. 그 외 일반적인 질문, 절차 문의, 예시 요청인 경우 (대화)**
+		        기존에 정의된 도구(Tool)를 적극적으로 활용하여 답변을 생성하고, 최종 답변은 아래 JSON의 message 필드에 담아 반환하세요.
+		        
+		        {
+		          "type": "TALK",
+		          "message": "AI의 답변 내용 (줄바꿈은 \\n 사용)"
+		        }
+		        
+		        * [도구 사용 가이드]
+		        1. 기안 작성법/절차 문의 -> 'getHowToApproval' 도구 사용
+		        2. 기안서 예시 요청 -> 'getApprovalExample' 도구 사용
+		           (파라미터: resource, schedule, budget, inspection, final, other 중 택 1)
+		           - 단순히 템플릿만 주지 말고, 실제 비즈니스 상황처럼 예시를 보여줄 것.
+		        3. 사용자가 당신의 기능을 물어볼 때 내부 메서드명은 언급 금지.
+		        """;
+		
+		this.chatClient = builder
+				.defaultSystem(systemPrompt)
+				.build();
+	}
+	
+	/**
+	 * 챗봇 화면 조회
+	 * @return chatbot.jsp 주소
+	 */
+	@GetMapping("/chat")
+	public String chatMain() {
+		return "chatbot/chatbot";
+	}
+	
+	/**
+	 * 사용자의 질문 처리
+	 * @return AI의 답변
+	 */
+	@GetMapping("/ask")
+	@ResponseBody
+	public Map<String, Object> ask(String message) {
+		
+		String response = chatClient.prompt(message)
+				.tools(chatbotTool)
+				.call()
+				.content();
+
+		Map<String, Object> result = new HashMap<>();
+		
+		try {
+			result = objectMapper.readValue(response, new TypeReference<Map<String, Object>>(){});
+		}catch(JsonProcessingException e) {
+			result.put("type", "TALK");
+			result.put("message", response);
+		}
+		
+		result.put("answer", response);
+		
+		return result;
+	}
+	
+}

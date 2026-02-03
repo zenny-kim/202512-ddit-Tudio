@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.member.mapper.IMemberMapper">
+
+	<resultMap id="memberMap" type="kr.or.ddit.vo.MemberVO">
+		<id column="MEMBER_NO" property="memberNo" />
+		<result column="MEMBER_ID" property="memberId" />
+		<result column="MEMBER_PW" property="memberPw" />
+		<result column="MEMBER_NAME" property="memberName" />
+		<result column="MEMBER_TEL" property="memberTel" />
+		<result column="COMPANY_NO" property="companyNo" />
+		<result column="COMPANY_NO_STATUS" property="companyNoStatus" />
+		<result column="MEMBER_EMAIL" property="memberEmail" />
+		<result column="EMAIL_STATUS" property="emailStatus" />
+		<result column="MEMBER_DEPARTMENT" property="memberDepartment" />
+		<result column="MEMBER_POSITION" property="memberPosition" />
+		<result column="SELECTIVE_CONSENT" property="selectiveConsent" />
+		<result column="MEMBER_JOIN_DATE" property="memberJoinDate" />
+		<result column="MEMBER_LEAVE_DATE" property="memberLeaveDate" />
+		<result column="LEAVE_STATUS" property="leaveStatus" />
+		<result column="LEAVE_REASON" property="leaveReason" />
+		<result column="MEMBER_REGNO" property="memberRegno" />
+		<result column="MEMBER_REGDATE" property="memberRegdate" />
+		<result column="MEMBER_PROFILEIMG" property="memberProfileimg" />
+		<result column="COMPANY_NAME" property="companyName" />
+		<result column="PROJECT_COUNT" property="projectCount" />
+    	<result column="LAST_LOGIN_DATE" property="lastLoginDate" />
+    	<result column="DAYS_SINCE_LOGIN" property="daysSinceLogin" />
+		
+		<association property="notificationSettingVO" javaType="kr.or.ddit.vo.NotificationSettingVO">
+	        <id column="MEMBER_NO" property="memberNo" />
+	        <result column="NOTI_PROJECT_NOTICE" property="notiProjectNotice" />
+	        <result column="NOTI_TASK_COMMENT" property="notiTaskComment" />
+	        <result column="NOTI_BO_COMMENT" property="notiBoComment" />
+	        <result column="NOTI_SCHEDULE" property="notiSchedule" />
+	        <result column="NOTI_SITE" property="notiSite" />
+	    </association>
+		
+		<collection property="memberAuthVOList" resultMap="authMap" />
+	</resultMap>
+
+	<resultMap id="authMap" type="kr.or.ddit.vo.MemberAuthVO">
+		<result column="MEMBER_NO" property="memberNo" />
+		<result column="AUTH" property="auth" />
+	</resultMap>
+	
+	
+
+	<!-- 아이디 찾기 -->
+	<select id="findMemberId" parameterType="kr.or.ddit.vo.MemberVO" resultType="string">
+		SELECT 
+			member_id
+		FROM 
+			member
+		WHERE 
+			member_name = #{memberName}
+		AND member_email = #{memberEmail}
+		AND leave_status = 'N' 
+	</select>
+	
+	<!-- 비밀번호 찾기 -->
+	<select id="findMemberPw" parameterType="kr.or.ddit.vo.MemberVO" resultMap="memberMap">
+	    SELECT 
+	        MEMBER_NO, MEMBER_ID, MEMBER_NAME, COMPANY_NO,
+	        MEMBER_TEL, MEMBER_EMAIL, LEAVE_STATUS
+	    FROM MEMBER
+	    WHERE MEMBER_ID = #{memberId}
+	      AND MEMBER_NAME = #{memberName}
+	      AND MEMBER_TEL = #{memberTel}
+	      AND LEAVE_STATUS = 'N'
+	</select>
+	<update id="updateNewMemberPw" parameterType="kr.or.ddit.vo.MemberVO">
+	    UPDATE MEMBER
+	    SET MEMBER_PW = #{memberPw}
+	    WHERE MEMBER_ID = #{memberId}
+	</update>
+    
+    <!-- 마이페이지 조회 -->
+	<!-- 로그인 (권한테이블, 회사테이블과 조인, 컬럼생성) -->
+	<select id="findByMemberId" parameterType="string" resultMap="memberMap">
+	    SELECT
+	        M.MEMBER_NO, M.MEMBER_ID, M.MEMBER_PW,
+	        M.MEMBER_NAME, M.MEMBER_TEL, M.COMPANY_NO, M.COMPANY_NO_STATUS,
+	        M.MEMBER_EMAIL, M.EMAIL_STATUS, M.MEMBER_DEPARTMENT, M.MEMBER_POSITION,
+	        M.SELECTIVE_CONSENT, M.MEMBER_JOIN_DATE, M.MEMBER_LEAVE_DATE,
+	        M.LEAVE_STATUS, M.LEAVE_REASON, M.MEMBER_REGNO, M.MEMBER_PROFILEIMG,
+	        A.AUTH,
+	        C.COMPANY_NAME,
+	        N.NOTI_PROJECT_NOTICE, 
+	        N.NOTI_TASK_COMMENT, 
+	        N.NOTI_BO_COMMENT, 
+	        N.NOTI_SCHEDULE, 
+	        N.NOTI_SITE        
+		FROM MEMBER M
+	        LEFT OUTER JOIN MEMBER_AUTH A ON(M.MEMBER_NO = A.MEMBER_NO)
+	        LEFT OUTER JOIN CLIENT_COMPANY C ON(M.COMPANY_NO = C.COMPANY_NO) 
+	        LEFT OUTER JOIN NOTIFICATION_SETTING N ON (M.MEMBER_NO = N.MEMBER_NO)
+	   	WHERE
+	        M.MEMBER_ID = #{memberId}
+	    AND M.LEAVE_STATUS = 'N'
+	</select>
+	
+	<!-- 마이페이지 수정 -->
+	<update id="updateMember" parameterType="kr.or.ddit.vo.MemberVO">
+	    UPDATE MEMBER
+	    <set>
+	        <if test="memberName != null and memberName != ''">
+	            MEMBER_NAME = #{memberName},
+	        </if>
+	        <if test="memberEmail != null and memberEmail != ''">
+	            MEMBER_EMAIL = #{memberEmail},
+	        </if>
+	        <if test="memberTel != null and memberTel != ''">
+	            MEMBER_TEL = #{memberTel},
+	        </if>
+	        <if test="memberDepartment != null and memberDepartment != ''">
+	            MEMBER_DEPARTMENT = #{memberDepartment},
+	        </if>
+	        <if test="memberPosition != null and memberPosition != ''">
+	            MEMBER_POSITION = #{memberPosition},
+	        </if>
+	        <if test="companyNo != null and companyNo != ''">
+	            COMPANY_NO = #{companyNo},
+	        </if>
+	        <if test="memberPw != null and memberPw != ''">
+	            MEMBER_PW = #{memberPw},
+	        </if>
+	        <if test="memberProfileimg != null and memberProfileimg != ''">
+	            MEMBER_PROFILEIMG = #{memberProfileimg},
+	        </if>
+	    </set>
+	    WHERE 
+	        MEMBER_ID = #{memberId} 
+	        AND MEMBER_NO = #{memberNo}
+	</update>
+	
+	<!-- 마이페이지 - 알림설정 수정 -->
+	<update id="updateNotification" parameterType="kr.or.ddit.vo.NotificationSettingVO">
+	    UPDATE NOTIFICATION_SETTING
+	    SET NOTI_PROJECT_NOTICE = #{notiProjectNotice},
+	        NOTI_TASK_COMMENT = #{notiTaskComment},
+	        NOTI_BO_COMMENT = #{notiBoComment},
+	        NOTI_SCHEDULE = #{notiSchedule},
+	        NOTI_SITE = #{notiSite}
+	    WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+	<select id="getProfilePath" parameterType="int" resultType="string">
+	    SELECT 
+	        FD.FILE_PATH
+	    FROM 
+	        FILE_DETAIL FD
+	    JOIN 
+	        FILE_GROUP FG ON FD.FILE_GROUP_NO = FG.FILE_GROUP_NO
+	    WHERE 
+	        FG.MEMBER_NO = #{memberNo} 
+	        AND FG.FILE_GROUP_TYPE = '08'
+	</select>
+	
+	<!-- 프로필 변경 시 파일디테일 삭제 -->
+	<!-- <delete id="deleteProfileFile" parameterType="int">
+	    DELETE FROM FILE_DETAIL
+	    WHERE FILE_GROUP_NO = (
+	        SELECT FILE_GROUP_NO 
+	        FROM FILE_GROUP 
+	        WHERE MEMBER_NO = #{memberNo} AND FILE_GROUP_TYPE = '08'
+	    )
+	</delete> -->
+	
+	<!-- 프로필 변경 시 파일그룹 삭제 -->
+	<!-- <delete id="deleteProfileGroup" parameterType="int">
+	    DELETE FROM FILE_GROUP
+	    WHERE MEMBER_NO = #{memberNo} 
+	      AND FILE_GROUP_TYPE = '08'
+	</delete> -->
+
+	<!-- 아이디 중복확인 -->
+	<select id="idCheck" parameterType="string" resultType="kr.or.ddit.vo.MemberVO">
+	    SELECT MEMBER_NO, MEMBER_ID
+		FROM MEMBER
+		WHERE MEMBER_ID = #{memberId}
+	</select>
+	
+	<!-- 회원가입 시 알림설정 디폴트값 -->
+	<insert id="insertDefaultNotification" parameterType="int">
+	    INSERT INTO NOTIFICATION_SETTING (
+	        MEMBER_NO, 
+	        NOTI_TASK_COMMENT, 
+	        NOTI_BO_COMMENT, 
+	        NOTI_MANAGER, 
+	        NOTI_CHAT, 
+	        NOTI_SCHEDULE, 
+	        NOTI_SITE, 
+	        NOTI_INQUIRY_COMMENT, 
+	        NOTI_DRAFT_UPLOAD, 
+	        NOTI_APPROVAL, 
+	        NOTI_PROJECT_NOTICE
+	    ) VALUES (
+	        #{memberNo},
+	        'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'
+	    )
+	</insert>
+	
+	<!-- 일반회원가입 -->
+	<insert id="memberSignup" parameterType="kr.or.ddit.vo.MemberVO" useGeneratedKeys="true" keyProperty="memberNo">
+		<selectKey keyProperty="memberNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_MEMBER.NEXTVAL FROM DUAL
+	    </selectKey>
+	    
+		INSERT INTO MEMBER (
+	        MEMBER_NO, 
+	        MEMBER_ID, 
+	        MEMBER_PW,
+	        MEMBER_NAME, 
+	        MEMBER_TEL, 
+	        COMPANY_NO, 
+	        COMPANY_NO_STATUS,
+	        MEMBER_EMAIL, 
+	        EMAIL_STATUS, 
+	        MEMBER_DEPARTMENT, 
+	        MEMBER_POSITION,
+	        SELECTIVE_CONSENT, 
+	        MEMBER_JOIN_DATE, 
+	        LEAVE_STATUS,
+	        MEMBER_REGNO, 
+	        MEMBER_PROFILEIMG
+	    ) VALUES (
+	        #{memberNo},
+	        #{memberId},
+	        #{memberPw},
+	        #{memberName},
+	        #{memberTel}, 
+	        #{companyNo},
+	        #{companyNoStatus}, 
+	        #{memberEmail},
+	        #{emailStatus}, 
+	        #{memberDepartment},
+	        #{memberPosition},
+	        #{selectiveConsent},
+	        CURRENT_TIMESTAMP,
+	        'N', 
+	        #{memberRegno},
+	        #{memberProfileimg}
+	    )
+	</insert>
+	
+	<!-- 기업관리자 회원가입 -->
+	<insert id="insertClientCompany" parameterType="kr.or.ddit.vo.ClientCompanyVO">
+	    INSERT INTO CLIENT_COMPANY (
+	        COMPANY_NO, 
+	        COMPANY_NAME,
+	        COMPANY_ADDR1, 
+	        COMPANY_ADDR2,
+	        COMPANY_TEL, 
+	        COMPANY_POSTCODE, 
+	        COMPANY_CEO_NAME,
+	        COMPANY_AUTH_STATUS, 
+	        BIZ_FILE_NO
+	    ) VALUES (
+	        #{companyNo}, #{companyName},
+	        #{companyAddr1},
+	        #{companyAddr2},
+	        #{companyTel},
+	        #{companyPostcode},
+	        #{companyCeoName},
+	        'N',
+	        #{bizFileNo} )
+	</insert>
+		
+	<!-- 일반회원가입 권한생성 -->
+	<insert id="insertMemberAuth">
+	    INSERT INTO MEMBER_AUTH (MEMBER_NO, AUTH)
+	    VALUES (#{memberNo}, #{auth})
+	</insert>
+	
+	<!-- 회원가입 프로필 파일 그룹 -->
+	<!-- 
+	<insert id="insertProfileFileGroup" parameterType="kr.or.ddit.vo.FileGroupVO">
+	    <selectKey keyProperty="fileGroupNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_FILE_GROUP.NEXTVAL FROM DUAL
+	    </selectKey>
+	    INSERT INTO FILE_GROUP (
+	        FILE_GROUP_NO, 
+	        FILE_GROUP_TYPE, 
+	        MEMBER_NO, 
+	        FILE_GROUP_REGDATE
+	    ) VALUES (
+	        #{fileGroupNo}, 
+	        #{fileGroupType}, 
+	        #{memberNo}, 
+	        CURRENT_TIMESTAMP
+	    )
+	</insert> 
+	-->
+
+	<!-- 회원가입 프로필 파일디테일 -->
+	<!-- 
+	<insert id="insertProfileFileDetail" parameterType="kr.or.ddit.vo.FileDetailVO">
+	    INSERT INTO FILE_DETAIL (
+	        FILE_NO, 
+	        FILE_GROUP_NO, 
+	        FILE_ORIGINAL_NAME, 
+	        FILE_SAVE_NAME, 
+	        FILE_PATH, 
+	        FILE_SIZE, 
+	        FILE_EXTENSION, 
+	        FILE_MIME, 
+	        FILE_DOWNLOAD_CNT, 
+	        FILE_REGDATE, 
+	        FILE_DELETE
+	    ) VALUES (
+	        SEQ_FILE.NEXTVAL, 
+	        #{fileGroupNo},
+	        #{fileOriginalName}, 
+	        #{fileSaveName},
+	        #{filePath}, 
+	        #{fileSize}, 
+	        #{fileExtension}, 
+	        #{fileMime}, 
+	        0, 
+	        CURRENT_TIMESTAMP, 
+	        'N'
+	    )
+	</insert> 
+	-->
+	
+	<!-- 공통 프로필 위치 업로드 -->
+	<update id="updateMemberProfile" parameterType="kr.or.ddit.vo.MemberVO">
+	    UPDATE MEMBER
+	    SET MEMBER_PROFILEIMG = #{memberProfileimg}
+	    WHERE MEMBER_NO = #{memberNo}
+	</update>
+	
+	<!-- 회원가입 사업자번호 db 조회 -->
+	<select id="getCompanyInfo" parameterType="String" resultType="kr.or.ddit.vo.ClientCompanyVO">
+	    SELECT 
+	        COMPANY_NO, 
+	        COMPANY_NAME, 
+	        COMPANY_CEO_NAME, 
+	        COMPANY_ADDR1, 
+	        COMPANY_ADDR2
+	    FROM 
+	        CLIENT_COMPANY
+	    WHERE 
+	        COMPANY_NO = #{companyNo}
+	</select>
+	
+	<!-- 일반 회원가입에서 저장되는 회사명, 사업자등록번호 -->
+	<insert id="insertCompanySimple" parameterType="kr.or.ddit.vo.ClientCompanyVO">
+	    INSERT INTO CLIENT_COMPANY (
+	        COMPANY_NO, 
+	        COMPANY_NAME, 
+	        COMPANY_AUTH_STATUS
+	    ) VALUES (
+	        #{companyNo}, 
+	        #{companyName}, 
+	        'N'
+	    )
+	</insert>
+
+	<!-- 사업자등록증 파일 그룹 -->
+	<insert id="insertbizFileFileGroup" parameterType="fileGroupVO">
+		<selectKey keyProperty="fileGroupNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_FILE_GROUP.NEXTVAL FROM DUAL
+	    </selectKey>
+		INSERT INTO FILE_GROUP (
+	        FILE_GROUP_NO, 
+	        FILE_GROUP_TYPE, 
+	        MEMBER_NO, 
+	        FILE_GROUP_REGDATE
+	    ) VALUES (
+	        #{fileGroupNo}, 
+	        #{fileGroupType}, 
+	        #{memberNo}, 
+	        CURRENT_TIMESTAMP
+	    )
+	</insert>
+
+	<!-- 사업자등록증 파일 디테일 -->
+	<insert id="insertbizFileFileDetail" parameterType="fileDetailVO">
+		INSERT INTO FILE_DETAIL (
+			FILE_NO, 
+	        FILE_GROUP_NO, 
+	        FILE_ORIGINAL_NAME, 
+	        FILE_SAVE_NAME, 
+	        FILE_PATH, 
+	        FILE_SIZE, 
+	        FILE_EXTENSION, 
+	        FILE_MIME, 
+	        FILE_DOWNLOAD_CNT, 
+	        FILE_REGDATE, 
+	        FILE_DELETE
+		) VALUES (
+			#{fileGroupNo},
+	        #{fileOriginalName}, 
+	        #{fileSaveName},
+	        #{filePath}, 
+	        #{fileSize}, 
+	        #{fileExtension}, 
+	        #{fileMime}, 
+	        0, 
+	        CURRENT_TIMESTAMP, 
+	        'N'
+		)
+	</insert>	
+	
+	<select id="selectAdminMemberList" parameterType="string" resultMap="memberMap">
+	    SELECT 
+	        M.MEMBER_NO, M.MEMBER_ID, M.MEMBER_NAME, M.MEMBER_EMAIL, 
+	        M.MEMBER_TEL, M.MEMBER_DEPARTMENT, M.MEMBER_POSITION,
+	        M.MEMBER_JOIN_DATE, M.MEMBER_LEAVE_DATE, M.LEAVE_STATUS, M.LEAVE_REASON,
+	        M.MEMBER_PROFILEIMG,
+	        A.AUTH,
+	        C.COMPANY_NAME,
+	        (SELECT COUNT(*) FROM PROJECT_MEMBER PM WHERE PM.MEMBER_NO = M.MEMBER_NO) AS PROJECT_COUNT,
+	        (SELECT MAX(REG_DATE) FROM LOG_LOGIN L 
+	         WHERE L.MEMBER_NO = M.MEMBER_NO AND L.LOGIN_STATUS = 'SUCCESS') AS LAST_LOGIN_DATE,
+	        TRUNC(SYSDATE - (SELECT MAX(REG_DATE) FROM LOG_LOGIN L 
+	                         WHERE L.MEMBER_NO = M.MEMBER_NO AND L.LOGIN_STATUS = 'SUCCESS')) AS DAYS_SINCE_LOGIN
+	    FROM MEMBER M
+	    LEFT OUTER JOIN MEMBER_AUTH A ON (M.MEMBER_NO = A.MEMBER_NO)
+	    LEFT OUTER JOIN CLIENT_COMPANY C ON (M.COMPANY_NO = C.COMPANY_NO)
+	    WHERE 1=1
+	      AND A.AUTH != 'ROLE_ADMIN'
+	    <choose>
+	        <when test="type == 'general'">
+	            AND A.AUTH = 'ROLE_MEMBER'
+	            AND M.LEAVE_STATUS = 'N'
+	        </when>
+	        <when test="type == 'company'">
+	            AND A.AUTH = 'ROLE_CLIENT'
+	            AND M.LEAVE_STATUS = 'N'
+	        </when>
+	        <when test="type == 'withdrawal'">
+	            AND M.LEAVE_STATUS = 'Y'
+	        </when>
+	    </choose>
+	    ORDER BY M.MEMBER_JOIN_DATE DESC
+	</select>
+</mapper>

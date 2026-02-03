@@ -1,0 +1,65 @@
+(function () {
+	let contextPath;
+	let projectNo;
+	let $content;
+	
+	$(document).on('tab:loaded', function (e, tabName) {
+		if (tabName !== 'tasks') return;
+		
+		initTaskTab();
+	});
+	
+	function initTaskTab(){
+		contextPath = $('body').data('contextPath');
+		projectNo = $('body').data('projectNo');
+		$content = $('#projectTabContent');
+		
+		bindAccordion();	
+		bindCreateModal();
+	}
+	
+	function bindAccordion(){
+		$content
+				.off('click.taskAccordion')
+				.on('click.taskAccordion', '.task-row', function(){
+					const $taskRow = $(this);
+					const taskId = $taskRow.data('taskId');
+					
+					const $subs = $content.find(
+						`.sub-row[data-parent-task-id="${taskId}"], .sub-add-row[data-parent-task-id="${taskId}"]`
+					);
+					
+					const $icon = $taskRow.find('.toggle-icon');
+					const isOpen = $subs.first().is(':visible');
+					
+					$subs.css('display', isOpen ? 'none' : 'table-row');
+					
+					$icon
+						.toggleClass('bi-caret-right-fill', isOpen)
+						.toggleClass('bi-caret-down-fill', !isOpen);
+				});
+	}
+	
+	function bindCreateModal(){
+		$content
+				.off('click.taskCreate')
+				.on('click.taskCreate', '#btnCreateTask', function(){
+					
+					const url = `${contextPath}/tudio/project/task/create?projectNo=${projectNo}`;
+					
+					$('#taskCreateModalBody').load(url, function (res, status) {
+						if (status === 'error') {
+							$(this).html('<div class="text-danger text-center py-4">로딩 실패</div>');
+							return;
+						}
+						
+						const modalEl = document.getElementById('taskCreateModal');
+						bootstrap.Modal.getOrCreateInstance(modalEl).show();
+					});
+					
+					
+				})
+	}
+	
+	
+})();

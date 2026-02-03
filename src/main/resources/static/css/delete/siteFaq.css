@@ -1,0 +1,67 @@
+@charset "UTF-8";
+
+/* =========================================
+   [공통] 레이아웃 & 애니메이션
+   ========================================= */
+:root {
+    --admin-color: #334155;
+}
+
+/* 화면 전환 애니메이션 */
+.admin-section {
+    display: none;
+}
+.admin-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 카드 박스 디자인 */
+.admin-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: #fff;
+    margin-bottom: 20px;
+}
+.admin-card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* =========================================
+   [전용] FAQ 드래그 & 스타일
+   ========================================= */
+/* 드래그 핸들 (::) 아이콘 스타일 */
+.drag-handle { 
+    cursor: grab; 
+    color: #adb5bd;
+    font-size: 1.2rem;
+    padding: 5px;
+    transition: color 0.2s;
+}
+.drag-handle:hover { 
+    color: #495057; 
+}
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* SortableJS 드래그 중인 아이템 스타일 (반투명 효과) */
+.sortable-ghost { 
+    opacity: 0.4; 
+    background-color: #e9ecef; 
+    border: 2px dashed #adb5bd;
+}
+
+/* 테이블 행 높이 유지 (드래그 시 깨짐 방지) */
+.table td {
+    vertical-align: middle;
+}

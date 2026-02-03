@@ -1,0 +1,21 @@
+package kr.or.ddit.project.mapper;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.ProjectMemberVO;
+import kr.or.ddit.vo.ProjectMiniHeaderVO;
+import kr.or.ddit.vo.ProjectVO;
+
+@Mapper
+public interface IProjectMapper {
+	// 프로젝트 생성
+	public int insertProject(ProjectVO projectVO);
+	public int insertProjectMember(ProjectMemberVO memberVO);
+	public int insertMiniHeader(ProjectMiniHeaderVO miniheaderVO);	
+	// 이메일로 회원 정보 조회
+	public MemberVO findMemberByEmail(String memberEmail);
+	public List<MemberVO> checkMemberExistence(List<String> emailList);
+}

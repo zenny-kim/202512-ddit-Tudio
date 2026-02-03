@@ -1,0 +1,564 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tudio - 새 프로젝트 생성</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/sidebar.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/project.css">
+</head>
+<body>
+    
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom fixed-top" style="height: var(--header-height);">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold fs-4 ms-3 me-5" href="dashboard.html"><span class="text-primary">Tudio</span></a>
+                <div class="d-flex align-items-center me-3">
+                    <div class="dropdown me-3">
+                        <button class="btn btn-light notification-icon position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-bell-fill fs-5"></i><span class="notification-badge bg-danger text-white">3</span></button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" style="width: 300px;"><li><a class="dropdown-item small" href="#">[프로젝트 A] 새 업무가 할당되었습니다.</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-center small" href="notifications.html">모든 알림 보기</a></li></ul>
+                    </div>
+                    <div class="dropdown">
+                        <a class="nav-link d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><span class="profile-img-wrap">K</span> <span class="profile-name d-none d-lg-inline">김사용 님</span></a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow"><li><a class="dropdown-item" href="mypage.html">마이페이지</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="logout.html">로그아웃</a></li></ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="d-flex">
+        
+        <jsp:include page="include/sidebar.jsp">
+		      <jsp:param name="menu" value="createForm" />
+		</jsp:include>
+
+        <main class="main-content-wrap flex-grow-1">
+            <div class="container-fluid">
+                <h1 class="h3 fw-bold mb-4 text-primary"><i class="bi bi-folder-plus me-2"></i>프로젝트 생성</h1>
+                
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow p-4">
+                            <form action="/tudio/project/create" method="post">
+                                
+                                <div class="admin-note mb-4">
+                                    <i class="bi bi-info-circle-fill me-1"></i> 프로젝트를 생성하는 사용자는 자동으로 프로젝트 관리자 권한이 부여됩니다.
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="projectName" class="form-label fw-bold">프로젝트명 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="projectName" name="projectName" placeholder="" required>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="projectDesc" class="form-label fw-bold">프로젝트에 대한 설명</label>
+                                    <textarea class="form-control" id="projectDesc" name="projectDesc" rows="3" placeholder="프로젝트의 목적, 주요 목표, 핵심 범위 등을 입력하세요."></textarea>
+                                </div>
+                                
+                                <div class="row mb-5">
+								    <div class="col-md-4">
+								        <label for="projectType" class="form-label fw-bold">프로젝트 타입 <span class="text-danger">*</span></label>
+								        <select class="form-select" id="projectType" name="projectType" required>
+								            <option value="" selected disabled>선택</option>
+								            <option value="it">IT</option>
+								            <option value="marketitng">마케팅</option>
+								            <option value="entertainment">엔터테인먼트</option>
+								            <option value="construction">건설</option>
+								            <option value="sequrities">증권</option>
+								            <option value="school">학교</option>
+								            <option value="design">디자인</option>
+								            <option value="research">연구</option>
+								            <option value="manufacturing">제조&amp;생산</option>
+								            <option value="fnb">F&amp;B</option>
+								            <option value="etc">기타</option>
+								        </select>
+								    </div>
+								
+								    <div class="col-md-4">
+								        <label for="startDate" class="form-label fw-bold">프로젝트 시작일시 <span class="text-danger">*</span></label>
+								        <input type="datetime-local" class="form-control" id="startDate" name="projectStartdate" required>
+								    </div>
+								
+								    <div class="col-md-4">
+								        <label for="endDate" class="form-label fw-bold">프로젝트 종료일시 <span class="text-danger">*</span></label>
+								        <input type="datetime-local" class="form-control" id="endDate" name="projectEnddate" required>
+								    </div>
+								</div>
+
+                                <h5 class="text-primary fw-bold mb-3 border-top pt-4">
+                                    <i class="bi bi-layout-text-window-reverse me-1"></i> 프로젝트 탭 및 순서 설정
+                                </h5>
+                                <p class="text-muted small mb-4">
+                                    프로젝트 상세 화면에서 사용할 탭을 선택하고, <strong>드래그하여 순서를 변경</strong>할 수 있습니다.<br/>
+                                    설정된 순서는 프로젝트 상세 화면의 메뉴 순서로 반영됩니다.
+                                </p>
+                                
+                                <div class="table-responsive mb-4">
+                                    <table class="table table-bordered align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 10%;" class="text-center">이동</th>
+                                                <th style="width: 40%;">탭 이름 (기능)</th>
+                                                <th style="width: 20%;" class="text-center">사용 여부</th>
+                                                <th style="width: 30%;">비고</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tabSortableList">
+                                        	<tr class="draggable-row" data-tap-id="1">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-card-list me-2 text-info"></i> <strong>게시판 (Board)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">공지 및 자유게시판</td>
+                                            </tr>
+                                            <tr class="bg-light static-row" data-tap-id="2">
+                                                <td class="text-center text-muted"><i class="bi bi-lock-fill"></i></td>
+                                                <td><i class="bi bi-kanban me-2 text-primary"></i><strong>업무 (Tasks)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">칸반보드 및 리스트 뷰 제공</td>
+                                            </tr>
+                                            <tr class="draggable-row" data-tap-id="3">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-calendar-date me-2 text-success"></i><strong>일정 (Schedule)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">캘린더 뷰 제공</td>
+                                            </tr>
+                                            <tr class="draggable-row" data-tap-id="4">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-bar-chart-steps me-2 text-danger"></i><strong>간트차트 (Gantt)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">간트차트 및 진척도</td>
+                                            </tr>
+                                            <tr class="draggable-row" data-tap-id="5">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-folder-fill me-2 text-warning"></i><strong>자료실 (Files)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">파일 저장소</td>
+                                            </tr>
+                                            
+                                            <tr class="draggable-row" data-tap-id="6">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-people-fill me-2 text-dark"></i><strong>구성원 (Members)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">프로젝트 참여자 목록</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <h5 class="text-primary fw-bold mb-3 border-top pt-4">
+                                    <i class="bi bi-shield-lock me-1"></i> 고객사 접근 및 작성 권한 설정
+                                </h5>
+                                <div class="alert alert-light border mb-4" role="alert">
+                                    <i class="bi bi-exclamation-circle me-2 text-primary"></i>
+                                    <strong>안내:</strong> 위에서 '사용'으로 설정한 탭에 대해서만 권한 설정이 유효합니다. <br>
+                                    업무(Task) 생성 및 댓글 작성 권한은 개별 업무 생성 시 설정합니다.
+                                </div>
+
+                                <div class="table-responsive mb-5">
+                                    <table class="table table-bordered permission-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 30%;">메뉴 항목</th>
+                                                <th style="width: 25%;" class="text-center">고객사 메뉴 노출</th>
+                                                <th class="text-center">작성 권한 범위 설정</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <strong><i class="bi bi-card-list me-2 text-info"></i>게시판 (Board)</strong>
+                                                    <div class="text-muted small mt-1">공지사항 및 자유 게시글</div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="showBoard" checked>
+                                                        <label class="form-check-label ms-2" for="showBoard">노출함</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex justify-content-around">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="perm_board" id="perm_board_internal" value="internal">
+                                                            <label class="form-check-label" for="perm_board_internal">내부 팀원만 작성</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="perm_board" id="perm_board_all" value="all" checked>
+                                                            <label class="form-check-label" for="perm_board_all">전체 (고객사 포함)</label>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <strong><i class="bi bi-folder-fill me-2 text-warning"></i>자료실 (Files)</strong>
+                                                    <div class="text-muted small mt-1">프로젝트 산출물 및 자료 공유</div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="showFiles" checked>
+                                                        <label class="form-check-label ms-2" for="showFiles">노출함</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex justify-content-around">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="perm_files" id="perm_files_internal" value="internal">
+                                                            <label class="form-check-label" for="perm_files_internal">내부 팀원만 업로드</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="perm_files" id="perm_files_all" value="all" checked>
+                                                            <label class="form-check-label" for="perm_files_all">전체 (고객사 포함)</label>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="text-primary fw-bold mb-3 border-top pt-4"><i class="bi bi-people-fill me-1"></i> 팀원 구성 및 초대</h5>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <p class="text-muted small mb-0">프로젝트 생성 후에도 팀원을 추가하거나 변경할 수 있습니다.</p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                                        <i class="bi bi-envelope-plus me-1"></i> 이메일로 팀원 초대
+                                    </button>
+                                </div>
+                                
+                                <div class="table-responsive mb-4">
+                                    <table class="table table-striped align-middle small">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th scope="col" class="w-25">사용자 이름</th>
+                                                <th scope="col" class="w-50">이메일</th>
+                                                <th scope="col" class="w-25 text-center">관리</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="participantList">
+                                            <tr>
+                                                <td><span class="fw-bold">김사용 (본인)</span></td>
+                                                <td>user_ksy@tudio.com</td>
+                                                <td class="text-center"><button type="button" class="btn btn-sm btn-outline-secondary p-1" disabled><i class="bi bi-lock-fill"></i></button></td>
+                                            </tr>
+                                            </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="d-flex justify-content-end pt-3 border-top">
+                                    <button type="button" class="btn btn-outline-secondary me-2">취소</button>
+                                    <button type="button" class="btn btn-primary" onclick="submitProject()"><i class="bi bi-folder-plus me-1"></i> 프로젝트 생성</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+        
+        <!-- footer -->
+        
+    </div>
+    
+    <div class="chatbot-icon" data-bs-toggle="modal" data-bs-target="#chatbotModal">
+        <i class="bi bi-chat-dots-fill fs-4"></i>
+    </div>
+    
+    <div class="modal fade" id="chatbotModal" tabindex="-1" aria-labelledby="chatbotModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="chatbotModalLabel">Tudio AI 챗봇</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body" style="height: 300px; overflow-y: auto;"><p class="text-muted small">안녕하세요, Tudio AI입니다. 무엇을 도와드릴까요?</p></div><div class="modal-footer p-2"><input type="text" class="form-control form-control-sm me-2" placeholder="메시지를 입력하세요..."><button type="button" class="btn btn-primary btn-sm">전송</button></div></div></div>
+    </div>
+    
+    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="inviteModalLabel"><i class="bi bi-envelope-paper me-2"></i> 팀원 이메일 초대</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    
+                    <ul class="nav nav-tabs mb-3" id="inviteTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-pane" type="button" role="tab"><i class="bi bi-keyboard me-1"></i> 직접 입력</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="excel-tab" data-bs-toggle="tab" data-bs-target="#excel-pane" type="button" role="tab"><i class="bi bi-file-earmark-excel me-1"></i> 엑셀 업로드</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="manual-pane" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="inviteEmails" class="form-label">초대할 이메일 주소</label>
+                                <textarea class="form-control" id="inviteEmails" rows="5" placeholder="여러 명을 초대하려면 이메일을 쉼표(,) 또는 줄 바꿈으로 구분하여 입력하세요.&#13;&#10;예: user1@example.com, user2@example.com"></textarea>
+                                <div class="form-text">입력한 이메일로 프로젝트 초대 링크가 발송됩니다.</div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="excel-pane" role="tabpanel">
+                            <div class="mb-3 text-center p-4 border rounded bg-light">
+                                <i class="bi bi-file-earmark-excel text-success fs-1 mb-2"></i>
+                                <p class="small text-muted mb-3">이메일 목록이 담긴 엑셀(.xlsx, .csv) 파일을 업로드하세요.<br>(A열에 이메일 주소가 있어야 합니다)</p>
+                                <input type="file" class="form-control" id="excelFile" accept=".xlsx, .xls, .csv">
+                            </div>
+                            <div class="alert alert-info small mb-0">
+                                <i class="bi bi-info-circle me-1"></i> 업로드 시 자동으로 이메일을 추출하여 목록에 추가합니다.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary" onclick="processInvitations()">초대장 발송 및 추가</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+    <script>
+        // 1. 탭 순서 변경 (SortableJS)
+        document.addEventListener('DOMContentLoaded', function() {
+            let el = document.getElementById('tabSortableList');
+            
+            // SortableJS 초기화
+            let sortable = Sortable.create(el, {
+                animation: 150,
+                handle: '.drag-handle', // 드래그 핸들 클래스 지정
+                ghostClass: 'sortable-ghost',
+                filter: '.static-row', // 고정 행(업무 탭)은 드래그 시작 불가
+                
+                // 이동 제한 로직
+                onMove: function (evt) {
+                    // 드래그 중인 항목이 'static-row' 클래스를 가진 고정 행 위로 이동하려 하면 취소
+                    return evt.related.className.indexOf('static-row') === -1;
+                }
+            });
+        });
+
+        // 2. 초대된 사용자 목록 삭제 함수
+        function removeParticipant(btn) {
+            if (confirm("이 사용자를 목록에서 제거하시겠습니까?")) {
+                const row = btn.closest('tr');
+                row.remove();
+            }
+        }
+        
+        // 프로젝트 생성 로직
+        async function submitProject(event) {
+			// 1. 프로젝트 기본 정보
+			const projectName = document.getElementById('projectName').value;
+			const projectDesc = document.getElementById('projectDesc').value;
+			const projectType = document.getElementById('projectType').value;
+			const startDate = document.getElementById('startDate').value;
+			const endDate = document.getElementById('endDate').value;
+			
+			if(projectName == null || projectName == "") {
+				sweetAlert("error", "프로젝트명을 입력해주세요!");
+				return false;
+			} 
+			
+			if(!startDate) {
+				sweetAlert("error", "프로젝트 시작일을 입력해주세요!");
+				return false;
+			}
+			if(!endDate) {
+				sweetAlert("error","프로젝트 종료을 입력해주세요!");
+				return false;
+			}
+			
+			// 2. 탭 및 탭 순서 설정
+			const tabRows = document.querySelectorAll('#tabSortableList tr');
+			const tabOrderList = [];
+			
+			tabRows.forEach(row => {
+				// data-tab-id 속성이 있는 행의 데이터를 가져옴
+				const tabIdAttr = row.getAttribute('data-tap-id');
+				const checkbox = row.querySelector('input[type="checkbox"]');
+				
+				// 체크박스가 켜져있는(checked) 탭만 포함
+				if(tabIdAttr && checkbox && (checkbox.checked)) {
+					tabOrderList.push(parseInt(tabIdAttr));
+				}
+			});
+			
+			// 3. 프로젝트 참여자 및 기업 담당자 정보
+			const memberRows = document.querySelectorAll('#participantList tr');
+			const memberList = [];
+			const clientList = [];
+			
+			memberRows.forEach(row => {
+				const nameText = row.cells[0].innerText;
+				const emailText = row.cells[1].innerText;
+		
+				const userType = row.getAttribute('data-type') || 'MEMBER';
+				
+				// 본인(프로젝트 관리자) 제외한 구성원 정보
+				if(!nameText.includes("(본인)")) {
+					const memberData = {
+						memberEmail: emailText.trim(),
+						memberName: nameText.replace("초대됨", "").trim()
+					};
+					
+					// 기업 담당자
+					if(userType === 'CLIENT') {
+						clientList.push(memberData);
+					} else {	// 프로젝트 참여자
+						memberList.push(memberData);
+					}
+				}
+			});
+			
+			// 4. 권한 설정
+			const clientAccess = document.getElementById('clientAccessBoard')?.checked ? "Y" : "N" ;
+			
+			// 5. 프로젝트 생성 데이터 객체 생성
+			const data = {
+				projectName : projectName,
+				projectDesc : projectDesc,
+				ptojectType : projectType,
+				projectStartdate : startDate,
+				projectEnddate : endDate,
+				// mini header
+				miniheader: {
+					tabOrderList: tabOrderList
+				},
+				
+				// 멤버 목록
+				memberList: memberList,
+				clientList: clientList
+			};
+			
+			console.log("전송 데이터: ", data);
+			
+			if(typeof $ !== 'undefined') {
+				$.ajax({
+					url: "/tudio/project/create",
+					type: "post",
+					data: JSON.stringify(data),
+					contentType: "application/json; charset=utf-8",
+					success: function(res) {
+						if(res === "SUCCESS") {
+							sweetAlert("프로젝트가 생성되었습니다!");
+							location.href= "/tudio/project/detail";
+						} else {
+							sweetAlert("프로젝트 생성에 실패했습니다!");
+						}
+					},
+					error: function(error, status, thrown) {
+						console.log(error);
+						console.log(status);
+						console.log(thrown);
+					}
+				});
+			} else {
+				console.log("jquery error");
+			}	
+        }
+
+        // 3. 구성원 초대 처리 로직 (직접 입력 & 엑셀)
+        function processInvitations() {
+            // 현재 활성화된 탭 확인
+            const activeTabButton = document.querySelector('#inviteTabs .active');
+            const activeTabId = activeTabButton.id;
+
+            if (activeTabId === 'excel-tab') {
+                // 엑셀 업로드 처리
+                const fileInput = document.getElementById('excelFile');
+                if (fileInput.files.length === 0) {
+                    alert("엑셀 파일을 선택해주세요.");
+                    return;
+                }
+                
+                // (실제로는 여기서 엑셀 파일을 파싱해야 함)
+                alert("엑셀 파일에서 이메일 2개를 추출했습니다. (Placeholder)");
+                
+                // 가상의 데이터 추가
+                addMemberRow("박엑셀", "excel_user@test.com");
+                addMemberRow("김자료", "data_user@test.com");
+                
+            } else {
+                // 직접 입력 처리
+                const emailText = document.getElementById('inviteEmails').value;
+                if (!emailText.trim()) {
+                    alert("이메일 주소를 입력해주세요.");
+                    return;
+                }
+                
+                // 쉼표, 줄바꿈 등으로 분리하여 배열 생성
+                const emails = emailText.split(/[\n,]+/).map(e => e.trim()).filter(e => e);
+                
+                if (emails.length === 0) return;
+
+                let count = 0;
+                emails.forEach(email => {
+                    // 간단한 이메일 형식 체크 (실무에선 정규식 사용 권장)
+                    if (email.includes('@')) {
+                        // 이름은 이메일 아이디 부분으로 임시 대체
+                        const name = email.split('@')[0]; 
+                        addMemberRow(name, email);
+                        count++;
+                    }
+                });
+                
+                if (count > 0) {
+                    alert(`${count}명에게 초대장을 발송하고 목록에 추가했습니다.`);
+                } else {
+                    alert("유효한 이메일 형식이 아닙니다.");
+                    return;
+                }
+            }
+
+            // 모달 닫기 및 입력 필드 초기화
+            const modal = bootstrap.Modal.getInstance(document.getElementById('inviteModal'));
+            modal.hide();
+            document.getElementById('inviteEmails').value = '';
+            document.getElementById('excelFile').value = '';
+        }
+
+        // 목록에 행 추가하는 헬퍼 함수
+        function addMemberRow(name, email) {
+            const listBody = document.getElementById('participantList');
+            const newRow = listBody.insertRow();
+            newRow.innerHTML = `
+                <td>${name} <span class="badge bg-secondary ms-1 small">초대됨</span></td>
+                <td>${email}</td>
+                <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger p-1" onclick="removeParticipant(this)"><i class="bi bi-trash"></i></button></td>
+            `;
+        }
+    </script>
+</body>
+</html>

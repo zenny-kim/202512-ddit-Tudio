@@ -1,0 +1,31 @@
+package kr.or.ddit.tab.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : TabScheduleController
+ * DESC : 프로젝트 내부 탭 안에 있는 일정 기능 컨트롤러
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 KSJ
+ * @version 1.0, 2026.01.08
+ * 
+ */
+@Slf4j
+@Controller
+@RequestMapping("/tudio/project/schedule")
+public class TabScheduleController {
+	
+	//프로젝트 스케줄 화면
+	@GetMapping
+	public String TabScheduleList() {
+		log.info("TabScheduleList() 실행");
+		return "schedule/tabSchedule";
+	}
+}

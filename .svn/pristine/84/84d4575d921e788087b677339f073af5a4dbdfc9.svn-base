@@ -1,0 +1,167 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tudio</title>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/dhtmlxgantt.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/project_common.css">
+<script src="${pageContext.request.contextPath}/js/dhtmlxgantt.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<style>
+/* 1. 기본 텍스트 및 레이아웃 (회색 톤 유지) */
+#gantt_here .gantt_task_content {
+	color: #475569 !important;
+    font-size: 14px;
+}
+
+/* 2. 진척도 바 숨기기 (또는 전체 색상과 통일) */
+/* 진척도 구분을 없애기 위해 투명하게 처리하거나 막대 색상과 일치시킵니다. */
+#gantt_here .gantt_task_progress {
+    display: none !important; 
+}
+
+/* 3. 상위 업무: 진한 블루 (#56ACFF) 전체 채우기 */
+#gantt_here .gantt_task_line.gantt_project {
+    background-color: #C7E3FF !important;
+    border: 1px solid #8FC8FF !important; /* 배경보다 살짝 진한 테두리로 선명하게 */
+    border-radius: 10px !important; /* 단색일 때는 너무 둥근 것보다 살짝 각진 게 깔끔합니다 */
+}
+
+/* 4. 하위 업무: 진한 옐로우 (칸반 핀 컬러 #FDE68A) 전체 채우기 */
+#gantt_here .gantt_task_line {
+    background-color: #FDE68A !important;
+    border: 1px solid #EDD57A !important;
+    border-radius: 10px !important;
+}
+
+/* (참고) 그리드 텍스트 컬러도 같은 회색으로 통일하면 더 예뻐요 */
+#gantt_here .gantt_grid_data .gantt_cell {
+    color: #475569 !important;
+}
+
+</style>
+</head>
+<body>
+
+
+<div class="tudio-section-header mb-4">
+	<h2 class="h5 fw-bold m-0 text-primary-dark" id="taskViewTitle">
+	        <i class="bi bi-clipboard-data me-2"></i>간트차트
+	</h2>
+   	<div class="d-flex gap-1 justify-content-end">
+	    <button id="btnWeek" class="view-btn tudio-btn tudio-btn-primary">Week</button>
+	    <button id="btnDay"  class="view-btn tudio-btn ms-2" style="border: 1px solid var(--tudio-border-soft);">Day</button>
+	</div>  
+</div>
+
+<div id="gantt_here" style="width: 100%; height: 500px; background: #f4f4f4;"></div>
+
+<script>
+$(document).on("click", "#btnWeek", function () {
+    gantt.ext.zoom.setLevel("week");
+    $(this).addClass("tudio-btn-primary").css("border", "none");
+    $("#btnDay").removeClass("tudio-btn-primary").css("border", "1px solid var(--tudio-border-soft)");
+});
+
+$(document).on("click", "#btnDay", function () {
+    gantt.ext.zoom.setLevel("day");
+    $(this).addClass("tudio-btn-primary").css("border", "none");
+    $("#btnWeek").removeClass("tudio-btn-primary").css("border", "1px solid var(--tudio-border-soft)");
+});
+
+$(function () {
+
+    gantt.plugins({
+        marker: true,
+        tooltip: true
+    });
+    
+    // 서버 변수 확인용 로깅
+    const pNo = "${projectNo}";
+    const cPath = "${pageContext.request.contextPath}";
+    
+    console.log("체크1: pNo =", pNo);
+    console.log("체크2: cPath =", cPath);
+
+    // 간트 초기 설정 
+    gantt.config.xml_date = "%Y-%m-%d";
+    gantt.config.grid_resize = true;	//
+    gantt.config.autofit = false;		//
+    gantt.config.open_tree_initially = true;
+    gantt.config.work_time = true;
+    gantt.setWorkTime({ days: [1,2,3,4,5] });
+    gantt.config.drag_move = false;
+    gantt.config.drag_resize = false;
+    gantt.config.drag_links = false;
+    gantt.config.details_on_dblclick = false;
+    gantt.config.drag_progress = false;
+
+    gantt.config.columns = [
+        { name:"text", label:"업무명", tree:true, width: 180, resize: true },
+        { name:"start_date", label:"시작일", align:"center", width: 100, resize: true },
+        { 
+            name: "end_date", 
+            label: "마감일", 
+            align: "center", 
+            width: 100,
+            resize: true,
+            template: function(obj) { return gantt.templates.date_grid(obj.end_date); }
+        },
+        { name:"duration", label:"기간", align:"center", width: 60, resize: true },
+        { 
+            name: "progress", 
+            label: "진척도", 
+            align: "center", 
+            width: 70, 
+            resize: true,
+            template: function(obj) { return Math.round((obj.progress || 0) * 100) + "%"; } 
+        }
+    ];
+    
+    // 줌 설정
+    const zoomConfig = {
+        levels: [
+            { name: "week", scales: [{ unit: "month", format: "%Y-%m" }, { unit: "week", format: "W%W" }], min_column_width: 50 },
+            { name: "day", scales: [{ unit: "month", format: "%Y-%m" }, { unit: "day", format: "%d" }], min_column_width: 30 }
+        ]
+    };
+    gantt.ext.zoom.init(zoomConfig);
+    gantt.ext.zoom.setLevel("week");
+    
+    gantt.templates.tooltip_text = function(start, end, task) {
+        return "<span style='display:inline-block; white-space:nowrap;'>" +
+		        "<b>기간 :</b> " + gantt.templates.tooltip_date_format(start) + " ~ " + gantt.templates.tooltip_date_format(end) + 
+		        "</span>" +
+		        "<span style='display:inline-block; white-space:nowrap;'>" +
+		        "<b>진척도 :</b> " + Math.round((task.progress || 0) * 100) + "%" +
+		        "</span>";
+    };
+    
+    //칸트차트틀
+    gantt.init("gantt_here");
+        
+    //데이터 요청 (pNo가 있을 때만)
+    if (pNo && pNo !== "" && pNo !== "0") {
+        const finalUrl = cPath + "/tudio/project/gantt/data?projectNo=" + pNo;
+        console.log("체크3: 요청 URL =", finalUrl);
+
+        fetch(finalUrl)
+           .then(res => res.json())
+           .then(result => {
+               console.log("체크4: 서버 데이터 수신 =", result);
+               gantt.clearAll();
+               gantt.parse(result);
+           
+               gantt.addMarker({
+                   start_date: new Date(),
+                   css: "today_line"
+               });
+           })
+           .catch(err => console.error("데이터 로딩 에러:", err));
+    
+    }
+    
+});
+</script>
+</body>
+</html>

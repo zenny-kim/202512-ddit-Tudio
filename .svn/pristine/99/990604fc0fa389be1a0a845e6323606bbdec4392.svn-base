@@ -1,0 +1,156 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- 
+    파일명: approval_view_user.jsp
+    설명: 기안서 상세 조회 (상태값에 따라 승인/반려 도장 및 버튼 동적 변경)
+--%>
+
+<div class="main-content-wrap w-100">
+    <div class="container-fluid p-0" style="max-width: 900px; margin: 0 auto;">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <a href="approval_list_manager.jsp" class="btn btn-light border rounded-circle me-3"><i class="bi bi-arrow-left"></i></a>
+                <div>
+                    <span class="badge bg-primary mb-1" id="statusBadge">요청</span>
+                    <h3 class="fw-bold mb-0">장비 구매 요청 건</h3>
+                </div>
+            </div>
+            <div class="text-end text-muted small">기안일: 2025.12.21</div>
+        </div>
+
+        <div class="doc-card mb-5">
+            <div class="p-4 border-bottom">
+                <div class="row">
+                    <div class="col-md-7">
+                        <table class="info-table w-100">
+                            <tr><th>문서 번호</th><td>APL-2025-001</td></tr>
+                            <tr><th>기안자</th><td>김사용 (Tudio 기획팀)</td></tr>
+                            <tr><th>프로젝트</th><td>Alpha 신규 프로젝트</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-5 d-flex justify-content-end gap-2">
+                        <div class="approval-stamp bg-light">
+                            <div class="small fw-bold py-1 border-bottom">기안</div>
+                            <div class="flex-grow-1 d-flex align-items-center justify-content-center">
+                                <span class="stamp-ok" style="font-size:0.8rem;">김사용</span>
+                            </div>
+                            <div class="small bg-white border-top">12.21</div>
+                        </div>
+                        <div class="approval-stamp">
+                            <div class="small fw-bold py-1 border-bottom">승인</div>
+                            <div class="flex-grow-1 d-flex align-items-center justify-content-center" id="approverSign">
+                                <span class="text-muted small">결재 대기</span>
+                            </div>
+                            <div class="small bg-white border-top">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doc-body-view">안녕하세요, Tudio 김사용입니다.
+                
+Alpha 프로젝트 수행을 위해 아래와 같이 장비 구매를 요청드립니다.
+
+1. 품목: 모니터 2대, 테스트용 태블릿 1대
+2. 사유: 개발 환경 구축 및 모바일 테스트
+3. 예상 금액: 1,500,000원
+
+상세 견적서는 첨부파일을 확인 부탁드립니다.</div>
+
+            <div class="p-4 border-top bg-light">
+                <h6 class="fw-bold small text-muted mb-2"><i class="bi bi-paperclip"></i> 첨부파일</h6>
+                <div class="card p-2 border-0 shadow-sm d-inline-block bg-white pe-3">
+                    <a href="#" class="text-decoration-none text-dark d-flex align-items-center">
+                        <i class="bi bi-file-earmark-pdf text-danger fs-4 me-2 ms-1"></i>
+                        <div>
+                            <div style="font-size: 0.9rem;">견적서_20251221.pdf</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">540 KB</div>
+                        </div>
+                        <i class="bi bi-download text-muted ms-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mb-5" id="actionButtons">
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* [상태 관리 로직]
+       실제 JSP 환경에서는 Server-Side(JSTL/EL)에서 상태값을 받아와 
+       HTML을 렌더링하는 것이 일반적이나, 요청하신 Mockup 형태 유지를 위해 JS로 처리합니다.
+       
+       Test URL 예시: 
+       - approval_view.jsp?status=requested (기본)
+       - approval_view.jsp?status=approved
+       - approval_view.jsp?status=rejected
+    */
+    
+    // URL 파라미터로 상태값 시뮬레이션
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status') || 'requested'; // 기본값: 요청
+
+    const badge = document.getElementById('statusBadge');
+    const signArea = document.getElementById('approverSign');
+    const actions = document.getElementById('actionButtons');
+
+    // 1. 결재 요청 상태 (기안자/관리자 초기 화면)
+    if (status === 'requested') {
+        badge.className = 'badge bg-primary mb-1';
+        badge.textContent = '결재 요청';
+        
+        // 버튼: 목록, 상신 취소
+        actions.innerHTML = `
+            <button class="btn btn-light border" onclick="location.href='approval_list_manager.jsp'">목록</button>
+            <button class="btn btn-outline-danger" onclick="alert('상신을 취소하고 임시보관함으로 이동합니다.')">상신 취소(회수)</button>
+        `;
+    } 
+    // 2. 승인 완료 상태
+    else if (status === 'approved') {
+        badge.className = 'badge bg-success mb-1';
+        badge.textContent = '승인 완료';
+        
+        // 도장 찍기
+        signArea.innerHTML = `<span class="stamp-ok">정고객</span>`;
+        
+        // 버튼: 목록만 가능
+        actions.innerHTML = `<button class="btn btn-light border" onclick="location.href='approval_list_manager.jsp'">목록</button>`;
+    } 
+    // 3. 반려 상태
+    else if (status === 'rejected') {
+        badge.className = 'badge bg-danger mb-1';
+        badge.textContent = '반려됨';
+        
+        // 도장 찍기
+        signArea.innerHTML = `<span class="stamp-reject">반려</span>`;
+        
+        // 버튼: 삭제, 목록, 재상신
+        actions.innerHTML = `
+            <button class="btn btn-outline-secondary" onclick="deleteDoc()">삭제</button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-light border" onclick="location.href='approval_list_manager.jsp'">목록</button>
+                <button class="btn btn-primary" onclick="location.href='approval_write.jsp?mode=rewrite'">재상신 (수정)</button>
+            </div>
+        `;
+        
+        // 반려 사유 알림창 추가
+        const docCard = document.querySelector('.doc-card');
+        const rejectAlert = document.createElement('div');
+        rejectAlert.className = 'alert alert-danger m-4';
+        rejectAlert.innerHTML = '<strong>[반려 사유]</strong> 예산 초과로 인해 수량 조정이 필요합니다.';
+        docCard.prepend(rejectAlert);
+    }
+
+    // 문서 삭제 함수
+    function deleteDoc() {
+        if(confirm('반려된 문서를 삭제하시겠습니까?')) {
+            // 실제 삭제 AJAX 호출 필요
+            alert('삭제되었습니다.');
+            location.href = 'approval_list_manager.jsp';
+        }
+    }
+</script>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.videoChat.mapper.IVideoChatMapper">
+
+	<select id="selectMemberProjectList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectVO">
+        SELECT 
+            P.PROJECT_NO 
+            , P.PROJECT_NAME
+        FROM PROJECT P
+        INNER JOIN PROJECT_MEMBER PM ON P.PROJECT_NO = PM.PROJECT_NO
+        WHERE PM.MEMBER_NO = #{memberNo}
+          AND PM.PROJECT_ROLE = 'MANAGER'
+          AND P.PROJECT_STATUS = 0
+        ORDER BY P.PROJECT_REGDATE DESC
+	</select>
+	
+	<select id="selectProjectMemberList" parameterType="int" resultType="kr.or.ddit.vo.MemberVO">
+        SELECT DISTINCT 
+        	M.MEMBER_NO AS 
+        	, M.MEMBER_NAME AS 
+        	, PM.PROJECT_ROLE AS "memberRole"
+        FROM MEMBER M
+    	INNER JOIN PROJECT_MEMBER PM ON M.MEMBER_NO = PM.MEMBER_NO
+    	WHERE PM.PROJECT_NO = #{projectNo}
+    	  AND PM.PROJECT_ROLE IN ('MANAGER', 'CLIENT')
+    	  AND PM.PROJECT_MEM_STATUS = 'Y'
+    	ORDER BY M.MEMBER_NAME ASC
+    </select>
+    
+    <insert id="insertVideoChatRoom" parameterType="kr.or.ddit.vo.VideoChatVO" useGeneratedKeys="true">
+		<selectKey keyProperty="videochatNo" resultType="int" order="BEFORE">
+			SELECT SEQ_VIDEOCHAT.NEXTVAL FROM DUAL 
+		</selectKey>    
+        INSERT INTO VIDEOCHAT_ROOM (
+            VIDEOCHAT_NO
+            , VIDEOCHAT_TITLE
+            , VIDEOCHAT_ID  
+            , VIDEOCHAT_PW
+            , VIDEOCHAT_STATUS    
+            , VIDEOCHAT_CREATER_NO
+            , PROJECT_NO
+            , VIDEOCHAT_URL
+            , VIDEOCHAT_REGDATE
+        ) VALUES (
+            #{videochatNo}
+            , #{videochatTitle}
+            , #{videochatId}
+            , #{videochatPw}
+            , 0
+            , #{videochatCreaterNo}
+            , #{projectNo}
+            , '/tudio/videoChat/room/' || #{videochatId}
+            , CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <insert id="insertVideoChatMember" parameterType="map">
+        INSERT INTO VIDEOCHAT_MEMBER (VIDEOCHAT_NO, MEMBER_NO)
+	        SELECT #{videochatNo}, A.* FROM (
+	            <foreach collection="memberList" item="memberNo" separator="UNION ALL">
+	                SELECT #{memberNo} FROM DUAL
+	            </foreach>
+	        ) A
+    </insert>
+    
+    <select id="selectVideoChatById" parameterType="string" resultType="kr.or.ddit.vo.VideoChatVO">
+        SELECT 
+              VIDEOCHAT_NO
+            , VIDEOCHAT_TITLE
+            , VIDEOCHAT_ID
+            , VIDEOCHAT_PW
+            , VIDEOCHAT_STATUS
+            , VIDEOCHAT_CREATER_NO
+            , PROJECT_NO
+            , VIDEOCHAT_REGDATE
+        FROM VIDEOCHAT_ROOM
+        WHERE VIDEOCHAT_ID = #{videochatId}
+    </select>
+
+    <select id="countVideoChatMember" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM VIDEOCHAT_MEMBER VM
+        INNER JOIN VIDEOCHAT_ROOM VR ON VM.VIDEOCHAT_NO = VR.VIDEOCHAT_NO
+        WHERE VR.VIDEOCHAT_ID = #{videochatId}
+    </select>
+
+	<select id="countRoomByIdAndPw" parameterType="map" resultType="int">
+	    SELECT COUNT(*)
+	    FROM VIDEOCHAT_ROOM
+	    WHERE VIDEOCHAT_ID = #{roomId}
+	      AND VIDEOCHAT_PW = #{roomPw}
+	      AND VIDEOCHAT_STATUS = 0
+	</select>
+
+</mapper>

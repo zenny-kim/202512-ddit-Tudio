@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.kanban.mapper.IKanbanMapper">
+
+    <resultMap id="subTaskMap" type="kr.or.ddit.vo.project.ProjectTaskSubVO">
+        <id     property="subId"            column="SUB_ID"/>
+        <result property="taskId"           column="TASK_ID"/>
+        <result property="subStatus"        column="SUB_STATUS"/>
+        <result property="parentTitle"      column="PARENT_TITLE"/>
+        <result property="subTitle"         column="SUB_TITLE"/>
+        <result property="taskManagerName"  column="TASK_MANAGER_NAME"/>
+        <result property="subRate"          column="SUB_RATE"/>
+        <result property="subPinYn" column="SUB_PIN_YN"/>
+        <result property="subEnddate"       column="SUB_ENDDATE"/>
+    </resultMap>
+
+    <select id="getKanbanTaskList" resultMap="subTaskMap" parameterType="int">
+	    SELECT
+	        S.SUB_ID,
+	        S.TASK_ID,
+	        T.TASK_TITLE          AS PARENT_TITLE,
+	        S.SUB_TITLE,
+	        
+	        (SELECT LISTAGG(M.MEMBER_NAME, ', ') 
+	        		WITHIN GROUP (ORDER BY M.MEMBER_NAME)
+	           FROM PROJECT_TASK_MANAGER PM
+	           JOIN MEMBER M ON PM.MEMBER_NO = M.MEMBER_NO
+	          WHERE PM.WORK_ID = S.SUB_ID 
+	            AND PM.WORK_TYPE = 'S'
+            ) AS TASK_MANAGER_NAME,
+            
+	        S.SUB_RATE,
+	        S.SUB_ENDDATE,
+	        S.SUB_PIN_YN,
+	        S.SUB_STATUS
+	    FROM PROJECT_TASK_SUB S
+	    JOIN PROJECT_TASK T ON S.TASK_ID = T.TASK_ID
+	    WHERE T.PROJECT_NO = #{projectNo}
+	    ORDER BY S.SUB_ID DESC
+	</select>
+    
+    <update id="modifyTaskStatus" parameterType="map">
+        UPDATE PROJECT_TASK_SUB
+        SET SUB_STATUS = #{taskStatus},
+            SUB_UPDDATE = CURRENT_TIMESTAMP
+        WHERE SUB_ID = #{taskId}
+    </update>
+    
+    <update id="updateTaskRate" parameterType="map">
+        UPDATE PROJECT_TASK_SUB
+        SET SUB_RATE = #{taskRate}
+        WHERE SUB_ID = #{taskId}
+    </update>
+    
+    <update id="updateTaskPin" parameterType="map">
+	    UPDATE PROJECT_TASK_SUB
+	       SET SUB_PIN_YN = #{subPinYn}
+	     WHERE SUB_ID = #{subId}
+	</update>
+
+</mapper>

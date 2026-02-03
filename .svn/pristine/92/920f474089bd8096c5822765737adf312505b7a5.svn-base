@@ -1,0 +1,149 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. Design Tokens (변수 정의)
+   - 모든 파일에서 공통으로 사용할 색상/수치
+   ========================================= */
+:root {
+	/* [추가됨] 1. 폰트 변수 선언 (pretendard.css에 정의된 이름 사용) */
+    --main-font: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+    
+    /* Brand Colors */
+    --primary-color: #007aff;
+    --danger-color: #ff3b30; /* badge-color 통합 */
+    
+    /* Text Colors */
+    --text-primary: #1c1c1e;
+    --text-secondary: #8e8e93;
+    --text-on-primary: #ffffff;
+    
+    /* Background Colors */
+    --bg-color: #ffffff;
+    --bg-secondary: #f2f2f7;
+    
+    /* Shapes & Effects */
+    --radius-lg: 20px;
+    --radius-md: 16px;
+    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-floating: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+/* =========================================
+   2. Global Reset & Utilities
+   ========================================= */
+*, *::before, *::after {
+    box-sizing: border-box;
+    
+    /* [추가됨] 2. 모든 요소에 폰트 강제 적용 */
+    font-family: var(--main-font);
+}
+
+/* [추가됨] 3. 폼 요소는 폰트 상속이 잘 안 돼서 따로 지정 */
+input, button, select, textarea {
+    font-family: var(--main-font);
+}
+
+/* 스크롤바 숨김 (공통 유틸리티) */
+.hide-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;    /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;            /* Chrome, Safari, Opera */
+}
+
+/* =========================================
+   3. Common Components (아바타, 툴팁)
+   ========================================= */
+
+/* 아바타 (Avatar) 공통 스타일 */
+.default-avatar {
+    width: 38px; 
+    height: 38px;
+    border-radius: 50%;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    color: #ffffff;
+    flex-shrink: 0;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+/* 프로필 이미지 */
+.profile-img {
+    width: 38px; 
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 아바타 랜덤 배경색 (list, chatroom 공통) */
+.avatar-color-0 { background-color: #FF9F0A; }
+.avatar-color-1 { background-color: #30D158; }
+.avatar-color-2 { background-color: #0A84FF; }
+.avatar-color-3 { background-color: #BF5AF2; }
+.avatar-color-4 { background-color: #FF375F; }
+
+/* 툴팁 (Tooltip) - list.css와 chatroom.css 중복 완벽 제거 */
+[data-tooltip] {
+    position: relative; /* relative 추가 (자식 absolute 기준점) */
+    cursor: pointer;
+}
+
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    background-color: #ffffff;
+    color: #333333;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeIn 0.2s forwards;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* 기본 위치: 요소의 아래쪽 */
+    top: 100%; 
+    margin-top: 8px;
+}
+
+/* 툴팁 위치 변형 */
+[data-tooltip-pos="left"]:hover::after {
+    left: 0;
+    transform: translateX(0);
+}
+[data-tooltip-pos="right"]:hover::after {
+    left: auto;
+    right: 0;
+    transform: translateX(0);
+}
+/* 버튼 내부 툴팁 위치 보정 */
+.header-btn[data-tooltip]:hover::after,
+.footer-btn[data-tooltip]:hover::after {
+    /* 상황에 따라 top/bottom 조정이 필요할 수 있으나 기본적으로 아래로 통일 */
+}
+
+/* ... 기존 툴팁 코드 아래에 추가 ... */
+
+/* [수정] 하단 푸터 버튼(.footer-btn)의 툴팁은 무조건 위로 띄우기 */
+.footer-btn[data-tooltip]:hover::after {
+    top: auto;          /* 기존의 아래쪽 배치 무효화 */
+    bottom: 100%;       /* 요소의 위쪽 끝에 배치 */
+    margin-top: 0;
+    margin-bottom: 8px; /* 버튼과 툴팁 사이 간격 */
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

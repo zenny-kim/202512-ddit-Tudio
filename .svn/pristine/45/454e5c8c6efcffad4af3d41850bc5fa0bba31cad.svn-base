@@ -1,0 +1,203 @@
+@charset "UTF-8";
+
+.post-wrap {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 24px;
+  min-height: calc(100vh - 200px);
+}
+
+/* 헤더 */
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.post-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* 카드 */
+.post-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+}
+
+/* 내용 textarea */
+.bw-textarea {
+  width: 100%;
+  min-height: 280px;
+  padding: 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  box-shadow: none;
+}
+
+/* 포커스 */
+.bw-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+
+/* 말머리 + 제목 한 줄 */
+.form-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.form-head { width: 220px; }
+.form-title { flex: 1; }
+
+/* 공통 폼 */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  font-weight: 700;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* 말머리 select */
+.bw-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  background: #fff;
+}
+.bw-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.25rem rgba(59,130,246,0.18);
+}
+
+/* ✅ 제목 입력: 포커스 2겹 방지 핵심 */
+.title-input-wrap {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  padding: 4px; /* 안쪽 여백으로 input이 딱 붙지 않게 */
+}
+
+/* input 자체는 테두리/포커스 제거 */
+.bw-input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  padding: 10px 12px;
+  border-radius: 8px; /* wrap 안에서 둥글게 */
+  font-size: 14px;
+}
+
+/* 포커스는 wrapper에만 */
+.title-input-wrap:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.25rem rgba(59,130,246,0.18);
+}
+
+/* 내용(에디터 영역) */
+.editor-box {
+  min-height: 280px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 16px;
+  background: #fff;
+}
+.editor-box:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.25rem rgba(59,130,246,0.18);
+}
+
+/* 첨부 */
+.bw-file {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 14px;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 8px;
+  color: #777;
+}
+
+/* 버튼 영역 */
+.post-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.btn.cancel {
+  background: #eee;
+}
+
+.btn.submit {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* 토글 */
+.pin-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.pin-toggle input { display: none; }
+
+.pin-toggle i {
+  width: 42px;
+  height: 24px;
+  background: #ddd;
+  border-radius: 20px;
+  position: relative;
+}
+
+.pin-toggle i::after {
+  content: "";
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+.pin-toggle input:checked + i {
+  background: #3b82f6;
+}
+
+.pin-toggle input:checked + i::after {
+  left: 20px;
+}

@@ -1,0 +1,17 @@
+package kr.or.ddit.vo.project;
+
+import lombok.Data;
+
+@Data
+public class DriveFolderFileVO {
+	 private int driveFolderFileNo;		// 드라이브 파일 일련번호
+	 private int projectNo;				// 프로젝트 일련번호
+	 private int fileGroupNo;			// 파일번호
+	 private int folderNo;				// 폴더 일련번호
+	 private String fileName;			// 파일명
+	 private int memberNo;				// 파일 생성자
+	 private String folderFileRegdate;	// 파일 생성일
+	 private String folderFileDelete;	// 삭제 여부
+	 private String folderFileDeldate;	// 삭제일
+	 private int delMemberNo;			// 삭제자
+}

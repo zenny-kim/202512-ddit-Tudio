@@ -1,0 +1,51 @@
+package kr.or.ddit.projectTask.service.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.dto.GanttTaskDTO;
+import kr.or.ddit.projectTask.mapper.IProjectTaskMapper;
+import kr.or.ddit.projectTask.service.IProjectGanttService;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class ProjectGanttServiceImpl implements IProjectGanttService {
+	
+	@Autowired
+    private IProjectTaskMapper mapper;
+
+    public List<GanttTaskDTO> getGanttTaskList(int projectNo) {
+
+    	List<GanttTaskDTO> list = mapper.selectGanttTaskList(projectNo);
+    	log.warn("🔥 gantt task count = {}", list.size());
+
+
+        for (GanttTaskDTO dto : list) {
+            Date start = dto.getStartDate();
+            Date end   = dto.getEndDate();
+
+            if (start != null && end != null) {
+                dto.setStart_date(format(start));
+                dto.setDuration(calcDuration(start, end));
+            }
+        }
+
+        return list;
+    }
+    
+    
+    private String format(Date date) {
+        return new SimpleDateFormat("yyyy-MM-dd").format(date);
+    }
+
+    private int calcDuration(Date start, Date end) {
+        long diff = end.getTime() - start.getTime();
+        return (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS) + 1;
+    }
+}

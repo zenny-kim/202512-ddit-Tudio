@@ -1,0 +1,109 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/ko.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/fonts/pretendard/pretendard.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/chat/common.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/chat/main.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/chat/list.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/chat/chatroom.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/chat/new.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/chat/memList.css">
+	
+    
+    <div class="floating-chat-container">
+        <div id="chatListContainer" class="chat-list-box"></div>
+    
+        <button class="floating-chat-btn" aria-label="채팅 목록 열기">
+            <div class="icon-wrapper">
+                <i data-feather="message-circle"></i>
+            </div>
+            <span class="notification-badge">5</span>
+        </button>
+    </div>
+
+<script>
+    // 페이지 로드 시 아이콘 렌더링
+    $(document).ready(function() {
+        feather.replace(); 
+    });
+    
+    let isOpen = false;
+    let $container = null;
+    
+    $(function(){
+    	
+        $container = $("#chatListContainer"); 
+        $footer = $(".footer");
+        defaultBottom = parseInt($(".floating-chat-container").css("bottom"));
+        
+        // 스크롤을 내리거나 브라우저 사이즈가 변경될 때 실행
+        $(window).on("scroll resize", function(){
+        	let scrollTop = $(window).scrollTop();
+        	let innerHeight = $(window).innerHeight();
+        	let scrollBottom = scrollTop + innerHeight
+        	let footerTop = $footer.offset().top;
+        	
+        	// 사용자의 스크롤 하단이 footer 상단 아래까지 내려왔을 때
+        	if(scrollBottom >= footerTop){
+        		let overlapHeight = scrollBottom - footerTop;
+        		$(".floating-chat-container").css('bottom', defaultBottom+overlapHeight+'px');
+        	}else{
+        		$(".floating-chat-container").css('bottom', defaultBottom+'px');
+        	}
+        })
+        
+        $(".floating-chat-btn").on("click", function(){
+            const $btn = $(this);
+            const $iconWrapper = $btn.find(".icon-wrapper");
+            const $badge = $btn.find(".notification-badge");
+            
+            $container.toggleClass("active");
+            $btn.toggleClass("opened");
+            
+            isOpen = !isOpen;
+            
+            if(isOpen){
+                $container.load("/tudio/chat/list", function(){
+                    feather.replace(); 
+                });
+                
+                // 버튼을 X 아이콘으로 교체 
+                $iconWrapper.html('<i data-feather="x"></i>');
+                
+                $badge.css('transform', 'scale(0)'); 
+                $badge.css('transition', 'transform 0.2s');
+                
+            } else {
+                // 버튼을 채팅 아이콘으로 교체 
+                $iconWrapper.html('<i data-feather="message-circle"></i>');
+                
+                $badge.css('transform', 'scale(1)');
+            }
+            feather.replace(); 
+        });
+        
+        // 채팅방 목록에서 특정 채팅방을 클릭할 경우
+        $container.on("click", ".chat-item", function(){
+            let roomNo = $(this).find("#chatroomNo").val();
+            $container.load("/tudio/chat/chatroom/" + roomNo, function(){
+                feather.replace();
+            });
+        });
+        
+        // 채팅방 목록에서 새채팅 버튼을 클릭할 경우
+        $container.on("click", ".new-chat-btn", function(){
+            $container.load("/tudio/chat/new");
+        });
+        
+    })
+</script>
+</body>
+</html>

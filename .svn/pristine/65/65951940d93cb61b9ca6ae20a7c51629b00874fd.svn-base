@@ -1,0 +1,92 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
+<nav class="sidebar shadow-lg">
+    <div class="sidebar-main-scroll" id="sidebarAccordion">
+
+        <button class="sidebar-group-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menu-user" aria-expanded="false">
+            <span>회원 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse" id="menu-user" data-bs-parent="#sidebarAccordion">
+             <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="loadPage('${pageContext.request.contextPath}/admin/user/list', this)">
+                        전체 조회
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menu-board" aria-expanded="false">
+            <span>고객센터</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse" id="menu-board" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="loadPage('${pageContext.request.contextPath}/admin/board/notice', this)">
+                        <i class="bi bi-megaphone me-2"></i> 공지사항
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="loadPage('${pageContext.request.contextPath}/admin/board/inquiry', this)">
+                        <i class="bi bi-question-circle me-2"></i> 문의사항
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="loadPage('${pageContext.request.contextPath}/admin/board/faq', this)">
+                        <i class="bi bi-question-square-fill me-2"></i> FAQ 관리
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <button class="sidebar-group-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menu-survey" aria-expanded="false">
+            <span>설문 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse" id="menu-survey" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="loadPage('${pageContext.request.contextPath}/admin/survey/list', this)">
+                        <i class="bi bi-clipboard-data me-2"></i> 설문 목록
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="loadPage('${pageContext.request.contextPath}/admin/survey/form', this)">
+                        <i class="bi bi-pencil-square me-2"></i> 설문 등록
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menu-policy" aria-expanded="false">
+            <span>정책 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse" id="menu-policy" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="loadPage('${pageContext.request.contextPath}/admin/policy/terms', this)">
+                        <i class="bi bi-file-earmark-text me-2"></i> 이용약관 관리
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menu-log" aria-expanded="false">
+            <span>로그 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse" id="menu-log" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="loadPage('${pageContext.request.contextPath}/admin/log/login', this)">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> 로그인 로그
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="loadPage('${pageContext.request.contextPath}/admin/log/error', this)">
+                        <i class="bi bi-exclamation-triangle me-2"></i> 오류 로그
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</nav>

@@ -1,0 +1,53 @@
+package kr.or.ddit.projectBoard.service.impl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.projectBoard.mapper.IProjectBoardMapper;
+import kr.or.ddit.projectBoard.service.IProjectBoardService;
+import kr.or.ddit.vo.PaginationInfoVO;
+import kr.or.ddit.vo.project.ProjectBoardVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@Slf4j
+public class ProjectBoardServiceImpl implements IProjectBoardService {
+
+    @Autowired
+    private IProjectBoardMapper mapper;
+
+    
+    /**
+     * 게시판 목록 조회
+     */
+    @Override
+    public void list(int projectNo, PaginationInfoVO<ProjectBoardVO> page) {
+        // 기본 목록(전체) = categoryName 없이 호출
+        listBoardPartial(projectNo, page, null);
+    }
+
+    
+   
+    @Override
+    public void listBoardPartial(int projectNo,
+                                 PaginationInfoVO<ProjectBoardVO> page,
+                                 String categoryName) {
+
+        // currentPage 기본값 보정
+        if (page.getCurrentPage() <= 0) {
+            page.setCurrentPage(1); // 이 순간 startRow/endRow 계산됨
+        }
+
+        // 1) total count
+        int totalRecord = mapper.projectBoardCount(projectNo, categoryName, page);
+        page.setTotalRecord(totalRecord);
+
+        // 2) list
+        List<ProjectBoardVO> dataList = mapper.list(projectNo, categoryName, page);
+        page.setDataList(dataList);
+    }
+}
+
+

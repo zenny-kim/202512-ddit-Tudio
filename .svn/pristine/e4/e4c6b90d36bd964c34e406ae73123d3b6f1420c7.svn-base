@@ -1,0 +1,33 @@
+package kr.or.ddit.admin.siteMember.service.impl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.admin.siteMember.mapper.IAdminMemberMapper;
+import kr.or.ddit.admin.siteMember.service.IAdminMemberService;
+import kr.or.ddit.dto.AdminUserDTO;
+import kr.or.ddit.member.mapper.IMemberMapper;
+import kr.or.ddit.vo.MemberVO;
+
+@Service
+public class AdminMemberServiceImpl implements IAdminMemberService {
+	
+	@Autowired
+	private IAdminMemberMapper adminMapper;
+	
+	@Autowired
+	private IMemberMapper memberMapper;
+
+	@Override
+	public AdminUserDTO getAdminInfo(String memId) {
+		return adminMapper.selectAdminMember(memId);
+	}
+
+	@Override
+	public List<MemberVO> selectAdminMemberList(String type) {
+		return memberMapper.selectAdminMemberList(type);
+	}
+
+}

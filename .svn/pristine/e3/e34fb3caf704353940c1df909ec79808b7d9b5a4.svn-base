@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.drive.mapper.IDriveMapper">
+
+	<resultMap id="driveResultMap" type="java.util.HashMap">
+	    <result property="fileId"        column="ID"/>
+	    <result property="fileName"      column="NAME"/>
+	    <result property="fileType"      column="TYPE"/>
+	    <result property="fileSize"      column="SIZE_VAL"/> 
+	    <result property="fileExtension" column="EXTENSION"/>
+	    <result property="uploaderName"  column="UPLOADER_NAME"/>
+	    <result property="regDate"       column="REG_DATE" javaType="java.time.LocalDate"/>
+    </resultMap>
+
+	<select id="selectProjectRootFolderNo" resultType="int">
+        SELECT FOLDER_NO
+        FROM DRIVE_FOLDER
+        WHERE PROJECT_NO = #{projectNo}
+          AND PARENT_FOLDER_NO IS NULL  
+          AND FOLDER_DELETE = 'N'
+    </select>
+
+    <select id="selectDriveItems" resultMap="driveResultMap">
+        SELECT 
+            FOLDER_NO        AS ID,
+            FOLDER_NAME      AS NAME,
+            'FOLDER'         AS TYPE,
+            0                AS SIZE_VAL,
+            NULL             AS EXTENSION,
+            (SELECT MEMBER_NAME 
+             FROM MEMBER 
+             WHERE MEMBER_NO = F.MEMBER_NO) AS UPLOADER_NAME,
+            FOLDER_REGDATE   AS REG_DATE
+        FROM DRIVE_FOLDER F
+        WHERE PROJECT_NO = #{projectNo}
+          AND PARENT_FOLDER_NO = #{folderId} 
+          AND FOLDER_DELETE = 'N'
+
+        UNION ALL
+
+        SELECT 
+            DRIVE_FOLDER_FILE_NO AS ID,
+            FILE_NAME            AS NAME,
+            'FILE'               AS TYPE,
+            DRIVE_FILE_SIZE      AS SIZE_VAL,
+            DRIVE_FILE_EXTENSION AS EXTENSION,
+            (SELECT MEMBER_NAME 
+             FROM MEMBER 
+             WHERE MEMBER_NO = FF.UPLOADER_NO) AS UPLOADER_NAME,
+            DRIVE_FILE_REGDATE   AS REG_DATE
+        FROM DRIVE_FOLDER_FILE FF
+        WHERE FOLDER_NO = #{folderId}         
+          AND DRIVE_FILE_DELETE = 'N'
+          
+        ORDER BY TYPE DESC, NAME ASC 
+    </select>
+    
+    <insert id="insertFolder" parameterType="kr.or.ddit.vo.DriveFolderVO">
+        <selectKey keyProperty="folderNo" resultType="int" order="BEFORE">
+            SELECT SEQ_DRIVE_FOLDER.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO DRIVE_FOLDER (
+              FOLDER_NO
+            , PROJECT_NO
+            , FOLDER_NAME
+            , MEMBER_NO
+            , PARENT_FOLDER_NO
+            , FOLDER_REGDATE
+            , FOLDER_DELETE
+        ) VALUES (
+              #{folderNo}
+            , #{projectNo}
+            , #{folderName}
+            , #{memberNo}
+            , #{parentFolderNo}  
+            , CURRENT_TIMESTAMP
+            , 'N'
+        )
+    </insert>
+    
+    <insert id="insertRootFolder" parameterType="kr.or.ddit.vo.DriveFolderVO">
+		<selectKey keyProperty="folderNo" resultType="int" order="BEFORE">
+			SELECT SEQ_DRIVE_FOLDER.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO DRIVE_FOLDER (
+			  FOLDER_NO
+			, PROJECT_NO
+			, FOLDER_NAME
+			, MEMBER_NO
+			, PARENT_FOLDER_NO  
+			, FOLDER_REGDATE
+			, FOLDER_DELETE
+		) VALUES (
+			  #{folderNo}
+			, #{projectNo}
+			, #{folderName}
+			, #{memberNo}
+			, NULL              
+			, CURRENT_TIMESTAMP
+			, 'N'
+		)
+	</insert>
+
+</mapper>

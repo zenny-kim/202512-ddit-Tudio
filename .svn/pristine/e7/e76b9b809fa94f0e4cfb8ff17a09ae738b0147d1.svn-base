@@ -1,0 +1,87 @@
+@charset "UTF-8";
+
+/* =========================================
+   Drive List Specific Styles
+   (기본 테이블 스타일은 project_common.css 및 task_list.css 공유)
+   ========================================= */
+
+/* 테이블 행 간격 (task_list와 동일하게 카드형 유지) */
+.drive-table {
+    border-collapse: separate;
+    border-spacing: 0 8px; 
+}
+
+/* 행 스타일 */
+.drive-row td {
+    background-color: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 14px 12px;
+    vertical-align: middle;
+    transition: background-color 0.2s;
+}
+
+/* 첫 번째 칸 (아이콘) 둥글게 */
+.drive-row td:first-child {
+    border-left: 1px solid #e2e8f0;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+/* 마지막 칸 (메뉴) 둥글게 */
+.drive-row td:last-child {
+    border-right: 1px solid #e2e8f0;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* 마우스 호버 효과 */
+.drive-row:hover td {
+    background-color: #f8fbff; /* task list의 hover 색상과 유사하게 */
+    border-color: #BFDBFE;
+    cursor: pointer;
+}
+
+.drive-row:hover .drive-name-td span {
+    color: #3b82f6; /* 제목 파란색 강조 */
+}
+
+/* Breadcrumb 스타일 (경로 네비게이션) */
+.breadcrumb-item {
+    font-size: 0.95rem;
+    color: #64748b;
+    cursor: pointer;
+    font-weight: 500;
+}
+.breadcrumb-item:hover {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+.breadcrumb-item.active {
+    color: #1e293b; /* 현재 위치는 진하게 */
+    font-weight: 700;
+    cursor: default;
+    text-decoration: none;
+}
+/* Breadcrumb 구분자 (>) */
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    font-family: Arial, sans-serif; 
+    color: #cbd5e1;
+    font-size: 1.1em;
+    vertical-align: middle;
+}
+
+/* 파일 타입별 아이콘 색상 (FontAwesome 기반) */
+.text-warning { color: #ffc107 !important; } /* 폴더 */
+.text-danger { color: #dc3545 !important; }  /* PDF, PPT */
+.text-success { color: #198754 !important; } /* Excel */
+.text-primary { color: #0d6efd !important; } /* Word */
+.text-info { color: #0dcaf0 !important; }    /* ZIP */
+.text-secondary { color: #6c757d !important; } /* ETC */
+
+/* 드래그 앤 드롭 영역 활성화 시 */
+.drag-over {
+    border: 2px dashed #3b82f6 !important;
+    background-color: rgba(59, 130, 246, 0.05) !important;
+}

@@ -1,0 +1,147 @@
+document.addEventListener("DOMContentLoaded", function() {
+	
+	const contextPath = document.body.dataset.contextPath;
+	const projectNo = document.body.dataset.projectNo;
+	const contentArea = $('#projectTabContent'); // 내용을 뿌려줄 영역
+	
+	/**
+		* 2. 탭 컨텐츠 로드 함수
+		* @param {string} tabName - 탭 이름 (tasks, board, member 등)
+	*/
+	function loadTab(tabName) {
+		if(!tabName) return;
+
+		// URL 생성 (Controller의 @GetMapping 매핑 주소와 일치)
+		let url = "";
+		url = `${contextPath}/tudio/project/${tabName}?projectNo=${projectNo}`;
+		switch (tabName) {
+		        case 'tasks': // 1. 업무
+		            url = `${contextPath}/tudio/project/task/list?projectNo=${projectNo}`;
+		            break;
+
+		        case 'gantt': // 2. 차트
+		            url = `${contextPath}/tudio/project/gantt/view?projectNo=${projectNo}`;
+		            break;
+
+		        case 'board': // 3. 게시판
+		            url = `${contextPath}/tudio/project/board?projectNo=${projectNo}`;
+		            break;
+
+		        case 'calendar': // 4. 일정 (Calendar)
+		            url = `${contextPath}/tudio/project/schedule?projectNo=${projectNo}`;
+		            break;
+
+		        case 'library': // 5. 자료실 (File/Library)
+		            url = `${contextPath}/tudio/project/library/list?projectNo=${projectNo}`;
+		            break;
+
+		        case 'member': // 6. 구성원 (Member)
+		            url = `${contextPath}/tudio/project/member/view?projectNo=${projectNo}`;
+		            break;
+				
+		        default: // 그 외 (예외 처리)
+		            url = `${contextPath}/tudio/project/${tabName}?projectNo=${projectNo}`;
+				
+		    }
+			console.log(`[탭 로딩 중] 탭이름: ${tabName} | 요청URL: ${url}`);
+		
+		
+		// 서버에서 해당 URL의 JSP 내용을 가져와서 contentArea(#projectTabContent)에 채워넣기
+		contentArea.load(url, function(response, status, xhr) {
+			
+			if (status == "error") {
+				let msg = "해당 컨텐츠를 불러오는 중 오류가 발생했습니다.";
+				console.error(`${msg} (${xhr.status} ${xhr.statusText})`);
+				contentArea.html(`
+			                <div class="tudio-empty">
+			                    <i class="bi bi-exclamation-circle"></i>
+			                    <p class="title">${msg}</p>
+			                    <p class="small text-muted">컨트롤러의 Mapping 주소와 JS의 URL이 일치하는지 확인하세요.</p>
+			                </div>
+				`);
+				return;
+			}
+			
+			// 탭 메뉴별 로드
+			$(document).trigger('tab:loaded', [tabName]);
+		});
+	}
+	
+	// -------------------------------------------------------------
+	// 3. 초기 로딩 처리 (화면 켜지자마자 첫 번째 탭 로드)
+	// -------------------------------------------------------------
+	// 수정 포인트: #projectTabs 아이디를 명시해서 정확히 프로젝트 탭만 찾습니다.
+	let activeTab = document.querySelector('#projectTabs .nav-link.active');
+
+	// 만약 active된 게 없다면? (안전장치: 첫 번째 탭 강제 선택)
+	if (!activeTab) {
+		activeTab = document.querySelector('#projectTabs .nav-link');
+		if(activeTab) activeTab.classList.add('active');
+	}
+
+	// 찾은 탭이 있다면 내용 로드 실행
+	if (activeTab) {
+		const tabName = activeTab.getAttribute('data-tab');
+		loadTab(tabName); 
+	}
+	
+	// 4. 탭 클릭 이벤트 리스너 (Bootstrap 5 이벤트)
+	// 사용자가 탭을 누를 때마다 해당 내용을 로드합니다.
+	const tabButtons = document.querySelectorAll('#projectTabs button[data-bs-toggle="tab"]');
+	tabButtons.forEach(button => {
+		button.addEventListener('shown.bs.tab', function(event) {
+			const tabName = event.target.getAttribute('data-tab');
+	    	loadTab(tabName);
+	    });
+	});
+		
+	// 북마크 설정 버튼
+	const btnBookmark = document.getElementById('btnBookmark');
+	if(btnBookmark) {
+		btnBookmark.addEventListener("click", function(){
+			toggleBookmark(contextPath, projectNo);
+		})
+	}
+});
+
+
+/**
+ * 프로젝트 북마크 설정 함수
+ */
+function toggleBookmark(contextPath, projectNo) {
+	$.ajax({
+		url: `${contextPath}/tudio/project/bookmark`,
+		type: 'post',
+		data: JSON.stringify({projectNo}),
+		contentType: 'application/json; charset=utf-8',
+		dataType: 'json',
+		success: function(res) {
+			if(res.status === 'SUCCESS') {
+				const bookmarkText = document.getElementById('bookmarkText');
+				const icon = document.querySelector('#btnBookmark i');
+				const btn = document.getElementById('btnBookmark');
+				
+				// 설정된 북마크 상태에 따라 아이콘 변경 (Y/N)
+				if(res.bookmark === 'Y') {
+					icon.classList.remove('bi-star');
+					icon.classList.add('bi-star-fill');
+					btn.title = "북마크 해제";
+					bookmarkText.textContent = "북마크 해제";
+				} else {
+					icon.classList.remove('bi-star-fill');
+					icon.classList.add('bi-star');
+					btn.title = "북마크 설정";
+					bookmarkText.textContent = "북마크 설정";
+				}
+			} else {
+				Swal.fire('오류', '북마크 설정에 실패하였습니다!', 'error');
+			}
+		},
+		error: function(xhr) {
+			console.log(xhr);
+			Swal.fire('에러', '서버 통신 중 오류가 발생했습니다!', 'error');
+		}
+	});
+}
+
+	

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.comment.mapper.ICommentMapper">
+
+    <resultMap id="commentMap" type="kr.or.ddit.vo.CommentVO">
+        <id property="cmtNo" column="CMT_NO"/>
+        <result property="memberNo" column="MEMBER_NO"/>
+        <result property="targetType" column="TARGET_TYPE"/>
+        <result property="targetId" column="TARGET_ID"/>
+        <result property="cmtContent" column="CMT_CONTENT"/>
+        <result property="cmtGroup" column="CMT_GROUP"/>
+        <result property="cmtOrd" column="CMT_ORD"/>
+        <result property="cmtDepth" column="CMT_DEPTH"/>
+        <result property="cmtStatus" column="CMT_STATUS"/>
+        <result property="fileGroupNo" column="FILE_GROUP_NO"/>
+        <result property="cmtRegdate" column="CMT_REGDATE"/>
+        <result property="cmtUpddate" column="CMT_UPDDATE"/>
+        
+        <result property="memberProfileimg" column="MEMBER_PROFILEIMG"/>
+        
+        <association property="memberVO" javaType="kr.or.ddit.vo.MemberVO">
+            <result property="memberNo" column="MEMBER_NO"/>
+            <result property="memberName" column="MEMBER_NAME"/>
+            <result property="memberProfileimg" column="MEMBER_PROFILEIMG"/>
+        </association>
+
+        <collection property="cmtFileDetailList" ofType="kr.or.ddit.vo.FileDetailVO">
+            <id property="fileNo" column="FILE_NO"/>
+            <result property="fileGroupNo" column="FILE_GROUP_NO"/>
+            <result property="fileOriginalName" column="FILE_ORIGINAL_NAME"/>
+            <result property="fileSaveName" column="FILE_SAVE_NAME"/>
+            <result property="filePath" column="FILE_PATH"/>
+            <result property="fileSize" column="FILE_SIZE"/>
+            <result property="fileFancysize" column="FILE_FANCYSIZE"/>
+            <result property="fileExtension" column="FILE_EXTENSION"/>
+            <result property="fileMime" column="FILE_MIME"/>
+            <result property="fileDownloadCnt" column="FILE_DOWNLOAD_CNT"/>
+        </collection>
+    </resultMap>
+
+
+    <select id="selectCommentList" parameterType="kr.or.ddit.vo.CommentVO" resultMap="commentMap">
+        SELECT A.CMT_NO
+             , A.MEMBER_NO
+             , A.TARGET_TYPE
+             , A.TARGET_ID
+             , A.CMT_CONTENT
+             , A.CMT_GROUP
+             , A.CMT_ORD
+             , A.CMT_DEPTH
+             , A.CMT_STATUS
+             , A.FILE_GROUP_NO
+             , A.CMT_REGDATE
+             , A.CMT_UPDDATE
+             , B.MEMBER_NAME
+             , B.MEMBER_PROFILEIMG
+             , F.FILE_NO
+             , F.FILE_ORIGINAL_NAME
+             , F.FILE_SAVE_NAME
+             , F.FILE_PATH
+             , F.FILE_SIZE
+             , F.FILE_FANCYSIZE
+             , F.FILE_EXTENSION
+             , F.FILE_MIME
+             , F.FILE_DOWNLOAD_CNT
+        FROM TB_COMMENT A
+        LEFT OUTER JOIN MEMBER B 
+                     ON A.MEMBER_NO = B.MEMBER_NO
+        LEFT OUTER JOIN FILE_DETAIL F 
+                     ON A.FILE_GROUP_NO = F.FILE_GROUP_NO 
+                    AND F.FILE_DELETE = 'N'
+        WHERE A.TARGET_TYPE = #{targetType}
+          AND A.TARGET_ID = #{targetId}
+        ORDER BY A.CMT_GROUP ASC, A.CMT_ORD ASC
+    </select>
+    
+    
+    <insert id="insertComment" parameterType="kr.or.ddit.vo.CommentVO">
+        <selectKey keyProperty="cmtNo" resultType="int" order="BEFORE">
+            SELECT SEQ_COMMENT.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO TB_COMMENT (
+              CMT_NO
+            , MEMBER_NO
+            , TARGET_TYPE
+            , TARGET_ID
+            , CMT_CONTENT
+            , CMT_GROUP
+            , CMT_ORD
+            , CMT_DEPTH
+            , CMT_STATUS
+            , FILE_GROUP_NO
+            , CMT_REGDATE
+        ) VALUES (
+              #{cmtNo}
+            , #{memberNo}
+            , #{targetType}
+            , #{targetId}
+            , #{cmtContent}
+            , #{cmtNo}   
+            , 1          
+            , 0          
+            , 'Y'
+            , #{fileGroupNo}
+            , SYSDATE
+        )
+    </insert>
+
+
+    <update id="updateComment" parameterType="kr.or.ddit.vo.CommentVO">
+        UPDATE TB_COMMENT
+           SET CMT_CONTENT = #{cmtContent}
+             , CMT_UPDDATE = SYSDATE
+             , FILE_GROUP_NO = #{fileGroupNo}
+         WHERE CMT_NO = #{cmtNo}
+           AND MEMBER_NO = #{memberNo}
+    </update>
+
+
+    <update id="deleteComment" parameterType="kr.or.ddit.vo.CommentVO">
+        UPDATE TB_COMMENT
+           SET CMT_STATUS = 'N'
+         WHERE CMT_NO = #{cmtNo}
+           AND MEMBER_NO = #{memberNo}
+    </update>
+    
+    
+    <insert id="insertReplyComment" parameterType="kr.or.ddit.vo.CommentVO">
+        INSERT INTO TB_COMMENT (
+              CMT_NO
+            , MEMBER_NO
+            , TARGET_TYPE
+            , TARGET_ID
+            , CMT_CONTENT
+            , CMT_GROUP
+            , CMT_ORD
+            , CMT_DEPTH
+            , CMT_STATUS
+            , FILE_GROUP_NO
+            , CMT_REGDATE
+        ) VALUES (
+              SEQ_COMMENT.NEXTVAL
+            , #{memberNo}
+            , #{targetType}
+            , #{targetId}
+            , #{cmtContent}
+            , (SELECT CMT_GROUP FROM TB_COMMENT WHERE CMT_NO = #{cmtNo})       
+            , (SELECT MAX(CMT_ORD) + 1 FROM TB_COMMENT WHERE CMT_GROUP = (SELECT CMT_GROUP FROM TB_COMMENT WHERE CMT_NO = #{cmtNo})) 
+            , (SELECT CMT_DEPTH FROM TB_COMMENT WHERE CMT_NO = #{cmtNo}) + 1   
+            , 'Y'
+            , #{fileGroupNo}
+            , SYSDATE
+        )
+    </insert>
+
+</mapper>

@@ -1,0 +1,29 @@
+package kr.or.ddit.survey.mapper;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.vo.survey.SurveyAnswerVO;
+import kr.or.ddit.vo.survey.SurveyParticipationVO;
+import kr.or.ddit.vo.survey.SurveyVO;
+
+
+@Mapper
+public interface ISurveyMapper {
+	
+	//설문 조회
+	public SurveyVO getSurveyDetail(int surveyNo);
+	
+	
+	//참여 정보 저장
+	public int insertParticipation(SurveyParticipationVO participationVO);
+	
+	//설문 답변 저장
+	public int insertAnswers(List<SurveyAnswerVO> answers);
+	
+	//중복 참여 확인
+	public int checkAlreadyParticipated(SurveyParticipationVO participationVO);
+
+}

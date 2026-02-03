@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.admin.siteNotice.mapper.ISiteNoticeMapper">
+
+	<resultMap id="noticeMap" type="kr.or.ddit.vo.NoticeVO">
+	    <id property="noticeNo" column="noticeNo"/>
+	    <result property="noticeTitle" column="noticeTitle"/>
+	    <result property="noticeContent" column="noticeContent"/>
+	    <result property="noticeRegdate" column="noticeRegdate"/>
+	    <result property="noticeUpdate" column="noticeUpdate"/>
+	    <result property="noticeHit" column="noticeHit"/>
+	    <result property="noticePinStatus" column="noticePinStatus"/>
+	    <result property="memberNo" column="memberNo"/>
+	    <result property="fileGroupNo" column="fileGroupNo"/>
+	    <result property="writer" column="writer"/>
+	    
+	    <result property="modMemberNo" column="modMemberNo"/>
+    	<result property="modifierName" column="modifierName"/>
+	    
+	    <collection property="fileList" ofType="kr.or.ddit.vo.FileDetailVO">
+	        <id property="fileNo" column="fileNo"/>
+	        <result property="fileOriginalName" column="fileOriginalName"/>
+	        <result property="filePath" column="filePath"/>
+	        <result property="fileSize" column="fileSize"/>
+	        <result property="fileExtension" column="fileExtension"/>
+	        <result property="fileDownloadCnt" column="fileDownloadCnt"/>
+	    </collection>
+	</resultMap>
+	
+	<select id="selectNoticeList" resultType="kr.or.ddit.vo.NoticeVO">
+		SELECT * FROM (
+			SELECT A.*, ROWNUM AS RNUM FROM (
+				SELECT 
+					N.NOTICE_NO AS noticeNo
+					, N.NOTICE_TITLE AS noticeTitle
+					, N.NOTICE_CONTENT AS noticeContent
+					, N.NOTICE_REGDATE AS noticeRegdate
+					, N.NOTICE_UPDDATE AS noticeUpdate
+					, N.NOTICE_HIT AS noticeHit
+					, N.NOTICE_FILE_NO AS noticeFileNo
+					, N.NOTICE_PIN_STATUS AS noticePinStatus
+					, N.MEMBER_NO AS memberNo
+					, M.MEMBER_NAME AS writer
+					, N.MOD_MEMBER_NO AS modMemberNo
+					, M2.MEMBER_NAME AS modifierName
+					, (SELECT COUNT(*) 
+	                   FROM FILE_DETAIL 
+	                   WHERE FILE_GROUP_NO = N.NOTICE_FILE_NO
+	                     AND FILE_DELETE = 'N') AS fileCount
+	                , (SELECT NVL(SUM(FILE_DOWNLOAD_CNT), 0) 
+	                   FROM FILE_DETAIL 
+	                   WHERE FILE_GROUP_NO = N.NOTICE_FILE_NO 
+	                     AND FILE_DELETE = 'N') AS totalDownloadHit
+				FROM NOTICE N
+				LEFT JOIN MEMBER M ON N.MEMBER_NO = M.MEMBER_NO
+				LEFT JOIN MEMBER M2     ON N.MOD_MEMBER_NO = M2.MEMBER_NO
+				ORDER BY N.NOTICE_PIN_STATUS DESC, N.NOTICE_NO DESC
+			) A
+			WHERE ROWNUM <![CDATA[ <= ]]> #{endRow}
+		)
+		WHERE RNUM <![CDATA[ >= ]]> #{startRow}
+	</select>
+	
+	<insert id="insertNotice" parameterType="kr.or.ddit.vo.NoticeVO">
+		<selectKey keyProperty="noticeNo" resultType="int" order="BEFORE">
+	   	 SELECT SEQ_NOTICE.NEXTVAL FROM DUAL
+	   </selectKey>
+		INSERT INTO NOTICE(
+			NOTICE_NO
+			, NOTICE_TITLE
+			, NOTICE_CONTENT
+			, NOTICE_PIN_STATUS
+			, MEMBER_NO
+			, NOTICE_REGDATE
+			, NOTICE_HIT
+			, NOTICE_FILE_NO
+		) VALUES (
+			#{noticeNo}, #{noticeTitle}, #{noticeContent}, #{noticePinStatus},
+			#{memberNo}, sysdate, 0, #{fileGroupNo}
+		)
+	</insert>
+	
+	
+	
+	<update id="updateNoticePin" parameterType="kr.or.ddit.vo.NoticeVO">
+		UPDATE NOTICE
+		SET NOTICE_PIN_STATUS = #{noticePinStatus}
+		WHERE NOTICE_NO = #{noticeNo}
+	</update>
+	
+	<select id="selectNoticeCount" parameterType="kr.or.ddit.vo.NoticeVO" resultType="int">
+		SELECT COUNT(*)
+		FROM NOTICE
+	</select>
+	
+	<select id="selectNoticeDetail" parameterType="int" resultMap="noticeMap">
+	    SELECT 
+	          N.NOTICE_NO          AS noticeNo
+	        , N.NOTICE_TITLE       AS noticeTitle
+	        , N.NOTICE_CONTENT     AS noticeContent
+	        , N.NOTICE_REGDATE     AS noticeRegdate
+	        , N.NOTICE_UPDDATE     AS noticeUpdate
+	        , N.NOTICE_HIT         AS noticeHit
+	        , N.NOTICE_PIN_STATUS  AS noticePinStatus
+	        , N.MEMBER_NO          AS memberNo
+	        , N.NOTICE_FILE_NO      AS fileGroupNo
+	        , M.MEMBER_NAME        AS writer
+	        , N.MOD_MEMBER_NO AS modMemberNo
+			, M2.MEMBER_NAME AS modifierName
+	        , F.FILE_NO            AS fileNo
+	        , F.FILE_ORIGINAL_NAME AS fileOriginalName
+	        , F.FILE_PATH          AS filePath
+	        , F.FILE_SIZE          AS fileSize
+	        , F.FILE_EXTENSION     AS fileExtension
+	        , F.FILE_DOWNLOAD_CNT  AS fileDownloadCnt
+	    FROM NOTICE N
+	    LEFT JOIN MEMBER M      ON N.MEMBER_NO = M.MEMBER_NO
+	    LEFT JOIN MEMBER M2     ON N.MOD_MEMBER_NO = M2.MEMBER_NO
+	    LEFT JOIN FILE_DETAIL F ON N.NOTICE_FILE_NO = F.FILE_GROUP_NO 
+	    WHERE N.NOTICE_NO = #{noticeNo}
+	</select>
+	
+	<update id="updateNotice" parameterType="kr.or.ddit.vo.NoticeVO">
+		UPDATE NOTICE
+		SET 
+			NOTICE_TITLE = #{noticeTitle}
+			, NOTICE_CONTENT = #{noticeContent}
+			, NOTICE_PIN_STATUS = #{noticePinStatus}
+			, NOTICE_UPDDATE = sysdate
+			, MOD_MEMBER_NO = #{memberNo}
+			<if test="fileGroupNo > 0">
+	        , NOTICE_FILE_NO = #{fileGroupNo}
+	        </if>
+		WHERE NOTICE_NO = #{noticeNo}
+	</update>
+
+	<delete id="deleteNotice" parameterType="int">
+		DELETE FROM NOTICE 
+		WHERE NOTICE_NO = #{noticeNo}
+	</delete>
+
+	<update id="incrementHit" parameterType="int">
+		UPDATE NOTICE 
+		SET NOTICE_HIT = NOTICE_HIT + 1
+		WHERE NOTICE_NO = #{noticeNo}
+	</update>
+
+	<select id="selectMemberAuthList" parameterType="int" resultType="kr.or.ddit.vo.MemberAuthVO">
+		SELECT 
+			MEMBER_NO AS memberNo
+			, AUTH AS auth
+		FROM MEMBER_AUTH
+		WHERE MEMBER_NO = #{memberNo}
+	</select>
+</mapper>

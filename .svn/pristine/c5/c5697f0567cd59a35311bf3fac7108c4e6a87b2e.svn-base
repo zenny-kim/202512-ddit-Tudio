@@ -1,0 +1,30 @@
+@charset "UTF-8";
+
+:root {
+	--main-blue: #3B82F6;
+	--dark-navy: #00407F;
+	--header-blue: #D9E9FF;
+	--border-blue: #BFDBFE;
+	--bg-body: #F8FAFC;
+	--text-main: #1E293B;
+	--text-muted: #64748B;
+	--sidebar-width: 90px; 
+  	--header-height: 70px;
+}
+
+.video-action-card {
+	transition: transform 0.2s;
+	cursor: pointer;
+	border: 2px solid transparent;
+}
+
+.video-action-card:hover {
+	transform: translateY(-5px);
+	border-color: #0d6efd; /* Bootstrap primary color */
+	box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+}
+
+.icon-large {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}

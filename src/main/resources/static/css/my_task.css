@@ -1,0 +1,733 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. 기본 레이아웃 (기존 유지)
+   ========================================= */
+:root {
+	--bg-body: #f8f9fa;
+	--header-height: 70px;
+}
+
+.main-content-wrap {
+	padding: 30px 40px;
+	width: 100%;
+	min-height: calc(100vh - var(--header-height));
+	background-color: var(--bg-body);
+	font-family: 'Pretendard', sans-serif;
+}
+
+/* =========================================
+   2. 테이블 스타일 (기존 유지)
+   ========================================= */
+.tudio-table-wrap {
+	overflow-y: visible;
+}
+
+.tudio-table-card {
+	table-layout: fixed;
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+.tudio-table-card thead th {
+	font-size: 14px;
+	color: #64748b;
+	font-weight: 700;
+	padding: 12px 10px;
+	background-color: #f8fafc;
+	border-bottom: 1px solid #e2e8f0;
+	text-align: center;
+}
+
+.tudio-table-card tbody td {
+	padding: 12px 10px;
+	vertical-align: middle;
+	border-bottom: 1px solid #f1f5f9;
+	font-size: 14px;
+	color: #334155;
+	text-align: center;
+}
+
+/* =========================================
+   3. 업무 행(Row) 디자인
+   ========================================= */
+
+/* A. 내 상위 업무 (Active Parent) */
+.task-row td {
+	background-color: #ffffff !important;
+	transition: background-color 0.2s;
+}
+
+.task-row:hover td {
+	background-color: #f8fbff !important;
+}
+/* 파란색 띠 (강조) */
+.task-row td:first-child {
+	border-left: 4px solid #3B82F6 !important;
+}
+
+/* B. 하위 업무 (Sub) */
+.sub-row {
+	display: none;
+}
+
+.sub-row td {
+	background-color: #fafafa !important;
+	padding-top: 10px !important;
+	padding-bottom: 10px !important;
+}
+/* 하위업무는 띠 없음 (일반 테두리) */
+.sub-row td:first-child {
+	border-left: 1px solid #e2e8f0;
+}
+
+.sub-row:hover td {
+	background-color: #f1f5f9 !important;
+}
+
+/* C. [수정] 껍데기 상위업무 (Shell Task) */
+.task-shell-row td {
+	background-color: #f1f5f9 !important; /* 배경: 약간 더 진한 회색 */
+	color: #64748b; /* 글자: 흐릿하게 */
+	/* 위아래 구분선 */
+	border-bottom: 1px solid #e2e8f0;
+}
+
+/* 껍데기 업무 좌측 띠: 회색으로 차분하게 */
+.task-shell-row td:first-child {
+	border-left: 4px solid #cbd5e1 !important;
+}
+
+/* =========================================
+   4. 업무명(Title) 내부 레이아웃
+   ========================================= */
+.task-title {
+	display: flex !important;
+	align-items: center !important;
+	gap: 6px;
+	height: 100%;
+	text-align: left !important;
+	padding-left: 10px !important;
+}
+
+.sub-title {
+	text-align: left !important;
+	padding-left: 30px !important;
+}
+
+.task-title-text {
+	font-size: 0.95rem !important;
+	font-weight: 600 !important;
+	color: #1e293b !important;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.task-row:hover .task-title-text {
+	color: #3b82f6 !important;
+}
+
+/* 토글 버튼 */
+.toggle-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
+	color: #94a3b8;
+	transition: color 0.2s;
+}
+
+.toggle-btn:hover {
+	color: #3b82f6;
+}
+
+/* =========================================
+   5. 핀(Pin) 아이콘 스타일
+   ========================================= */
+.pin-wrapper {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	width: 24px;
+	height: 24px;
+}
+
+.task-pin-icon, .sub-pin-icon {
+	font-size: 1.1rem;
+	color: #cbd5e1;
+	transition: transform 0.2s, color 0.2s;
+}
+
+.pin-wrapper:hover .task-pin-icon, .pin-wrapper:hover .sub-pin-icon {
+	transform: scale(1.2) rotate(15deg);
+	color: #64748b;
+}
+
+.task-pin-icon.active, .sub-pin-icon.active {
+	color: #f59e0b !important;
+}
+
+/* =========================================
+   6. 우측 슬라이딩 패널 & 기타
+   ========================================= */
+.task-detail-panel {
+	position: fixed;
+	top: var(--header-height);
+	right: -600px;
+	width: 600px;
+	height: calc(100vh - var(--header-height));
+	background: #fff;
+	border-left: 1px solid #e2e8f0;
+	z-index: 1060;
+	transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+	box-shadow: -15px 0 30px rgba(0, 0, 0, 0.05);
+	display: flex;
+	flex-direction: column;
+}
+
+.task-detail-panel.open {
+	right: 0;
+}
+
+.panel-header {
+	padding: 24px;
+	border-bottom: 1px solid #eef2f7;
+	display: flex;
+	justify-content: space-between;
+}
+
+.panel-body {
+	padding: 30px;
+	overflow-y: auto;
+	flex-grow: 1;
+}
+
+.panel-footer {
+	padding: 20px 30px;
+	border-top: 1px solid #eef2f7;
+	background: #f8fafc;
+	display: flex;
+	justify-content: space-between;
+}
+
+/* =========================================
+   7. [수정] 필터 라디오 버튼 활성화 디자인 (강력 버전)
+   ========================================= */
+/* 1) 라디오 버튼이 체크되었을 때 형제 라벨 스타일 */
+.btn-check:checked+.btn-outline-primary {
+	background-color: #3b82f6 !important; /* 메인 블루 */
+	color: #ffffff !important;
+	border-color: #3b82f6 !important;
+	box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+/* 2) JSP에서 강제로 .active 클래스를 줬을 때 스타일 (새로고침 후 유지용) */
+.btn-outline-primary.active {
+	background-color: #3b82f6 !important;
+	color: #ffffff !important;
+	border-color: #3b82f6 !important;
+	box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+/* 3) 체크 안 된 상태 hover */
+.btn-check:not(:checked)+.btn-outline-primary:hover,
+	.btn-outline-primary:not(.active):hover {
+	background-color: #eff6ff !important;
+	color: #3b82f6 !important;
+	border-color: #3b82f6 !important;
+}
+
+/* =========================================
+   8. [수정] 진척도 슬라이더 커스텀 디자인 (완결판)
+   ========================================= */
+
+/* 1. 슬라이더 본체 (트랙) 초기화 및 스타일 */
+input[type=range].form-range {
+    -webkit-appearance: none; /* 브라우저 기본 스타일 제거 */
+    width: 100%;
+    height: 6px; /* 트랙 높이를 얇게 설정 (목록의 진행바와 통일) */
+    background: #dee2e6; /* 기본 회색 (JS가 로드되기 전 색상) */
+    border-radius: 5px;  /* 둥근 모서리 */
+    outline: none;
+    cursor: pointer;
+    margin-top: 5px;     /* 상단 여백 미세 조정 */
+    padding: 0;          /* 부트스트랩 패딩 제거 */
+}
+
+/* 2. 트랙(Track) 배경 투명화 (JS 그라데이션이 보이게 하기 위함) */
+input[type=range].form-range::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    background: transparent; /* 투명하게 해야 본체(input)의 그라데이션이 보임 */
+    border-radius: 5px;
+    border: none;
+}
+
+/* 3. 핸들(Thumb) 디자인 - 크롬/엣지/사파리 */
+input[type=range].form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 18px;        /* 핸들 크기 */
+    width: 18px;
+    border-radius: 50%;  /* 완전한 원형 */
+    background: #ffffff; /* 내부 흰색 */
+    border: 2px solid #3B82F6; /* 테두리 파란색 */
+    
+    /* [중요] 핸들 수직 중앙 정렬 계산식: (트랙높이 - 핸들높이) / 2 */
+    /* (6px - 18px) / 2 = -6px */
+    margin-top: -6px; 
+    
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); /* 부드러운 그림자 */
+    transition: background 0.1s, transform 0.1s;
+}
+
+/* 핸들에 마우스 올렸을 때 효과 */
+input[type=range].form-range::-webkit-slider-thumb:hover {
+    transform: scale(1.15); /* 살짝 커짐 */
+    background: #3B82F6;    /* 내부가 파란색으로 채워짐 (선택사항) */
+}
+
+/* 4. 포커스 시 못생긴 박스 제거 */
+input[type=range].form-range:focus {
+    box-shadow: none;
+    border-color: transparent;
+}
+
+/* =========================================
+   9. [추가] 상세 패널(Form) 디자인 고도화
+   (Toss/iOS 스타일의 깔끔하고 모던한 UI 적용)
+   ========================================= */
+
+/* 1. 입력 필드 & 셀렉트 박스 공통 스타일 */
+.task-detail-panel .form-control, 
+.task-detail-panel .form-select {
+    border: 1px solid #e2e8f0; /* 테두리 연하게 */
+    background-color: #f8fafc; /* 배경 아주 연한 회색 */
+    border-radius: 12px;       /* 둥근 모서리 (iOS 스타일) */
+    padding: 12px 16px;        /* 넉넉한 패딩 */
+    font-size: 0.95rem;
+    color: #334155;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); /* 부드러운 전환 */
+    box-shadow: none;          /* 기본 그림자 제거 */
+}
+
+/* 포커스 시 효과 (Toss 스타일: 파란 테두리 + 부드러운 그림자) */
+.task-detail-panel .form-control:focus, 
+.task-detail-panel .form-select:focus {
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); /* 퍼지는 파란 그림자 */
+}
+
+/* 2. 업무 제목 입력 필드 (더 크고 강조되게) */
+.task-detail-panel #detailTitle {
+    font-size: 1.25rem !important; /* 글자 키움 */
+    font-weight: 700;
+    color: #1e293b;
+    border: none;              /* 테두리 제거 */
+    background-color: transparent; /* 배경 투명 */
+    padding: 0;                /* 패딩 제거 */
+    border-radius: 0;
+    border-bottom: 2px solid transparent; /* 밑줄 애니메이션용 */
+    transition: border-color 0.2s;
+}
+
+.task-detail-panel #detailTitle:focus {
+    box-shadow: none;
+    background-color: transparent;
+    border-bottom-color: #3b82f6; /* 포커스 시 밑줄만 파랗게 */
+}
+
+/* 3. 라벨 스타일 (작고 깔끔하게) */
+.task-detail-panel .form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #94a3b8; /* 연한 회색 */
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* 4. 텍스트 영역 (Textarea) */
+.task-detail-panel textarea.form-control {
+    line-height: 1.6;
+    resize: none; /* 크기 조절 불가 */
+    min-height: 120px;
+}
+
+/* 5. 날짜 입력 필드 (Date Input) */
+.task-detail-panel input[type="date"] {
+    font-family: inherit; /* 폰트 통일 */
+    color: #475569;
+    cursor: pointer;
+}
+
+/* 6. 담당자 드롭다운 버튼 */
+.task-detail-panel #assigneeDropdownBtn {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.task-detail-panel #assigneeDropdownBtn:hover {
+    background-color: #f1f5f9;
+}
+
+/* 7. 담당자 뱃지 (선택된 사람) */
+.task-detail-panel #selectedAssigneeArea .badge {
+    background-color: #eff6ff !important; /* 아주 연한 파랑 배경 */
+    color: #2563eb !important; /* 진한 파랑 글씨 */
+    border: 1px solid #dbeafe !important;
+    padding: 6px 10px;
+    border-radius: 20px; /* 알약 모양 */
+    font-weight: 500;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* 8. 패널 하단 버튼 그룹 */
+.task-detail-panel .panel-footer {
+    background-color: #ffffff; /* 배경 흰색으로 변경 */
+    border-top: 1px solid #f1f5f9;
+    padding: 20px 30px;
+}
+
+.task-detail-panel .tudio-btn {
+    border-radius: 10px;       /* 버튼도 둥글게 */
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+/* 저장 버튼 (파란색 그라데이션 느낌) */
+.task-detail-panel .tudio-btn-primary {
+    background-color: #3b82f6;
+    border: none;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25); /* 그림자 추가 */
+}
+.task-detail-panel .tudio-btn-primary:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px); /* 살짝 떠오르는 효과 */
+    box-shadow: 0 6px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* 삭제 버튼 (빨간색 테두리) */
+.task-detail-panel .tudio-btn-outline-danger {
+    color: #ef4444;
+    border: 1px solid #fee2e2;
+    background-color: #fef2f2;
+}
+.task-detail-panel .tudio-btn-outline-danger:hover {
+    background-color: #fee2e2;
+    border-color: #fecaca;
+    color: #dc2626;
+}
+
+/* 9. 프로젝트명 (읽기 전용) */
+.task-detail-panel #detailProjectName {
+    font-size: 0.9rem;
+    color: #3b82f6 !important;
+    font-weight: 600;
+    background: none;
+    padding: 0;
+    border: none;
+    margin-bottom: 10px;
+}
+
+/* =========================================
+   10. [추가] 담당자 선택 드롭다운 디자인 고도화
+   (검색 기능 포함된 프로필 리스트 스타일)
+   ========================================= */
+
+/* 드롭다운 메뉴 박스 */
+.task-detail-panel .dropdown-menu {
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 0; /* 내부 패딩은 개별 요소에 */
+    overflow: hidden;
+    margin-top: 5px !important;
+}
+
+/* 검색창 영역 */
+.dropdown-search-wrap {
+    padding: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.dropdown-search-input {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.dropdown-search-input:focus {
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 멤버 리스트 아이템 */
+.assignee-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #f8fafc;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.assignee-item:last-child {
+    border-bottom: none;
+}
+
+.assignee-item:hover {
+    background-color: #f1f5f9;
+}
+
+/* 체크박스 커스텀 (숨기고 커스텀 UI 사용 or 스타일링) */
+.assignee-item .form-check-input {
+    margin-top: 0;
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    border-color: #cbd5e1;
+}
+
+.assignee-item .form-check-input:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+/* 프로필 아이콘 (원형) */
+.profile-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #e2e8f0;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+/* 멤버 정보 텍스트 */
+.member-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.2;
+}
+
+.member-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.member-role {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* 스크롤 영역 제한 */
+#assigneeDropdownList {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+/* 스크롤바 예쁘게 */
+#assigneeDropdownList::-webkit-scrollbar {
+    width: 6px;
+}
+#assigneeDropdownList::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+}
+
+/* =========================================
+   11. [수정] 제목 및 계층 구조(Breadcrumb) 스타일
+   (텍스트 링크 형태: 프로젝트명 > 상위업무명)
+   ========================================= */
+
+/* 1. 상단 계층 구조 (Breadcrumb) */
+.task-breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+/* 프로젝트명 (파란색 링크 스타일) */
+.breadcrumb-project {
+    color: #2563eb; /* 쨍한 파란색 */
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.breadcrumb-project:hover {
+    color: #1d4ed8;
+    text-decoration: underline; /* 호버 시 밑줄 */
+}
+
+/* 구분자 (>) */
+.breadcrumb-divider {
+    color: #94a3b8; /* 연한 회색 */
+    font-size: 0.8rem;
+    margin: 0 8px; /* 양옆 간격 */
+}
+
+/* 상위업무명 (검은색 텍스트) */
+.breadcrumb-parent {
+    color: #334155; /* 진한 회색/검정 */
+    max-width: 350px; /* 너무 길면 자르기 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 2. 업무 제목 입력 필드 (수정 가능함 강조) */
+.task-title-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.task-detail-panel #detailTitle {
+    font-size: 1.5rem !important; /* 제목답게 크게 */
+    font-weight: 700;
+    color: #1e293b;
+    width: 100%;
+    
+    /* 기본 상태: 투명이지만 시각적 힌트 제공 */
+    background-color: transparent; 
+    border: none;
+    border-radius: 4px;
+    padding: 4px 0; /* 패딩 최소화 */
+    
+    /* 입력 가능한 느낌을 주는 밑줄 (평소에는 연하게) */
+    border-bottom: 2px solid transparent; 
+    transition: all 0.2s;
+}
+
+/* 마우스 올렸을 때: "여기 입력 가능해요" 힌트 */
+.task-detail-panel #detailTitle:hover {
+    border-bottom-color: #e2e8f0; /* 연한 회색 밑줄 등장 */
+}
+
+/* 포커스(입력 중) 상태: 파란색 강조 */
+.task-detail-panel #detailTitle:focus {
+    outline: none;
+    border-bottom-color: #3b82f6; /* 파란색 밑줄 */
+}
+
+/* 제목 옆 연필 아이콘 (입력 상태일 땐 숨김) */
+.title-edit-icon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #cbd5e1;
+    font-size: 1.1rem;
+    pointer-events: none;
+    opacity: 1 !important; 
+    transition: color 0.2s;
+}
+
+/* 입력창 포커스 시 아이콘 색상 변경 (파란색) */
+.task-detail-panel #detailTitle:focus + .title-edit-icon {
+    color: #3b82f6;
+}
+
+/* =========================================
+   12. [추가] 날짜 입력 필드 UX 개선 (전체 클릭 가능)
+   ========================================= */
+
+/* 1. 날짜 필드 전체 영역에 포인터 커서 */
+.task-detail-panel input[type="date"] {
+    position: relative;
+    cursor: pointer !important; /* 마우스 올리면 손가락 모양 */
+}
+
+/* 2. (크롬/엣지) 달력 아이콘을 투명하게 만들고 input 전체를 덮게 함
+      또는 아이콘을 우측에 예쁘게 배치하고 전체 클릭 이벤트를 JS로 보완 */
+/* 여기서는 심플하게: input 전체 클릭 시 달력이 뜨도록 JS 트리거를 사용하거나,
+   CSS만으로 하려면 아이콘 영역을 확장하는 꼼수가 필요하지만, 
+   가장 깔끔한 건 JS로 'click' 시 'showPicker()'를 호출하는 것입니다. (아래 JS 수정 참조) */
+
+/* 날짜 텍스트 정렬 및 스타일 */
+.task-detail-panel input[type="date"] {
+    text-align: left;
+    font-family: 'Pretendard', sans-serif;
+    color: #334155;
+}
+
+/* 가독성을 위해 라벨 간격 미세 조정 */
+.task-detail-panel .form-label {
+    margin-bottom: 4px !important;
+    font-size: 0.8rem !important;
+}
+
+/* =========================================
+   13. [수정] 상세 정보 한 줄 레이아웃 최적화 (Left 정렬 통일)
+   ========================================= */
+
+/* 1. 이 행(Row) 내부의 모든 텍스트를 왼쪽 정렬로 통일 */
+.task-detail-panel .task-info-row .form-label,
+.task-detail-panel .task-info-row .form-control,
+.task-detail-panel .task-info-row .form-select {
+    text-align: left !important;
+}
+
+/* 2. 입력 필드 스타일링 (폰트 크기 및 패딩 최적화) */
+.task-detail-panel .task-info-row .form-control,
+.task-detail-panel .task-info-row .form-select {
+    font-size: 0.85rem !important; /* 글자 크기 약간 축소 (공간 확보) */
+    padding: 8px 10px !important;   /* 좌우 패딩 적절히 부여 */
+    height: 38px;                   /* 높이 고정 (정렬 맞춤) */
+    letter-spacing: -0.3px;         /* 자간을 살짝 좁혀서 내용 더 많이 표시 */
+}
+
+/* 3. Select 박스 화살표 위치 조정 */
+.task-detail-panel .task-info-row .form-select {
+    background-position: right 8px center !important; /* 화살표 오른쪽 여백 확보 */
+    padding-right: 25px !important; /* 글자가 화살표와 겹치지 않게 */
+}
+
+/* 4. 날짜 입력 필드 스타일 */
+.task-detail-panel .task-info-row input[type="date"] {
+    position: relative;
+    font-family: 'Pretendard', sans-serif; /* 숫자 폰트 고정 */
+}
+
+/* 5. 라벨 스타일 (간격 조정) */
+.task-detail-panel .task-info-row .form-label {
+    font-size: 0.75rem !important;
+    margin-bottom: 6px !important;
+    padding-left: 2px; /* 입력창 라인과 미세하게 맞춤 */
+}

@@ -1,0 +1,16 @@
+package kr.or.ddit.drive.service;
+
+import java.util.Map;
+
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.vo.DriveFolderVO;
+
+public interface IDriveService {
+
+	public Map<String, Object> getDriveList(int projectNo, int i);
+	
+	public ServiceResult insertFolder(DriveFolderVO driveFolderVO);
+
+	void createProjectRootFolder(int projectNo, String projectName, int memberNo);
+	
+}

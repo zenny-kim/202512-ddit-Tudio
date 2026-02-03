@@ -1,0 +1,316 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   Tudio Task Style (Compact & Clean)
+   ========================================================================== */
+
+:root {
+    --task-bg-base: #ffffff;
+    --task-bg-soft: #f9fafb;
+    --task-border: #f2f4f6;
+    
+    --task-text-main: #191f28;
+    --task-text-body: #333d4b;
+    --task-text-sub: #8b95a1;
+    
+    --task-primary: #3182f6;
+    --task-radius: 16px; /* 모달이라 라운드 살짝 줄임 */
+}
+
+/* 모달 래퍼 (여백 40px -> 30px 축소) */
+.task-modal-wrap {
+    padding: 30px; 
+    color: var(--task-text-body);
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif;
+    background-color: #fff;
+    border-radius: var(--task-radius);
+}
+
+/* 헤더 영역 */
+.task-project-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--task-primary); /* 브랜드 컬러 사용 */
+    margin-bottom: 6px;         /* 제목과의 간격 */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.task-header-section {
+    margin-bottom: 20px; /* 30 -> 20 */
+    padding-bottom: 15px; /* 20 -> 15 */
+    border-bottom: 1px solid var(--task-border);
+}
+
+.task-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 8px; /* 12 -> 8 */
+}
+
+/* [수정] 제목 가독성 강화 (우선순위 상향 조정) */
+.task-header-section .task-title-text {
+    font-size: 32px; /* 26px -> 32px로 확대 (시각적 위계 확실히) */
+    font-weight: 800; /* 700 -> 800 (Apple 스타일의 굵은 헤드라인) */
+    color: var(--task-text-main);
+    line-height: 1.35; /* 줄 간격 확보로 가독성 개선 */
+    letter-spacing: -0.6px; /* 자간을 살짝 좁혀 단단한 느낌 (iOS 스타일) */
+    margin: 4px 0 0 0;
+    word-break: break-all; /* 긴 영어 단어 줄바꿈 */
+}
+
+.task-meta-info {
+    font-size: 15px;
+    color: var(--task-text-sub);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 브레드크럼 컨테이너 */
+.task-breadcrumb {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8b95a1;
+    display: flex;
+    align-items: center;
+    gap: 6px; /* 요소 간 간격 */
+}
+
+/* 프로젝트명 (브랜드 컬러 강조) */
+.breadcrumb-project {
+    color: var(--task-primary, #3182f6); 
+    font-weight: 700;
+}
+
+/* 구분자 (화살표 아이콘) */
+.breadcrumb-divider {
+    font-size: 12px;
+    color: #b0b8c1;
+    display: flex; align-items: center;
+}
+
+/* 상위업무 링크 (기존 btnGoParent 스타일링) */
+.breadcrumb-link {
+    color: #4e5968;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    max-width: 200px; /* 너무 길면 말줄임 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.breadcrumb-link:hover {
+    color: var(--task-primary, #3182f6);
+    text-decoration: underline;
+}
+
+/* 3. 핵심 정보 그리드 (회색 박스: 더 촘촘하게) */
+.task-info-grid {
+    background-color: var(--task-bg-soft);
+    padding: 20px; /* 24 -> 20 */
+    border-radius: 12px;
+    margin-bottom: 24px; /* 40 -> 24 (여기가 제일 중요) */
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* 줄 간격 16 -> 10 */
+}
+
+.task-info-row {
+    display: flex;
+    align-items: center;
+    min-height: 28px; /* 높이 축소 */
+}
+
+.task-info-label {
+    width: 90px; 
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--task-text-sub);
+    flex-shrink: 0;
+}
+
+.task-info-value {
+    flex-grow: 1;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--task-text-main);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* 담당자 칩 스타일 (조금 더 작게) */
+.task-user-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff;
+    border: 1px solid #e5e8eb;
+    padding: 2px 8px 2px 3px;
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--task-text-main);
+}
+.task-user-profile {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex; justify-content: center; align-items: center;
+}
+
+/* ======================================================
+	본문
+======================================================= */
+.task-section {
+    margin-bottom: 24px; /* 40 -> 24 (섹션끼리 너무 멀어지지 않게) */
+}
+.task-section-title {
+    font-size: 17px; 
+    font-weight: 700;
+    color: var(--task-text-main);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.task-content-box {
+    line-height: 1.5;
+    min-height: 80px; /* 최소 높이 줄임 */
+    white-space: pre-wrap;
+    color: var(--task-text-body);
+    font-size: 16px;
+}
+
+/* ======================================================
+	하위업무 리스트
+======================================================= */
+.task-sub-item {
+	display: flex;
+	align-items: center;
+	padding: 10px 14px;
+	background: #fff;
+	border: 1px solid var(--task-border);
+	border-radius: 8px;
+	margin-bottom: 6px;
+	gap: 0; /* 정교한 간격 조절을 위해 gap 제거하고 개별 padding/width로 제어 */
+}
+
+/* 하위업무 제목 호버 효과 */
+.task-sub-title:hover {
+    color: var(--task-primary, #3182f6); /* 파란색으로 변경 */
+    text-decoration: underline;          /* 밑줄 추가 */
+}
+
+/* 1. 상태 (55px) */
+.task-sub-status {
+	width: 55px;
+	flex-shrink: 0;
+	text-align: center;
+	margin-right: 12px;
+}
+
+/* 2. 제목 (남는 공간 차지) */
+.task-sub-title {
+	flex-grow: 1;
+	min-width: 0;
+	font-weight: 500;
+	font-size: 16px;
+	color: var(--task-text-main);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin-right: 15px; /* 마감일과의 간격 확보 */
+}
+
+/* 3. 마감일 */
+.task-sub-date {
+	width: 250px; /* ⭐ 너비를 100px -> 120px로 늘려 제목 공간을 줄임 */
+	flex-shrink: 0;
+	display: flex;
+	justify-content: flex-start; /* ⭐ 좌측 정렬로 시작점 통일 */
+	align-items: center;
+	font-size: 15px;
+	color: #191f28; /* ⭐ 아주 진한 회색/검정으로 변경 (가독성 UP) */
+	font-weight: 500;
+	/* 날짜 앞 아이콘과 텍스트 간격 미세 조정은 HTML에서 처리 */
+}
+
+/* 4. 담당자 (90px 좌측 정렬) */
+.task-sub-assignee {
+	width: 100px;
+	flex-shrink: 0;
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 6px;
+	font-size: 15px;
+	color: #333d4b;
+}
+/* ======================================================
+	댓글 및 푸터
+======================================================= */
+.task-comment-area {
+    border-top: 1px solid var(--task-border);
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+.task-footer-actions {
+    margin-top: 30px; /* 40 -> 30 */
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* 공통 요소 오버라이딩 */
+.task-modal-wrap .form-control {
+    background-color: var(--task-bg-soft);
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+}
+.task-modal-wrap .btn {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 8px 16px; /* 버튼 크기 살짝 줄임 */
+    font-size: 14px;
+}
+.task-modal-wrap .btn-primary {
+    background-color: var(--task-primary);
+    border: none;
+}
+
+/* 슬라이더 커스텀 스타일 */
+#detailRateSlider {
+    -webkit-appearance: none; /* 브라우저 기본 스타일 제거 */
+    width: 100%;
+    height: 6px; /* 트랙 높이 */
+    border-radius: 5px;
+    background: #e9ecef; /* 기본 회색 (JS로 덮어씌워질 예정) */
+    outline: none;
+    cursor: pointer;
+}
+
+/* 슬라이더 손잡이 (Thumb) 스타일 */
+#detailRateSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px; 
+    height: 16px;
+    border-radius: 50%;
+    background: #3182f6; /* 손잡이 색상 (Primary) */
+    cursor: pointer;
+    border: 2px solid #fff; /* 흰색 테두리로 깔끔하게 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}

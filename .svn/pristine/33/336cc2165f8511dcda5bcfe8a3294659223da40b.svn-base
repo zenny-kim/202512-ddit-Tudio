@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "constant-autumn-461216-q0",
+  "private_key_id": "a75d338fd31f19b740f1ead54e522c20b06508bb",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDfPb0fI6Z7/GHQ\nzhKD5/t0TVOKdTkX+ahlR9pGN6ttqfLKZxEVppBX3MA7t4ITQjQlGS2igQsgfdid\nSAYhPrVf8JktW624vVhu72zeYVnvrzoz3nPuN3+qopWKFLqNF4ujvHidBIJeX8IT\nUSsTI2QH/tOAcMCPhn2lOvTJSUSf9qSYoHbLivoFYRm2LZPGbkL/rXSswge3qf+n\nhk3z5xqQ/lprBH8eoxDMQgfTM5dhTfSYNDxqhrYmdMGyPNXk9QXrCDF0MAkT38gv\na5gi71vxBGMCZXIe49Z2zF2Yw64vWRJgrvhec/LizswvgvdtKX9eMqoRHX0v8Oa4\nUtS+/0apAgMBAAECggEAOCX7oM7jK1EduxpxnrqkzKo8RllYfFa/S4YIeNu8os75\ncX391o+3w1mTAhIURcrDecc86qABT/FHH7wDSq5OiSxnInjqF0qMaQ6QN9iNedL9\nVRlw2CweUKkm6n1vNFiFNzAKuBdvwNPd6OTj7CLdIIOv56C0VgUSKhJLiisC9yZm\nEC+lVxpzZ0cEZMu4JtZeRnJmlxVPA2YXhNj7cQobMXCxLckJae3QJFLMSRtWyL4d\n+HQc7NWb1q/2R+HltnSLVfm9X25FjYNUyBeYAfcM3Tey5qRF73ilB8TGrcj4wJL5\nclkkaecMkkgoWuJkBkQAsjeDsGnq/xVrXUeQ9HASJwKBgQD1it9k7lU3N9A7QcS6\nuRENHQvLmRnWUTyWVc8Tt4I49O4H46VmAxNbK49LjLVQ7kLNqVETxwaFf5PZEHLm\ns8F2QK7eC6L3jVvFdPf0/gwXgX5xBQLEX+bvhdOF9XJiCEpYOHMPHCnjncIG7etL\nU7rfCj4osdpQ19NpjU0rZLVS/wKBgQDov7eOjF5Hx+n5PYO9dAt+eoLU26ep1lr6\nTowmDa9O99wRSuJGX1NzB7Daw3l4WyC6iSEG8Br1V+Z+FBGNd7jlNUcIdGYSOEwU\ngR9D6rN/Ys14US+yslBJTGd32/qayKChPa42ggMjohE9whTtusWvIg88MRqB7Q5F\nCX4ROMnuVwKBgQDbhLdpxcW7oxNwFsFp6hB7d89Wy16VA3W2Nar3RqWOhDLWLMhv\nJirE5HGsqnRjkU96DHimxNVovoEQm6sN5AD+1p8/donQ5bj5FDSl/AYVcbj4E/HA\nXLjaxPsxlRkY2a6Vpon/JT+x9hVEGqq0Ynv78W1W9oJmqj2g7SnjtJqDQwKBgBdY\n0+LatcJhjVjRENv6PgTr6R/NAN6KgAnHw0s16DX1qv+ZEWWZvlc1mEn5fb/S9E+B\n3exCPZIKxTY0cSZNsiBb3co9UtfVCdysryQy8NqAYLgG/M/iDyerIF3nlRXdti82\nbrlNBV+XrD8TruHB8H6G3hxdmJkb3GiUcS7tEWR1AoGBAMjAW14N1/fPgcPaVyuv\n9Yp2hdclzVPoKL0l3Wu0XccQx7/1CbkBwxRrw3DuYSaDZdh4shFkH0x6xQMhAfRB\nrxezIVPDv42GpSFK1JDtx6JOb2gi7eltjaXwnli3hVPWe6HS4KEWsJcFP9Qyk+t1\nTOLS29xpggkTkwfe27lF5nhZ\n-----END PRIVATE KEY-----\n",
+  "client_email": "vertex-express@constant-autumn-461216-q0.iam.gserviceaccount.com",
+  "client_id": "101340868401321725894",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/vertex-express%40constant-autumn-461216-q0.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

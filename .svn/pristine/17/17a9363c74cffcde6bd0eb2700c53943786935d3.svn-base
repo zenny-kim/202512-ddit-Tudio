@@ -1,0 +1,278 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core"%>
+
+
+
+
+	<!-- ===== 구성원 탭 컨텐츠 시작 ===== -->
+	<section class="member-panel">
+
+		<main class="project-main">
+
+			<!-- 좌측 : 업무 현황 차트 -->
+			<section class="main-card chart-area">
+				<h3 class="card-title">진행중인 업무 현황</h3>
+				<div class="chart-box">
+					<!-- chart.js / echarts 들어갈 자리 -->
+					<canvas id="memTaskChart"></canvas>
+				</div>
+			</section>
+
+			<!-- 우측 : 구성원 역할 / 담당업무 -->
+			<section class="main-card member-area">
+				<h3 class="card-title">구성원 목록(${count})</h3>
+
+				<%-- <c:set property="${list.projectRole}" value=""/ --%>
+
+
+				<table class="member-table">
+					<thead>
+						<tr>
+							<th>No</th>
+							<th>구성원 이름</th>
+							<th>회사명</th>
+							<th>부서</th>
+							<th>직급</th>
+							<!--  프리면 프리, 고객사면 고객사로 () 안에 띄우기 -->
+							<th>채팅</th>
+						</tr>
+					</thead>
+					<tbody>
+						<c:forEach items="${list}" var="l" varStatus="st">
+							<tr>
+								<td>${st.count}</td>
+
+
+								<!-- data-bs-target="#memberModal : 모달 요소의 id 값 -->
+								<td class="member-name" data-member-no="${l.memberNo}"
+									data-bs-toggle="modal" data-bs-target="#memberModal">
+									${l.memberName} <c:if test="${l.projectRole eq 'MANAGER' }">(PM)</c:if>
+									<c:if test="${l.projectRole eq 'CLIENT'}">(기업관리자)</c:if>
+								</td>
+
+								<td>${l.companyName}</td>
+								<td>${l.memberDepartment}</td>
+								<td>${l.memberPosition}</td>
+								<th><button class="btn btn-sm btn-outline-secondary">
+										<i class="bi bi-chat-square-text"></i>
+									</button></th>
+							</tr>
+						</c:forEach>
+					</tbody>
+				</table>
+			</section>
+
+			<!-- 
+이메일, 연락처, 프로젝트 참여일은 모달에 나오게. 
+          <td>${l.memberEmail}</td>           <th>이메일</th>
+          <td>${l.memberTel}</td>          <th>연락처</th>
+	projectMemRegdate
+ -->
+
+		</main>
+
+	</section>
+
+	<!-- ===== 구성원 상세 모달 (Bootstrap) ===== -->
+	<div class="modal fade" id="memberModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+			<div class="modal-content member-modal">
+
+				<div class="modal-header">
+					<div>
+						<h5 class="modal-title">구성원 상세 정보</h5>
+					</div>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="닫기"></button>
+				</div>
+
+				<div class="modal-body">
+					<!-- 상단 -->
+					<div class="modal-body">
+
+						<!-- ===== 상단 카드 (사진 스타일) ===== -->
+						<div class="memTopCard">
+							<!--     <div class="memAvatarCircle" id="mProfile">프로필</div> -->
+							<div class="memAvatarCircle">
+								<img id="mAvatarImg" alt="profile" />
+							</div>
+
+							<div class="memName" id="mName">이름</div>
+
+							<div class="memStatLine">
+								<div class="memStatItem">
+									<div class="k">담당업무</div>
+									<div class="v">
+										<span id="mTotal">0</span>개
+									</div>
+								</div>
+								<div class="memStatItem">
+									<div class="k">진행중</div>
+									<div class="v">
+										<span id="mIng">0</span>개
+									</div>
+								</div>
+								<div class="memStatItem">
+									<div class="k">완료</div>
+									<div class="v">
+										<span id="mDone">0</span>개
+									</div>
+								</div>
+
+							</div>
+						</div>
+
+						<!-- ===== 하단 Information ===== -->
+						<div class="memInfoWrap">
+							<div class="memInfoTitle">Infomation</div>
+
+							<div class="memInfoBox">
+								<div class="infoRow">
+									<div class="label">이메일</div>
+									<div class="val" id="mEmail">-</div>
+								</div>
+
+								<div class="infoRow">
+									<div class="label">연락처</div>
+									<div class="val" id="mTel">-</div>
+								</div>
+
+								<div class="infoRow">
+									<div class="label">참여일</div>
+									<div class="val" id="mDate">-</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- 기존에 있던 힌트 div는 유지(안 쓰면 숨김 처리됨) -->
+						<div class="mm-desc" id="mProgHint" style="display: none;"></div>
+					</div>
+
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline-secondary btn-sm"
+						data-bs-dismiss="modal">닫기</button>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+
+<!-- 플러그인 CDN 추가. 파이조각 위에 숫자값 표시를 하려고 추가함 -->
+<script src="${pageContext.request.contextPath}/js/footer.js"></script>
+
+
+<script type="text/javascript">
+
+document.getElementById('memberModal').addEventListener('show.bs.modal', async(event)=>{
+	
+	const ctx = "${pageContext.request.contextPath}";
+
+	
+	const projectNo = '${projectNo}'; // path에서 가져온 값
+	const id = event.relatedTarget;   // 클릭한 id	console.log("미선짱짱:",id.dataset);
+	const memberNo = id.dataset.memberNo; // data-* 의 값을 가져오는거
+	
+	/* Sprin EL과 자바스크립트  템를릿 String 문법이 똑같아서 주의 필요, 자바스크립트 변수에는 \를 붙여줘야 java로 해석이 안됨 */
+	
+	const url = `${ctx}/tudio/project/\${projectNo}/memberModal?memberNo=\${memberNo}`;
+
+
+	// 서버 호출
+	const res = await fetch(url);
+	const data = await res.json(); //컨트롤러에서 JSON으로 내려준 객체 전체가 data. 쓰려면 data.memberName 이런식으로 쓴다
+
+	
+	//모달에 값 채우기
+	document.getElementById('mName').innerText = data.memberName;
+	document.getElementById('mEmail').innerText = data.memberEmail;
+	document.getElementById('mTel').innerText = data.memberTel;
+	document.getElementById('mDate').innerText = data.projectMemRegdate;
+	
+	// 업무 수
+	document.getElementById("mTotal").innerText = data.totalCnt ?? 0;
+	document.getElementById("mIng").innerText   = data.ingCnt ?? 0;
+	document.getElementById("mDone").innerText  = data.doneCnt ?? 0;
+
+
+	const img = document.getElementById("mAvatarImg");
+
+	img.src = data.memberProfileImg? data.memberProfileImg:"/images/default_profile.png";
+	
+	console.log(projectNo);
+	console.log(memberNo);
+	console.log("data : ", data);
+	
+	console.log("profile raw =", data.memberProfileImg);
+	console.log("profile final =", img.src); // 전체경로. 이거 복사해서 주소창에 복사하면 이미지 나와야함
+
+});
+
+
+
+// 빈 차트
+const memChart = document.querySelector("#memTaskChart");
+
+new Chart(memChart, {
+	type:'pie',
+	data:{
+		labels:[
+			'홍길동','홍길순','유재석','바나나','호호호','하하하','흐흐흐'
+		],
+	datasets:[{
+		data: [12,45,12,46,56,4,10],
+		backgroundColor: [
+			 	'#4e79a7',
+		        '#f28e2b',
+		        '#bab0ab',
+		        '#edc949',
+		        '#76b7b2',
+		        '#59a14f',
+		        '#2f4b7c'
+		]
+	}]
+  },
+  
+  		options : {
+  			responsive:true,
+  			maintainAspectRatio: false, // 캔버스 비율 고정말고 CSS에서 준 높이 그대로 쓰기 옵션. 콤마 중요
+  			plugins:{
+  				legend: {
+  					position : 'bottom' },
+  					
+  			// 여기부터가 숫자 항상 표시!
+  			datalabels:{
+  				color : '#000',
+  				font : {
+  					weight:'700',
+  					size:12
+  				},
+
+  				formatter: (value) => value < 2 ? '' : value, // 값 그대로 출력. 2보다 작을 시 생략
+  				anchor: 'center',				// 조각 바깥쪽 기준
+  				align: 'center',				// 바깥쪽에 붙임
+  				offset:6,					// 조각에서 살짝 띄우기
+  				font:{weight:'700',size:12}
+  			}	
+  		}
+  	},
+  	plugins : [ChartDataLabels]					// 플러그인 등록
+  		
+});
+
+
+// 실제 데이터 차트에 주입
+
+
+
+</script>

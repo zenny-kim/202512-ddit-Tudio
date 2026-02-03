@@ -1,0 +1,23 @@
+package kr.or.ddit.common.code;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
+public enum ProjectType implements CodeEnum {
+	IT(101, "IT"),
+    MARKETING(102, "마케팅"),
+    ENTERTAINMENT(103, "엔터테인먼트"),
+    CONSTRUCTION(104, "건설"),
+    SECURITIES(105, "증권"),
+    EDUCATION(106, "학교"),
+    DESIGN(107, "디자인"),
+    RESEARCH(108, "연구"),
+    MANUFACTURING(109, "제조&생산"),
+    FNB(110, "F&B"),
+    ETC(111, "기타");
+
+    private final int code;
+    private final String label;
+}

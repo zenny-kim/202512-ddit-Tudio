@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.projectMember.mapper.IProjectMemberMapper">
+
+
+<!-- 구성원 목록 (공용) -->
+<select id="projectMemberList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+SELECT 
+	  PM.PROJECT_NO
+    , PM.MEMBER_NO
+	, M.MEMBER_ID
+	, M.MEMBER_NAME
+	, M.MEMBER_TEL
+	, M.MEMBER_EMAIL
+	, M.MEMBER_PROFILEIMG 
+	, M.MEMBER_DEPARTMENT
+	, M.MEMBER_POSITION
+	, PM.PROJECT_MEM_REGDATE
+	, PM.PROJECT_ROLE
+	, CC.COMPANY_NAME
+
+FROM PROJECT_MEMBER PM
+INNER JOIN MEMBER M ON PM.MEMBER_NO = M.MEMBER_NO
+LEFT JOIN CLIENT_COMPANY CC ON M.COMPANY_NO = CC.COMPANY_NO
+WHERE PM.PROJECT_MEM_STATUS = 'Y' AND M.LEAVE_STATUS='N' AND PM.PROJECT_NO = #{projectNo}
+ORDER BY 
+	CASE PM.PROJECT_ROLE
+		WHEN 'MANAGER' THEN 1
+		WHEN 'CLIENT' THEN 2
+		ELSE 3
+	END,
+	M.MEMBER_NAME
+</select>
+
+
+<!-- 프로젝트 내 구성원 수 -->
+<select id="projectMemberCount" parameterType="int" resultType="int">
+	SELECT COUNT(*)
+	FROM PROJECT_MEMBER
+	WHERE PROJECT_NO = #{projectNo} 
+	AND PROJECT_MEM_STATUS = 'Y'
+</select>
+
+<!-- 구성원 모달 정보 -->
+<select id="projectMemberDetail" parameterType="kr.or.ddit.vo.project.ProjectMemberVO" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+SELECT
+      PM.PROJECT_MEM_NO      AS projectMemNo
+    , PM.PROJECT_NO          AS projectNo
+    , PM.MEMBER_NO           AS memberNo
+    , TO_CHAR(PM.PROJECT_MEM_REGDATE, 'YYYY-MM-DD') AS projectMemregdate
+    , PM.PROJECT_MEM_STATUS  AS projectMemStatus
+    , PM.PROJECT_ROLE        AS projectRole
+    , PM.PROJECT_BOOKMARK    AS projectBookmark
+
+    , M.MEMBER_ID            AS memberId
+    , M.MEMBER_NAME          AS memberName
+    , SUBSTR(M.MEMBER_TEL,1,3)||'-'||SUBSTR(M.MEMBER_TEL,4,4)||'-'||SUBSTR(M.MEMBER_TEL,8) AS memberTel
+    , M.MEMBER_EMAIL         AS memberEmail
+    , M.MEMBER_PROFILEIMG    AS memberProfileImg
+    , M.MEMBER_DEPARTMENT    AS memberDepartment
+    , M.MEMBER_POSITION      AS memberPosition
+    , CC.COMPANY_NO        AS companyNo
+    , CC.COMPANY_NAME       AS companyName
+
+FROM PROJECT_MEMBER PM
+JOIN MEMBER M
+  ON M.MEMBER_NO = PM.MEMBER_NO
+LEFT JOIN CLIENT_COMPANY CC
+  ON CC.COMPANY_NO = M.COMPANY_NO
+WHERE PM.PROJECT_MEM_STATUS = 'Y'
+  AND M.LEAVE_STATUS = 'N'
+  AND PM.PROJECT_NO = #{projectNo}
+  AND PM.MEMBER_NO  = #{memberNo}
+</select>
+
+
+<!-- 구성원 모달 업무 갯수 (상위+하위 합산) -->
+<select id="projectMemberDetailTaskCount"
+        parameterType="kr.or.ddit.vo.project.ProjectMemberVO"
+        resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+<![CDATA[
+SELECT
+    pm.MEMBER_NO  AS memberNo,
+    m.MEMBER_NAME AS memberName,
+
+    
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE = 202 THEN w.UNIQUE_ID
+    END) AS ingCnt,
+
+    
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE = 203 THEN w.UNIQUE_ID
+    END) AS doneCnt,
+
+   
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE = 205 THEN w.UNIQUE_ID
+    END) AS delayCnt,
+
+    
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE = 204 THEN w.UNIQUE_ID
+    END) AS holdCnt,
+
+    
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE IN (202,203,204,205) THEN w.UNIQUE_ID
+    END) AS totalTaskCnt
+
+FROM PROJECT_MEMBER pm
+JOIN MEMBER m
+  ON m.MEMBER_NO = pm.MEMBER_NO
+
+LEFT JOIN (
+   
+    SELECT
+        ptm.MEMBER_NO,
+        pt.PROJECT_NO,
+        pt.TASK_STATUS AS STATUS_CODE,
+        'T_' || TO_CHAR(pt.TASK_ID) AS UNIQUE_ID
+    FROM PROJECT_TASK_MANAGER ptm
+    JOIN PROJECT_TASK pt
+      ON ptm.WORK_TYPE = 'T'
+     AND ptm.WORK_ID   = pt.TASK_ID
+    WHERE pt.TASK_STATUS <> 201
+
+    UNION ALL
+
+   
+    SELECT
+        ptm.MEMBER_NO,
+        pt.PROJECT_NO,
+        ps.SUB_STATUS AS STATUS_CODE,
+        'S_' || TO_CHAR(ps.SUB_ID) AS UNIQUE_ID
+    FROM PROJECT_TASK_MANAGER ptm
+    JOIN PROJECT_TASK_SUB ps
+      ON ptm.WORK_TYPE = 'S'
+     AND ptm.WORK_ID   = ps.SUB_ID
+    JOIN PROJECT_TASK pt
+      ON pt.TASK_ID = ps.TASK_ID
+    WHERE ps.SUB_STATUS <> 201
+) w
+  ON w.PROJECT_NO = pm.PROJECT_NO
+ AND w.MEMBER_NO  = pm.MEMBER_NO
+
+WHERE pm.PROJECT_NO = #{projectNo}
+  AND pm.MEMBER_NO  = #{memberNo}
+  AND pm.PROJECT_MEM_STATUS = 'Y'
+
+GROUP BY pm.MEMBER_NO, m.MEMBER_NAME
+]]>
+</select>
+
+
+<select id="projectMemberDetailTaskCountChart" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+<![CDATA[
+
+SELECT
+    pm.MEMBER_NO  AS memberNo,
+    m.MEMBER_NAME AS memberName,
+
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE = 202 THEN w.UNIQUE_ID
+    END) AS ingCnt,
+
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE = 203 THEN w.UNIQUE_ID
+    END) AS doneCnt,
+
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE = 204 THEN w.UNIQUE_ID
+    END) AS holdCnt,
+
+
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE = 205
+          OR (
+               w.END_DATE IS NOT NULL
+           AND w.END_DATE < TRUNC(SYSDATE)
+           AND w.STATUS_CODE NOT IN (203, 204)
+          )
+        THEN w.UNIQUE_ID
+    END) AS delayCnt,
+
+    COUNT(DISTINCT CASE
+        WHEN w.STATUS_CODE IN (201,202,203,204,205) THEN w.UNIQUE_ID
+    END) AS totalTaskCnt
+
+FROM PROJECT_MEMBER pm
+JOIN MEMBER m
+  ON m.MEMBER_NO = pm.MEMBER_NO
+
+LEFT JOIN (
+
+    SELECT
+        ptm.MEMBER_NO,
+        pt.PROJECT_NO,
+        pt.TASK_STATUS  AS STATUS_CODE,
+        pt.TASK_ENDDATE AS END_DATE,
+        'T_' || TO_CHAR(pt.TASK_ID) AS UNIQUE_ID
+    FROM PROJECT_TASK_MANAGER ptm
+    JOIN PROJECT_TASK pt
+      ON ptm.WORK_TYPE = 'T'
+     AND ptm.WORK_ID   = pt.TASK_ID
+    WHERE pt.TASK_STATUS IN (201,202,203,204,205)
+
+    UNION ALL
+
+
+    SELECT
+        ptm.MEMBER_NO,
+        pt.PROJECT_NO,
+        ps.SUB_STATUS  AS STATUS_CODE,
+        ps.SUB_ENDDATE AS END_DATE,
+        'S_' || TO_CHAR(ps.SUB_ID) AS UNIQUE_ID
+    FROM PROJECT_TASK_MANAGER ptm
+    JOIN PROJECT_TASK_SUB ps
+      ON ptm.WORK_TYPE = 'S'
+     AND ptm.WORK_ID   = ps.SUB_ID
+    JOIN PROJECT_TASK pt
+      ON pt.TASK_ID = ps.TASK_ID
+    WHERE ps.SUB_STATUS IN (201,202,203,204,205)
+) w
+  ON w.PROJECT_NO = pm.PROJECT_NO
+ AND w.MEMBER_NO  = pm.MEMBER_NO
+
+WHERE pm.PROJECT_NO = #{projectNo}
+  AND pm.PROJECT_MEM_STATUS = 'Y'
+  AND pm.PROJECT_ROLE NOT IN ('CLIENT', 'ROLE_CLIENT')
+
+GROUP BY pm.MEMBER_NO, m.MEMBER_NAME
+ORDER BY m.MEMBER_NAME
+
+]]>
+</select>
+
+
+
+
+
+
+
+
+
+<select id="projectMemberListSearch" parameterType="map" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+	
+	SELECT 
+	      PM.PROJECT_NO
+	    , PM.MEMBER_NO
+	    , M.MEMBER_ID
+	    , M.MEMBER_NAME
+	    , M.MEMBER_TEL
+	    , M.MEMBER_EMAIL
+	    , M.MEMBER_PROFILEIMG 
+	    , M.MEMBER_DEPARTMENT
+	    , M.MEMBER_POSITION
+	    , PM.PROJECT_MEM_REGDATE
+	    , PM.PROJECT_ROLE
+	    , CC.COMPANY_NAME
+	FROM PROJECT_MEMBER PM
+	INNER JOIN MEMBER M ON PM.MEMBER_NO = M.MEMBER_NO
+	LEFT JOIN CLIENT_COMPANY CC ON M.COMPANY_NO = CC.COMPANY_NO
+	WHERE PM.PROJECT_MEM_STATUS = 'Y'
+	  AND M.LEAVE_STATUS = 'N'
+	  AND PM.PROJECT_NO = #{projectNo}
+	
+	 	<if test="searchWord != null and searchWord != ''">
+	 		<choose>
+	 			<when test="searchType == 'memberName'">
+	 				AND M.MEMBER_NAME LIKE '%'||#{searchWord}||'%'
+	 			</when>	 			
+	 			<when test="searchType == 'companyName'">
+	 				AND CC.COMPANY_NAME LIKE '%'||#{searchWord}||'%'
+	 			</when>
+	 			<when test="searchType == 'memberDepartment'">
+	 				AND M.MEMBER_DEPARTMENT LIKE '%'||#{searchWord}||'%'
+	 			</when>
+	 		</choose>
+	 	</if>
+	ORDER BY 
+	  CASE PM.PROJECT_ROLE
+	    WHEN 'MANAGER' THEN 1
+	    WHEN 'CLIENT' THEN 2
+	    ELSE 3
+	  END,
+	  M.MEMBER_NAME
+</select>
+
+
+
+
+
+</mapper>

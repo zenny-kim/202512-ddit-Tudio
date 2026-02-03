@@ -1,0 +1,196 @@
+package kr.or.ddit.chat.service.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.chat.mapper.IChatMapper;
+import kr.or.ddit.chat.service.IChatService;
+import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.chat.ChatMemberVO;
+import kr.or.ddit.vo.chat.ChatVO;
+import kr.or.ddit.vo.chat.ChatroomVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class ChatServiceImpl implements IChatService{
+
+	@Autowired
+	private IChatMapper chatMapper;
+
+	SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	SimpleDateFormat timeFormat = new SimpleDateFormat("a hh:mm");
+	
+	@Override
+	public List<ChatroomVO> selectChatroomList(int memberNo) {
+		List<ChatroomVO> chatroomList = chatMapper.selectChatroomList(memberNo);
+		
+
+		// 각 채팅방별 마지막 채팅 출력 날짜의 포맷을 변경
+		for(ChatroomVO chatroom : chatroomList) {
+			
+			Date lastChatDate = chatroom.getLastChatDate();
+			
+			if(lastChatDate != null) {
+				String today = dateFormat.format(new Date());
+				String yesterday = dateFormat.format(new Date(new Date().getTime() - 60*60*24*1000*1));
+				String strLastChatDate = dateFormat.format(chatroom.getLastChatDate());
+			
+				if(today.equals(strLastChatDate)) {
+					chatroom.setFmtLastChatDate(timeFormat.format(lastChatDate));
+				}else if(yesterday.equals(strLastChatDate)) {
+					chatroom.setFmtLastChatDate("어제");
+				}else {
+					chatroom.setFmtLastChatDate(dateFormat.format(lastChatDate));
+				}
+			}
+		}
+		
+		return chatroomList;
+	}
+
+	@Override
+	public List<ChatVO> selectChatList(ChatVO chatVo) {
+		List<ChatVO> chatList = chatMapper.selectChatList(chatVo);
+		
+		for(ChatVO chat : chatList) {
+			chat.setFmtCreateDate(timeFormat.format(chat.getCreateDate()));
+			log.info(chat.toString());
+		}
+		
+		return chatList;
+	}
+
+	@Override
+	public Map<String, Object> selectChatroomTitle(ChatVO chatVo) {
+		return chatMapper.selectChatroomTitle(chatVo);
+	}
+
+	@Override
+	public List<MemberVO> selectProjectMemberList(ChatVO chatVo) {
+		return chatMapper.selectProjectMemberList(chatVo);
+	}
+
+	@Transactional
+	@Override
+	public ServiceResult insertChatroom(ChatroomVO chatroomVo) {
+		ServiceResult result = null;
+		
+		// 채팅방 추가
+		int status = chatMapper.insertChatroom(chatroomVo);
+		if(status > 0) {
+			List<Integer> chatMemberVoList = chatroomVo.getChatMemberNoList();
+			
+			// 초대 메세지 추가
+			ChatVO chatVo = new ChatVO();
+			if(chatroomVo.getMemCount() > 2) {
+				String systemMsg = makeInviteChat(chatroomVo.getChatMemberNameList());
+				
+				chatVo.setChatroomNo(chatroomVo.getChatroomNo());
+				chatVo.setChatType("SYSTEM");
+				chatVo.setMessage(systemMsg);
+				
+				chatMapper.insertSystemChat(chatVo);
+			}
+
+			// 채팅 멤버 추가 (방금 추가한 채팅방의 구성원들을 추가해줌)
+			for(Integer chatMemberNo : chatMemberVoList) {
+				ChatMemberVO chatMemberVo = new ChatMemberVO();
+				chatMemberVo.setChatroomNo(chatroomVo.getChatroomNo());
+				chatMemberVo.setMemberNo(chatMemberNo);
+				chatMemberVo.setLastReadChatNo(chatVo.getChatNo());
+				chatMapper.insertChatMember(chatMemberVo);
+			}
+			result = ServiceResult.OK;
+		} else {
+			result = ServiceResult.FAILED;
+		}
+		return result;
+	}
+
+	@Transactional
+	@Override
+	public ServiceResult insertChat(ChatVO chatVo) {
+		ServiceResult result = null;
+		int status = chatMapper.insertChat(chatVo);
+		if(status > 0) {
+			result = ServiceResult.OK;
+			chatVo.setFmtCreateDate(timeFormat.format(chatVo.getCreateDate()));
+
+			// 채팅방 목록에 띄울 마지막 메세지 update
+			ChatroomVO chatroomVo = new ChatroomVO();
+			chatroomVo.setLastChat(chatVo.getMessage());
+			chatroomVo.setLastChatDate(chatVo.getCreateDate());
+			chatroomVo.setChatroomNo(chatVo.getChatroomNo());
+			chatMapper.updateLastChat(chatroomVo);
+			
+			// 본인의 마지막으로 읽은 채팅 번호 변경
+			chatMapper.updateLastReadChatNo(chatVo);
+		}else {
+			result = ServiceResult.FAILED;
+		}
+		return result;
+	}
+
+	@Override
+	public List<Integer> selectChatroomMemList(int chatroomNo) {
+		return chatMapper.selectChatroomMemList(chatroomNo);
+	}
+
+	public String makeInviteChat(List<String> chatMemberNameList) {
+		String myName = chatMemberNameList.get(chatMemberNameList.size()-1);
+		String systemMsg = myName + "님이 ";
+		
+		for(int i = 0; i< chatMemberNameList.size()-1; i++) {
+			systemMsg += chatMemberNameList.get(i);
+			if(i == chatMemberNameList.size()-2) {
+				systemMsg += "님을 초대했습니다.";
+			} else {
+				systemMsg += "님, ";
+			}
+		}
+		
+		return systemMsg;
+	}
+
+	@Transactional
+	@Override
+	public Map<String, Object> deleteChatMember(Map<String, Object> deleteInfo) {
+		Map<String, Object> delResultMap = new HashMap<>();
+		// 채팅방 멤버 삭제
+		int status = chatMapper.deleteChatMember(deleteInfo);
+		
+		if(status > 0) {
+			ChatVO systemChat = new ChatVO();
+			systemChat.setChatroomNo((int)deleteInfo.get("chatroomNo"));
+			systemChat.setChatType("SYSTEM");
+			systemChat.setMessage(deleteInfo.get("memberName") + "님이 나갔습니다.");
+
+			// 채팅방에 퇴장 메세지 추가하기
+			chatMapper.insertSystemChat(systemChat);
+			// 채팅방 인원수 업데이트 (-1)
+			chatMapper.updateChatroom((int)deleteInfo.get("chatroomNo"));
+			// 채팅방에 아무도 없는 경우 채팅방의 모든 채팅 삭제 후, 채팅방을 삭제
+			chatMapper.deleteAllChat((int)deleteInfo.get("chatroomNo"));
+			chatMapper.deleteChatroom((int)deleteInfo.get("chatroomNo"));
+			
+			delResultMap.put("result", ServiceResult.OK);
+			delResultMap.put("chatVo", systemChat);
+		}else {
+			delResultMap.put("result", ServiceResult.FAILED);
+		}
+		
+		return delResultMap;
+	}
+
+}

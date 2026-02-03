@@ -1,0 +1,23 @@
+package kr.or.ddit.vo;
+
+import java.sql.Timestamp;
+import java.util.List;
+
+import lombok.Data;
+
+@Data
+public class ProjectVO {
+	private int projectNo;				// 프로젝트 일련번호
+	private int memberNo;				// 회원번호 (프로젝트 관리자)
+	private String projectName;			// 프로젝트 이름
+	private String projectDesc;			// 프로젝트 설명
+	private String projectStartdate;	// 프로젝트 시작일
+	private String projectEnddate;		// 프로젝트 종료일
+	private int projectStatus;			// 프로젝트 상태 (0:진행, 1:완료, 2:중단)
+	private Timestamp projectRegdate;	// 프로젝트 생성일
+	private String projectType;			// 프로젝트 타입
+	
+	private List<ProjectMemberVO> memberList;	// 구성원 목록
+	private ProjectMiniHeaderVO miniheader;		// 미니헤더 설정
+	private List<ProjectMemberVO> clientList;	// 기업 담당자 목록
+}

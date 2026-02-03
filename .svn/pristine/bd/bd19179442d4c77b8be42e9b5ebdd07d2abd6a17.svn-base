@@ -1,0 +1,59 @@
+/* ---------------------- 댓글 및 활동 기록 스타일 ---------------------- */
+.comment-item {
+    padding: 10px;
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+.reply-item {
+    padding-left: 15px;
+    border-left: 3px solid #dee2e6;
+}
+.activity-log-item {
+    position: relative;
+    padding-left: 25px;
+    margin-bottom: 15px;
+    font-size: 0.85rem;
+}
+.activity-log-item::before {
+    content: ''; 
+    position: absolute; 
+    left: 0; top: 5px; 
+    width: 10px; height: 10px; 
+    border-radius: 50%; 
+    background-color: #0d6efd; 
+    border: 2px solid #ffffff; 
+    box-shadow: 0 0 0 2px #0d6efd; 
+    z-index: 1;
+}
+.activity-log-item:not(:last-child)::after {
+    content: ''; 
+    position: absolute; 
+    left: 4px; top: 15px; bottom: -15px; 
+    width: 2px; 
+    background-color: #dee2e6;
+}
+
+/* ---------------------- 진척도 컨트롤러 스타일 ---------------------- */
+.progress-control-container {
+    width: 250px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px 15px;
+    border: 1px solid #dee2e6;
+}
+
+/* 슬라이더(Input Range)를 투명하게 만들어 프로그레스 바 위에 겹침 */
+.custom-range-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* 담당자가 아닐 때 커서 변경 */
+.custom-range-overlay:disabled {
+    cursor: not-allowed;
+}

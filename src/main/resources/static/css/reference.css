@@ -1,0 +1,264 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. 기본 변수 및 메인 컨테이너
+   ========================================= */
+:root { 
+    --primary-color: #0d6efd; 
+    --bg-body: #f4f7f6;
+    --text-main: #334155;
+    --text-sub: #64748b;
+}
+
+/* 메인 콘텐츠 영역 (사이드바 의존성 제거됨) */
+.main-content-wrap { 
+    padding: 30px; 
+    width: 100%; 
+    min-height: 100vh;
+    background-color: var(--bg-body);
+    font-family: 'Pretendard', sans-serif;
+}
+
+/* =========================================
+   2. 상단 네비게이션 (브레드크럼 & 드롭다운)
+   ========================================= */
+.breadcrumb-nav { 
+    display: flex; 
+    align-items: center; 
+    font-size: 1.1rem; 
+    font-weight: 600; 
+    margin-bottom: 25px; 
+}
+
+.breadcrumb-nav .sep { 
+    margin: 0 10px; 
+    color: #ced4da; 
+}
+
+.dropdown-text { 
+    color: var(--text-main); 
+    text-decoration: none; 
+    padding: 6px 12px; 
+    border-radius: 8px; 
+    transition: all 0.2s; 
+    cursor: pointer; 
+    display: inline-flex; 
+    align-items: center;
+}
+
+.dropdown-text:hover { 
+    background: #e2e8f0; 
+    color: var(--primary-color); 
+}
+
+/* =========================================
+   3. 커스텀 탭 (프로젝트 전환)
+   ========================================= */
+.nav-tabs-custom { 
+    border-bottom: 2px solid #e2e8f0; 
+    margin-bottom: 30px; 
+    gap: 10px; 
+}
+
+.nav-tabs-custom .nav-link { 
+    border: none; 
+    color: var(--text-sub); 
+    font-weight: 600; 
+    padding: 12px 20px; 
+    position: relative; 
+    transition: all 0.3s;
+}
+
+.nav-tabs-custom .nav-link:hover { 
+    color: var(--primary-color); 
+}
+
+.nav-tabs-custom .nav-link.active { 
+    color: var(--primary-color); 
+    background: none; 
+}
+
+/* 활성화된 탭 하단 밑줄 효과 */
+.nav-tabs-custom .nav-link.active::after {
+    content: ""; 
+    position: absolute; 
+    bottom: -2px; 
+    left: 0; 
+    width: 100%; 
+    height: 2px; 
+    background: var(--primary-color);
+}
+
+/* =========================================
+   4. 파일/폴더 그리드 시스템
+   ========================================= */
+.folder-group { 
+    margin-bottom: 40px; 
+}
+
+.folder-header { 
+    font-size: 1rem; 
+    font-weight: 700; 
+    color: #475569; 
+    margin-bottom: 15px; 
+    display: flex; 
+    align-items: center; 
+}
+
+.folder-header i { 
+    color: #f39c12; /* 폴더 아이콘 색상 */
+    margin-right: 8px; 
+    font-size: 1.2rem; 
+}
+
+/* =========================================
+   5. 갤러리 카드 (파일 아이템)
+   ========================================= */
+.gallery-card { 
+    border-radius: 12px; 
+    border: none; 
+    overflow: hidden; 
+    transition: 0.2s; 
+    background: #fff; 
+    cursor: pointer; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: relative;
+}
+
+.gallery-card:hover { 
+    transform: translateY(-5px); 
+    box-shadow: 0 10px 15px rgba(0,0,0,0.1); 
+}
+
+/* 이미지 영역 */
+.img-box { 
+    height: 140px; 
+    background: #f8fafc; 
+    position: relative; 
+}
+
+.img-box img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+
+/* 이미지 호버 오버레이 */
+.img-overlay {
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%;
+    background: rgba(13, 110, 253, 0.1); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    opacity: 0; 
+    transition: 0.2s; 
+    border: 2px solid transparent;
+}
+
+.gallery-card:hover .img-overlay { 
+    opacity: 1; 
+    border-color: var(--primary-color); 
+}
+
+/* 파일 텍스트 정보 */
+.file-info { 
+    padding: 10px; 
+}
+
+.file-title { 
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    color: #1e293b; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
+
+.file-size-date { 
+    font-size: 0.7rem; 
+    color: #94a3b8; 
+    display: flex; 
+    justify-content: space-between; 
+    margin-top: 4px; 
+}
+
+/* =========================================
+   6. 배지 및 버튼 (카드 내부 요소)
+   ========================================= */
+/* 내 파일 배지 */
+.my-file-badge {
+    position: absolute; 
+    top: 8px; left: 8px; 
+    z-index: 10;
+    background-color: var(--primary-color); 
+    color: white;
+    font-size: 0.65rem; 
+    padding: 2px 8px; 
+    border-radius: 4px;
+    font-weight: bold; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 삭제 버튼 (호버 시 등장) */
+.btn-file-delete {
+    position: absolute; 
+    top: 8px; right: 8px; 
+    z-index: 10;
+    background-color: rgba(220, 53, 69, 0.9); 
+    color: white;
+    border: none; 
+    border-radius: 4px; 
+    width: 24px; height: 24px;
+    display: none; 
+    align-items: center; 
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.btn-file-delete:hover { 
+    background-color: #bb2d3b; 
+    transform: scale(1.1); 
+}
+
+.gallery-card:hover .btn-file-delete.is-mine { 
+    display: flex; 
+}
+
+/* =========================================
+   7. 상세 모달 내부 스타일
+   ========================================= */
+.profile-img-lg { 
+    width: 45px; height: 45px; 
+    border-radius: 50%; 
+    background-color: var(--primary-color); 
+    color: white; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-weight: bold; 
+    font-size: 1.1rem; 
+}
+
+.path-label { 
+    font-size: 0.75rem; 
+    color: #94a3b8; 
+    margin-bottom: 2px; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+    display: block;
+}
+
+.path-value { 
+    font-weight: 600; 
+    color: #334155; 
+    margin-bottom: 15px; 
+    display: block; 
+    text-decoration: none; 
+}
+
+.path-value:hover { 
+    color: var(--primary-color); 
+    text-decoration: underline; 
+}

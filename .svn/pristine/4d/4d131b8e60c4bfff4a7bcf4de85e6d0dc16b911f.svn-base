@@ -1,0 +1,90 @@
+package kr.or.ddit.siteAdmin.controller;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/admin") // 1. 공통 경로를 '/admin'으로 변경
+public class SiteAdminController {
+
+    // ==========================================
+    // 1. 메인 껍데기 화면 (동기 방식)
+    // 브라우저 접속 주소: http://localhost/admin/main
+    // ==========================================
+    @GetMapping("/main")
+    public String adminMain() {
+        return "siteadmin/main"; 
+    }
+
+    // ================== 1. 회원 관리 ==================
+    @GetMapping("/user/list")
+    public String userList() {
+        // 나중에 DB에서 회원 목록 가져오는 코드 추가
+        return "siteadmin/pages/user_list"; // pages/user_list.jsp로 이동
+    }
+
+    // ================== 2. 고객센터 ==================
+    @GetMapping("/board/notice")
+    public String boardNotice() {
+        return "siteadmin/pages/board_notice";
+    }
+
+    @GetMapping("/board/inquiry")
+    public String boardInquiry() {
+        return "siteadmin/pages/board_inquiry";
+    }
+
+    @GetMapping("/board/faq")
+    public String boardFaq() {
+        return "siteadmin/pages/board_faq";
+    }
+
+    // ================== 3. 설문 관리 ==================
+    @GetMapping("/survey/list")
+    public String surveyList() {
+        return "siteadmin/pages/survey_list";
+    }
+
+    @GetMapping("/survey/form")
+    public String surveyForm() {
+        return "siteadmin/pages/survey_form";
+    }
+
+    // ================== 4. 정책 관리 ==================
+    @GetMapping("/policy/terms")
+    public String policyTerms() {
+        return "siteadmin/pages/policy_terms";
+    }
+
+    // ================== 5. 로그 관리 ==================
+    @GetMapping("/log/login")
+    public String loginLogPage(Model model) {
+        // (기존 작성하신 코드 유지)
+        List<String[]> dummyList = new ArrayList<>();
+        dummyList.add(new String[]{"10", "2025-12-30 14:32:01", "김관리(admin)", "192.168.0.5", "성공"});
+        model.addAttribute("logList", dummyList);
+        return "siteadmin/pages/log_login"; 
+    }
+
+    @GetMapping("/log/error")
+    public String errorLogPage(Model model) {
+        
+        // 가짜 에러 데이터 생성 (구조: 번호, 일시, 에러코드, 요청URL, 에러메시지, 발생자)
+        List<String[]> errorList = new ArrayList<>();
+        
+        errorList.add(new String[]{"5", "2025-12-30 15:45:12", "500", "/admin/user/delete", "NullPointerException: User ID is null", "admin"});
+        errorList.add(new String[]{"4", "2025-12-30 14:20:00", "404", "/favicon.ico", "No mapping found for HTTP request with URI", "anonymous"});
+        errorList.add(new String[]{"3", "2025-12-30 13:10:55", "403", "/admin/policy/edit", "Access Denied: Insufficient privileges", "park_jm"});
+        errorList.add(new String[]{"2", "2025-12-29 18:00:01", "500", "/api/chart/data", "SQLSyntaxErrorException: Unknown column 'cnt' in field list", "system"});
+        errorList.add(new String[]{"1", "2025-12-29 09:30:22", "400", "/login", "Bad Request: Missing parameter 'password'", "hong_gildong"});
+
+        model.addAttribute("errorList", errorList);
+
+        return "siteadmin/pages/log_error";
+    }
+}

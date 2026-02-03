@@ -1,0 +1,32 @@
+package kr.or.ddit.chatbot.controller;
+
+import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Controller
+@RequestMapping("/tudio/bot")
+public class ChatbotController {
+	
+	@Autowired
+    private VertexAiGeminiChatModel chatModel;
+
+	@GetMapping("/chat")
+	public String chatMain() {
+		try {
+		    // AI에게 질문을 던집니다.
+		    String result = chatModel.call("안녕? 네가 대답하면 연결 성공이야!");
+		    log.info("✅ 연결 성공! AI 답변: " + result); 
+		} catch (Exception e) {
+		    e.printStackTrace();
+		    log.info("❌ 연결 실패... 에러 메시지: " + e.getMessage()); 
+}
+		return "chatbot/chatbot";
+	}
+	
+}

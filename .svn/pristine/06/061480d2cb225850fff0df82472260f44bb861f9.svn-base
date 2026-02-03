@@ -1,0 +1,64 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+
+<tbody id="boardTbody">
+  <c:forEach items="${page.dataList}" var="row">
+    <tr class="row-click">
+    
+    <td>
+    	<c:choose>
+    	
+    		<c:when test="${row.categoryName =='NOTICE'}">
+    			<span class="badge badge-notice">공지</span>
+    		</c:when>
+    		
+    		<c:when test="${row.categoryName =='FREE'}">
+    			<span class="badge badge-free">자유</span>
+    		</c:when>
+    		
+    		<c:otherwise>
+    			<span class="badge badge-minutes">회의록</span>
+    		</c:otherwise>
+    	</c:choose>
+    </td>
+    
+    
+      <td class="title">
+        <a href="${pageContext.request.contextPath}/tudio/project/${projectNo}/select?boNo=${row.boNo}">
+          ${row.boTitle}
+        </a>
+        
+         <c:if test="${row.commentCnt > 0}">
+    		<span class="comment-cnt">(${row.commentCnt})</span>
+  		 </c:if>
+      </td>
+      <td class="muted">${row.memberName}</td>
+      
+      
+      <td class="muted">
+      	<c:choose>
+      		<c:when test="${not empty row.boUpddate and row.boUpddate ne row.boRegdate}">
+      			<small class="text-muted">(수정)</small><fmt:formatDate value="${row.boUpddate}" pattern="yyyy-MM-dd HH:mm"/> <!-- 24시간제 -->
+      		</c:when>
+      		<c:otherwise>
+      			<fmt:formatDate value="${row.boRegdate}" pattern="yyyy-MM-dd HH:mm"/>
+      		</c:otherwise>
+      	</c:choose>
+      </td>
+      
+      
+    
+
+      
+      
+      <!-- 만약 업데이트 됐다면 boUppdate -->
+      
+      <td class="muted">${row.boHit}</td>
+    </tr>
+  </c:forEach>
+</tbody>
+
+<div class="pager" id="boardPager">
+  ${page.pagingHTML }
+</div>

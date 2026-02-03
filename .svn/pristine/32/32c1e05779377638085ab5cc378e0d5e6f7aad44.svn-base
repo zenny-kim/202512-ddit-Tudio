@@ -1,0 +1,7 @@
+package kr.or.ddit.test;
+
+public class Test_js {
+	public void test() {
+		System.out.println("커밋 테스트 해봅니다~ - 진솔");
+	}
+}

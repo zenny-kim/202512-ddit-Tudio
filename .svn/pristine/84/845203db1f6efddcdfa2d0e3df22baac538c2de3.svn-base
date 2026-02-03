@@ -1,0 +1,310 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- 
+    파일명: approval_lsit_user.jsp
+    설명: 내 결재 관리 (기안함, 완료함, 임시보관함) 리스트 및 검색/필터링 기능
+--%>
+
+<div class="main-content-wrap">
+    <div class="container-fluid p-0">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">내 결재 관리</h3>
+                <p class="text-muted small m-0">작성한 기안서의 진행 현황을 확인하세요.</p>
+            </div>
+            <a href="approval_create.jsp" class="btn btn-primary px-4 shadow-sm fw-bold" style="border-radius: 8px;">
+                <i class="bi bi-pencil-square me-2"></i>기안 작성
+            </a>
+        </div>
+
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-body py-3 bg-white" style="border-radius: 12px;">
+                <form class="row g-2 align-items-center" onsubmit="return false;">
+                    <div class="col-md-2">
+                        <select class="form-select form-select-sm fw-bold border bg-light" id="searchPeriod">
+                            <option value="all" selected>전체 기간</option>
+                            <option value="1">1개월</option>
+                            <option value="3">3개월</option>
+                            <option value="6">6개월</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select form-select-sm" id="searchStatus">
+                            <option value="all" selected>전체 상태</option>
+                            <option value="결재 중">결재 중</option>
+                            <option value="승인">승인</option>
+                            <option value="반려">반려</option>
+                            <option value="임시 저장">임시 저장</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="searchKeyword" placeholder="기안명, 프로젝트명 검색">
+                        </div>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button type="button" class="btn btn-sm btn-light border me-1" onclick="resetSearch()">초기화</button>
+                        <button type="button" class="btn btn-sm btn-primary px-3 fw-bold" onclick="handleSearch()">조회</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white border-0 pt-2 px-0 mx-4" style="border-bottom: 1px solid #eee;">
+                <ul class="nav nav-tabs card-header-tabs border-0" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#drafts" onclick="switchTab('drafts')">
+                            <i class="bi bi-send me-2"></i>기안함 <span class="badge bg-secondary ms-1 rounded-pill" id="badge_drafts">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#completed" onclick="switchTab('completed')">
+                            <i class="bi bi-check-all me-2"></i>결재 완료함
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tempSave" onclick="switchTab('tempSave')">
+                            <i class="bi bi-save me-2"></i>임시 보관함 <span class="badge bg-warning text-dark ms-1 rounded-pill" id="badge_temp">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="tab-content">
+                    
+                    <div class="tab-pane fade show active" id="drafts">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4" style="width:40%">제목</th>
+                                    <th style="width:15%">프로젝트</th>
+                                    <th style="width:15%">결재자</th>
+                                    <th style="width:10%">기안일</th>
+                                    <th style="width:10%">처리일</th>
+                                    <th class="text-center" style="width:10%">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody_drafts">
+                                </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="completed">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4" style="width:40%">제목</th>
+                                    <th style="width:15%">프로젝트</th>
+                                    <th style="width:15%">최종 결재자</th>
+                                    <th style="width:10%">기안일</th>
+                                    <th style="width:10%">승인일</th>
+                                    <th class="text-center" style="width:10%">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody_completed">
+                                </tbody>
+                        </table>
+                    </div>
+
+                    <div class="tab-pane fade" id="tempSave">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4" style="width:40%">제목</th>
+                                    <th style="width:20%">프로젝트</th>
+                                    <th style="width:20%">저장일시</th>
+                                    <th class="text-center" style="width:20%">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody_tempSave">
+                                </tbody>
+                        </table>
+                        <div class="p-4 text-center text-muted small bg-light border-top">
+                            <i class="bi bi-info-circle me-1"></i> 임시 저장된 문서는 30일 후 자동 삭제됩니다.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* ============================================================
+       [Data] 데이터 Mockup (실제 개발 시 JSP EL이나 AJAX로 대체)
+       - drafts: 기안함 (결재 중, 반려)
+       - completed: 완료함 (승인)
+       - tempSave: 임시 보관함
+    ============================================================ */
+    const dbData = {
+        drafts: [
+            { id: 'APL-002', title: "신규 프로젝트 'Alpha' 장비 구매 요청", project: "Alpha 프로젝트", approver: "정고객 (고객사)", date: "2025.12.16", processDate: "-", status: "결재 중", badge: "bg-primary bg-opacity-10 text-primary", isRejected: false },
+            { id: 'APL-003', title: "12월 워크샵 비용 청구서", project: "Tudio 런칭", approver: "박팀장 (내부)", date: "2025.12.01", processDate: "2025.12.03", status: "반려", badge: "bg-danger bg-opacity-10 text-danger", isRejected: true, rejectReason: "예산 초과 (한도 100만원)" }
+        ],
+        completed: [
+            { id: 'APL-001', title: "개발팀 인원 충원 요청", project: "Tudio 런칭", approver: "이사님 (내부)", date: "2025.12.10", processDate: "2025.12.15", status: "승인", badge: "bg-success bg-opacity-10 text-success" }
+        ],
+        tempSave: [
+            { id: 'TEMP-001', title: "1월 마케팅 캠페인 예산안", project: "마케팅 캠페인", saveDate: "2025.12.18 14:30" }
+        ]
+    };
+
+    // 현재 활성화된 탭 상태 관리
+    let currentTab = 'drafts'; 
+
+    /* ============================================================
+       [Logic] 데이터 렌더링 및 검색 기능
+    ============================================================ */
+
+    // 1. 초기화 및 탭 전환
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshAllTables();
+        updateBadges();
+    });
+
+    function switchTab(tabName) {
+        currentTab = tabName;
+        // 탭 전환 시 검색 필터는 유지 (필요시 resetSearch() 호출로 변경 가능)
+        handleSearch(); 
+    }
+
+    function refreshAllTables() {
+        renderTable('drafts', dbData.drafts);
+        renderTable('completed', dbData.completed);
+        renderTable('tempSave', dbData.tempSave);
+    }
+
+    function updateBadges() {
+        // null 체크를 추가하여 안전하게 요소 접근
+        const badgeDrafts = document.getElementById('badge_drafts');
+        const badgeTemp = document.getElementById('badge_temp');
+        
+        if(badgeDrafts) badgeDrafts.innerText = dbData.drafts.length;
+        if(badgeTemp) badgeTemp.innerText = dbData.tempSave.length;
+    }
+
+    // 2. 테이블 렌더링 함수 (핵심)
+    function renderTable(type, dataList) {
+        const tbody = document.getElementById(`tableBody_\${type}`);
+        if(!tbody) return; // 요소가 없으면 종료
+
+        tbody.innerHTML = ''; // 기존 내용 비우기
+
+        if (dataList.length === 0) {
+            const colSpan = type === 'tempSave' ? 4 : 6;
+            tbody.innerHTML = `<tr><td colspan="\${colSpan}" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>데이터가 없습니다.</td></tr>`;
+            return;
+        }
+
+        dataList.forEach(item => {
+            let rowHtml = '';
+
+            // (A) 기안함 렌더링
+            if (type === 'drafts') {
+                // 반려 상태일 경우: 재기안 버튼 및 사유 표시 UI 로직
+                let titleContent = `<a href="approval_detail.jsp?id=\${item.id}" class="fw-bold text-dark text-decoration-none">\${item.title}</a>`;
+                
+                if (item.isRejected) {
+                    titleContent = `
+                        <div class="d-flex align-items-center">
+                            <a href="approval_detail.jsp?id=\${item.id}" class="fw-bold text-dark text-decoration-none text-truncate" style="max-width: 280px;">\${item.title}</a>
+                            <span class="badge border border-danger text-danger bg-white ms-2" style="font-weight:normal;">재작성 필요</span>
+                        </div>
+                    `;
+                }
+
+                rowHtml = `
+                    <tr>
+                        <td class="ps-4 py-3">\${titleContent}</td>
+                        <td><span class="badge bg-light text-dark border">\${item.project}</span></td>
+                        <td>\${item.approver}</td>
+                        <td>\${item.date}</td>
+                        <td class="text-muted">\${item.processDate}</td>
+                        <td class="text-center"><span class="badge \${item.badge} badge-status">\${item.status}</span></td>
+                    </tr>
+                `;
+            
+            // (B) 완료함 렌더링
+            } else if (type === 'completed') {
+                rowHtml = `
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark py-3"><a href="approval_detail.jsp?id=\${item.id}" class="text-dark text-decoration-none">\${item.title}</a></td>
+                        <td><span class="badge bg-light text-dark border">\${item.project}</span></td>
+                        <td>\${item.approver}</td>
+                        <td>\${item.date}</td>
+                        <td>\${item.processDate}</td>
+                        <td class="text-center"><span class="badge \${item.badge} badge-status">\${item.status}</span></td>
+                    </tr>
+                `;
+
+            // (C) 임시 보관함 렌더링
+            } else if (type === 'tempSave') {
+                rowHtml = `
+                    <tr>
+                        <td class="ps-4 fw-bold text-secondary py-3"><a href="approval_create.jsp?id=\${item.id}" class="text-secondary text-decoration-none">\${item.title}</a></td>
+                        <td>\${item.project}</td>
+                        <td>\${item.saveDate}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary me-1 fw-bold" onclick="location.href='approval_create.jsp?id=\${item.id}'"><i class="bi bi-pencil me-1"></i>이어서 작성</button>
+                            <button class="btn btn-sm btn-outline-danger fw-bold" onclick="if(confirm('정말 삭제하시겠습니까?')) alert('삭제되었습니다.')"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            tbody.insertAdjacentHTML('beforeend', rowHtml);
+        });
+    }
+
+    // 3. 검색 핸들러 (조회 버튼 클릭 시 실행)
+    function handleSearch() {
+        // 입력값 가져오기
+        const keyword = document.getElementById('searchKeyword').value.toLowerCase();
+        const statusFilter = document.getElementById('searchStatus').value; // all, 결재 중, 승인, 반려, 임시 저장
+        const periodFilter = document.getElementById('searchPeriod').value; // (Mock: 실제 날짜 계산은 생략하고 로직만 구현)
+
+        // 현재 탭의 원본 데이터 가져오기
+        let sourceData = [];
+        if (currentTab === 'drafts') sourceData = dbData.drafts;
+        else if (currentTab === 'completed') sourceData = dbData.completed;
+        else if (currentTab === 'tempSave') sourceData = dbData.tempSave;
+
+        // 필터링 수행
+        const filteredData = sourceData.filter(item => {
+            // 1) 키워드 검색 (제목 or 프로젝트명)
+            const matchKeyword = (item.title.toLowerCase().includes(keyword) || item.project.toLowerCase().includes(keyword));
+            
+            // 2) 상태 검색
+            // 임시저장 탭은 상태 필터가 의미 없으므로 무조건 true, 그 외에는 status 비교
+            let matchStatus = true;
+            if (statusFilter !== 'all') {
+                if (currentTab === 'tempSave') {
+                    matchStatus = (statusFilter === '임시 저장');
+                } else {
+                    matchStatus = (item.status === statusFilter);
+                }
+            }
+
+            return matchKeyword && matchStatus;
+        });
+
+        // 결과 렌더링 (화면 갱신)
+        renderTable(currentTab, filteredData);
+    }
+
+    // 4. 초기화 버튼
+    function resetSearch() {
+        document.getElementById('searchKeyword').value = '';
+        document.getElementById('searchStatus').value = 'all';
+        document.getElementById('searchPeriod').value = 'all';
+        
+        // 현재 탭의 전체 데이터로 복구
+        handleSearch();
+    }
+
+</script>

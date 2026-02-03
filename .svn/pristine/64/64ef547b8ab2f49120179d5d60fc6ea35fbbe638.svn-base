@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "lithe-lens-485307-r6",
+  "private_key_id": "02ffb55df51de9797f808075d8786f134043f49a",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDJZG9J8dCFfJWp\nET0aQ/RdX7V95ZaX1Mnom+M42CvIAeyhvAhf47k9ucvyyiJrcoGHKHktUOwcHYpN\nsPRv/dE5rDfsgSzeHlKeXxaFHFa39TmIpzJ6TQ+d9PMGOz/tt8bXjy56V6DfF0gv\n1o5ABjOVXXn1hGRQpXaOvgAZVrIwveZ72EnsdAA2/rTP/dl9A8Hjpcvf40W9ZR+b\nQTuQGO/16IJsOdoGmVTlQaNX1qU9Mt6bQE6dYVVzw9VQoSeHO/nicDZOSdB84sF+\nfeIhWJ1v4KgYzobLwYQ20ED/6xOs4xJM1Z2JbswFbXUBWtWcuVE6HFZzbwHOA63R\n0CwJzL8lAgMBAAECggEANG5HYvLnnLkQpZFtXPcwGVcfgwVQrXqijkJ3Z4cv7sRB\nfOHdNEmvIljKtgzV5S9MdYmd8qRMtA0kwpE9MiLcY61oadQ/gBxY2g5baJA2K3JW\nZjNROvHxDOiGlKq8PAFKbThDm2pQ4YPIMVwkcJqst0g8xiSPkUdilEr276HYhkOU\nDcKTABmhrdcq9Mfk4E4bDP4zeFW5oZNinwOHge7KB8L2QrJ+aOLR00Of1jmda1nP\nQ8u9S7+qlZiGfaQ6p8Nmumth3EWMkCo789cwXi1YZGmYvt7BmlVCf/NtYbcJwbvG\nYcgckW95d2/0DkMOVo6V3LQEbvqVmStx7sjhvHqGyQKBgQDmlvYlmE4ZjOHtOBC3\nWE7gn6Naog7t70zUf2z6GB4vMYqEAcFnlMk4a2r9tWxgxa9xX/nKwaQx+T6iLSiL\nj9u0fphK659lqLCy4kmBUvUbCDgmVaTCWZCVnND81bbAsxrxn/hGn+kYhtKmdB2g\nPyVrxG/Vvd5mVpDOn0Xj05YqTwKBgQDflc1lE4fpQM0JMTIJkE0fCTwUxzgXPOZj\nBO48KlBWQnoNGFOj7/qfR8sEbr/L0cJ29cqYRYiHeh0R6r6sh+y7ajvIV00rVfgU\nVzLYN+bgdEq2v/WyL0o3ac4Xw/16H/WO7prtFH5OO7HzZggdbL998SjPSSjzRjg4\nI2df7YeGSwKBgAyVAClc/iX2wf0nqgHXF7a5/zfaz+W7wP13VoLu/falRWGelucH\n/1LMybG+TIObRc9x5TdjCYqQhxJiVGwJFXvrzHOKF9B8O+gG4Ovlkuo+sJGm6q6Q\nJIuFWwHwx2AMZdP5Xpq77wQfly7t9w/fYjNXLKMFETWUU6JynmWoDfGRAoGAaeYp\nN8OtbxRrSPxNJ+x6KsYT9/94GMGWmbXfJQ4hqQmph4RLMW3b9g9qIDpYi7BZfEDk\n6YSdqxVyqWbXUx66SPaDRFvdSDZa3z+B7JlluFA8hxyawf/WFjL+E5GYAH0csMth\nBAPd4y4xFgjwtQcqF/veiXesdrV+sVBLiUsXEssCgYEAkAvC5X8PHEnhDk4Dh1/I\nRpfgpN3HBM2zEUnEYHmkrdw5IUf7HHsh3g3K0bGbutuVZE0XI36Jm3UZXEIH7ETt\nAM5P+1z10uMrQ+sAvrfFnfPaw2N7QBIweQe+HpwrIHzdjXO1GkMeH3UQYIOcgIfO\nnlelBD5czDQgNWfYzNtTsPU=\n-----END PRIVATE KEY-----\n",
+  "client_email": "tudio-136@lithe-lens-485307-r6.iam.gserviceaccount.com",
+  "client_id": "113652187554851417278",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/tudio-136%40lithe-lens-485307-r6.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

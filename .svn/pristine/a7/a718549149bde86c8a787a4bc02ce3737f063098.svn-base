@@ -1,0 +1,140 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<style>
+/* 1. 기본 버튼 스타일 (더 작고 연하게) */
+.fc .fc-button {
+	background-color: #f8fbff !important; /* 배경색을 더 하얗고 투명하게 */
+	border: 1px solid #e2e8f0 !important; /* 테두리 색상을 아주 연한 회색빛으로 변경 */
+	color: #64748b !important; /* 글자색을 쨍한 파랑 대신 차분한 슬레이트 블루로 */
+	font-weight: 500 !important;
+	border-radius: 8px !important; /* 라운딩 살짝 조절 */
+	padding: 5px 12px !important; /* 안쪽 여백을 줄여 버튼 크기 축소 */
+	text-transform: capitalize; /* 전체 대문자보다는 첫 글자만 대문자로 해서 차분하게 */
+	font-size: 0.78rem !important; /* 글자 크기 축소 */
+	transition: all 0.2s ease !important;
+	box-shadow: none !important;
+}
+
+/* 2. 마우스를 올렸을 때 (Hover) */
+.fc .fc-button:hover {
+	background-color: #f1f5f9 !important;
+	border-color: #cbd5e1 !important;
+	color: var(--main-blue) !important; /* 마우스 올릴 때만 파란색 강조 */
+}
+
+/* 3. 활성화된 버튼 (현재 선택된 View) */
+.fc .fc-button-active {
+	background-color: #eff6ff !important; /* 활성화 시에도 너무 진하지 않은 연한 파랑 배경 */
+	border-color: #bfdbfe !important; /* 테두리도 연한 파랑 */
+	color: var(--main-blue) !important; /* 글자색만 파란색으로 유지하여 강조 */
+	font-weight: 700 !important;
+	box-shadow: none !important; /* 그림자 제거해서 더 평면적이고 깔끔하게 */
+}
+
+/* 4. 버튼 사이 간격 및 그룹 해제 */
+.fc .fc-button-group>.fc-button {
+	margin-right: 6px !important; /* 버튼 사이 간격을 살짝 벌림 */
+	border-radius: 8px !important; /* 각 버튼의 사방을 모두 둥글게 */
+	border-left: 1px solid #e2e8f0 !important; /* 그룹화 시 왼쪽 테두리 사라짐 방지 */
+}
+
+/* 5. 오늘(Today) 버튼 */
+.fc .fc-today-button {
+	background-color: #ffffff !important;
+	border: 1px solid #e2e8f0 !important;
+	color: #94a3b8 !important; /* 오늘 버튼은 더 은은하게 */
+}
+
+/* 6. 화살표 버튼 (prev, next) 크기 조절 */
+.fc .fc-button .fc-icon {
+	font-size: 0.9em !important; /* 화살표 아이콘 크기도 함께 축소 */
+}
+</style>
+<section class="tudio-section">
+    <div class="tudio-section-header">
+        <h2 class="h5 fw-bold m-0 text-primary-dark">
+            <i class="bi bi-calendar3 me-2"></i> 프로젝트 일정
+        </h2>
+        <button class="tudio-btn tudio-btn-primary" type="button" id="addScheduleBtn">
+            <i class="bi bi-plus-lg me-1"></i> 새 일정 등록
+        </button>
+    </div>
+
+    <div class="tudio-card p-4 shadow-sm bg-white mt-3">
+        <div id="calendar"></div>
+    </div>
+</section>
+
+<script>
+$(function() {
+    // 1. 현재 프로젝트 번호 가져오기 (URL 파라미터에서 추출 예시)
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentProjectNo = urlParams.get('projectNo'); 
+
+    const calendarEl = $('#calendar')[0];
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ko',
+        height: 'auto',
+        displayEventTime: false,
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listMonth'
+        },
+        dayCellContent: function(info) { return info.date.getDate(); },
+        buttonText: {
+            today: '오늘', month: 'MONTH', list: 'LIST'
+        },
+        
+        // 이벤트 클릭 시 상세 정보 모달 열기
+        eventClick: function(info) {
+            openDetailModal(info.event);
+        },
+
+        // 데이터 로드 로직
+        events: function(info, successCallback, failureCallback) {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/tudio/getScheduleList',
+                type: 'GET',
+                success: function(list) {
+                    // 필터링: 현재 프로젝트 번호가 같은 데이터만 남김
+                    const filteredList = list.filter(item => {
+                        const pNo = String(item.projectNo || item.PROJECTNO);
+                        const type = item.scheduleType || item.SCHEDULETYPE;
+                        
+                        // 현재 프로젝트에 속한 상위업무(TASK), 하위업무(SUB), 프로젝트일정(PROJECT)만 표시
+                        return (pNo === currentProjectNo) && (type === 'TASK' || type === 'SUB' || type === 'PROJECT');
+                    });
+
+                    const events = filteredList.map(item => {
+                        return {
+                            id: item.scheduleId || item.SCHEDULEID,
+                            title: item.scheduleTitle || item.SCHEDULETITLE,
+                            start: item.scheduleStartdate || item.SCHEDULESTARTDATE,
+                            end: item.scheduleEnddate || item.SCHEDULEENDDATE,
+                            backgroundColor: item.scheduleColor || item.SCHEDULECOLOR,
+                            borderColor: item.scheduleColor || item.SCHEDULECOLOR,
+                            allDay: (item.scheduleAllday || item.SCHEDULEALLDAY) === 'Y',
+                            extendedProps: {
+                                type: type,
+                                description: item.scheduleDescription || item.DESCRIPTION
+                            }
+                        };
+                    });
+                    successCallback(events);
+                }
+            });
+        }
+    });
+    
+    calendar.render();
+
+    // 새 일정 등록 클릭 시 (프로젝트 번호 고정)
+    $('#addScheduleBtn').on('click', function() {
+        $('#scheduleForm')[0].reset();
+        // 모달 내 프로젝트 선택 셀렉트박스를 현재 프로젝트로 고정
+        $('#projectNo').val(currentProjectNo).prop('disabled', true); 
+        $('#addScheduleModal').modal('show');
+    });
+});
+</script>

@@ -1,0 +1,85 @@
+package kr.or.ddit.kanban.controller;
+
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import kr.or.ddit.kanban.service.IKanbanService;
+import kr.or.ddit.vo.project.ProjectTaskSubVO;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : KanbanController
+ * DESC : 칸반보드 클래스
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 KHJ
+ * @version 1.0, 2026.01.06
+ * 
+ */
+
+
+@Controller
+@RequestMapping("/kanban")
+public class KanbanController {
+    
+    @Autowired
+    private IKanbanService kanbanService;
+    
+    // 칸반 보드 메인 페이지 이동
+    @GetMapping("/main")
+    public String kanbanMain() {
+        // JSP에서 사용할 기본 프로젝트 번호를 넘기거나 세션에서 관리할 수 있습니다.
+        return "kanban/kanban"; 
+    }
+
+    // 1. JSP의 source url과 일치시킴
+    @GetMapping("/getTaskList")
+    @ResponseBody
+    public List<ProjectTaskSubVO> kanbanList(@RequestParam(name="projectNo", defaultValue="7") int projectNo) {
+        return kanbanService.getKanbanTaskList(projectNo);
+    }
+    
+    // 2. 상태 업데이트 (드래그 앤 드롭 결과 수신)
+    // 리턴값이 페이지 경로가 아닌 "success" 문자열이어야 하므로 @ResponseBody 추가
+    @PostMapping("/modifyStatus")
+    @ResponseBody
+    public String updateStatus(@RequestParam int taskId, @RequestParam int taskStatus) {
+        try {
+            boolean result = kanbanService.modifyTaskStatus(taskId, taskStatus);
+            return result ? "success" : "fail";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
+        }
+    }
+        
+    // 3. 진척률 업데이트 (슬라이더 조작 결과 수신)
+    @PostMapping("/updateRate")
+    @ResponseBody
+    public String updateRate(@RequestParam int taskId, @RequestParam int taskRate) {
+        try {
+            int result = kanbanService.updateTaskRate(taskId, taskRate);
+            return (result > 0) ? "success" : "fail";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
+        }
+    }
+    
+    @PostMapping("/updatePin") // /kanban/updatePin 이 되는지 확인!
+    @ResponseBody
+    public String updatePin(@RequestParam String taskId, @RequestParam String pinYn) {
+    	kanbanService.updateTaskPin(taskId, pinYn);
+        return "success";
+    }
+}

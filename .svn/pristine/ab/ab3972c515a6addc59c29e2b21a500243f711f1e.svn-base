@@ -1,0 +1,111 @@
+document.addEventListener("DOMContentLoaded", function() {
+	// 1. 화면이 켜지자마자 'active' 클래스가 있는 탭을 찾아서 클릭한 척 합니다.
+	const activeTab = document.querySelector('.nav-link.active');
+	
+	if (activeTab) {
+		// HTML 태그의 data-tab 속성값(예: 'board')을 가져옴
+	    const tabName = activeTab.getAttribute('data-tab'); 
+	        
+	    // loadTab 함수 강제 실행
+	    loadTab(tabName, activeTab); 
+	}
+	
+	const CONTEXT_PATH = document.body.dataset.contextPath;
+	const PROJECT_NO = document.body.dataset.projectNo;
+		
+	// 북마크 설정 버튼
+	const btnBookmark = document.getElementById('btnBookmark');
+	if(btnBookmark) {
+		btnBookmark.addEventListener("click", function(){
+			toggleBookmark(CONTEXT_PATH, PROJECT_NO);
+		})
+	}
+});
+
+// [중요] window.loadTab = ... 이렇게 해야 HTML onclick에서 이 함수를 찾을 수 있습니다.
+window.loadTab = function(tabName, element) {
+    const contentArea = document.getElementById("tabContentArea");
+	
+	const projectNo = document.getElementById("currentProjectNo").value;
+
+    // 탭 버튼 디자인 활성화 (파란색 불 들어오게 하기)
+    if (element) {
+		// ID가 projectTabs인 영역 안에서만 active를 지움
+	    document.querySelectorAll('#projectTabs .nav-link').forEach(btn => btn.classList.remove('active'));
+	    element.classList.add('active');
+    }
+
+    // 로딩 스피너
+    contentArea.innerHTML = `
+        <div class="loading-spinner-container" style="display:flex; justify-content:center; align-items:center; height:300px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    `;
+
+    // 서버에 데이터 요청
+    // '/tudio/project/tab/board' 형태로 요청이 가야 함
+    // 만약 404가 계속 뜨면 주소 앞에 '/tudio'를 붙여보세요: fetch(`/tudio/project/tab/${tabName}`)
+	
+	const requestUrl = `/tudio/project/${projectNo}/tab/${tabName}`;
+
+	console.log("요청 URL:", requestUrl);
+	
+    fetch(requestUrl) 
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("서버 응답 실패: " + response.status);
+            }
+            return response.text();
+        })
+        .then(html => {
+            // 4. 성공하면 내용 갈아끼우기
+            contentArea.innerHTML = html;
+        })
+        .catch(error => {
+            console.error("탭 로딩 에러:", error);
+            contentArea.innerHTML = `<div class="alert alert-danger text-center p-5">내용을 불러오지 못했습니다.<br>(${error})</div>`;
+       });
+}
+
+/**
+ * 프로젝트 북마크 설정 함수
+ */
+function toggleBookmark(contextPath, projectNo) {
+	$.ajax({
+		url: `${contextPath}/tudio/project/bookmark`,
+		type: 'post',
+		data: JSON.stringify({projectNo}),
+		contentType: 'application/json; charset=utf-8',
+		dataType: 'json',
+		success: function(res) {
+			if(res.status === 'SUCCESS') {
+				const bookmarkText = document.getElementById('bookmarkText');
+				const icon = document.querySelector('#btnBookmark i');
+				const btn = document.getElementById('btnBookmark');
+				
+				// 설정된 북마크 상태에 따라 아이콘 변경 (Y/N)
+				if(res.bookmark === 'Y') {
+					icon.classList.remove('bi-star');
+					icon.classList.add('bi-star-fill');
+					btn.title = "북마크 해제";
+					bookmarkText.textContent = "북마크 해제";
+				} else {
+					icon.classList.remove('bi-star-fill');
+					icon.classList.add('bi-star');
+					btn.title = "북마크 설정";
+					bookmarkText.textContent = "북마크 설정";
+				}
+			} else {
+				Swal.fire('오류', '북마크 설정에 실패하였습니다!', 'error');
+			}
+		},
+		error: function(xhr) {
+			console.log(xhr);
+			Swal.fire('에러', '서버 통신 중 오류가 발생했습니다!', 'error');
+		}
+	});
+}
+
+	

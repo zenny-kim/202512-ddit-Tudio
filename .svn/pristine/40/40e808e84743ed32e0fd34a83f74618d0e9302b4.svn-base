@@ -1,0 +1,364 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib uri="jakarta.tags.core" prefix="c"%>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tudio</title>
+<jsp:include page="/WEB-INF/views/include/common.jsp" />
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/project_common.css">
+<style>
+/* VO가 뱉어내는 HTML 구조에 우리 디자인 강제 이식 */
+.approval-pager .pagination {
+	display: flex;
+	justify-content: center;
+	gap: 6px;
+	border: none;
+}
+
+.approval-pager .page-item {
+	border: none !important;
+}
+
+/* 기본 page-link를 tudio-pg 스타일로 변경 */
+.approval-pager .page-link {
+	border: none !important;
+	background: transparent !important;
+	color: #64748b !important; /* --text-muted */
+	padding: 8px 14px !important;
+	border-radius: 8px !important;
+	font-size: 14px !important;
+	transition: all 0.2s ease !important;
+}
+
+/* 마우스 올렸을 때 */
+.approval-pager .page-link:hover {
+	background: #f1f5f9 !important;
+	color: #2f6bff !important; /* --tudio-primary-strong */
+}
+
+/* 활성화된 페이지 (active) */
+.approval-pager .page-item.active .page-link {
+	background: #2f6bff !important; /* --tudio-primary-strong */
+	color: #fff !important;
+	font-weight: 700 !important;
+	box-shadow: 0 4px 10px rgba(47, 107, 255, 0.2) !important;
+}
+</style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+
+	<!-- APPROVAL LIST 화면 입니다. -->
+	<jsp:include page="../include/headerUser.jsp" />
+
+	<div class="d-flex flex-grow-1">
+
+		<jsp:include page="../include/sidebarUser.jsp">
+			<jsp:param name="menu" value="approval" />
+		</jsp:include>
+
+		<main class="main-content-wrap flex-grow-1 px-4 pt-4 pb-5">
+			<div class="container-fluid">
+
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<h2 class="h3 fw-bold text-primary-dark m-0">
+						<i class="bi bi-file-earmark-check me-2"></i> 결재 관리
+					</h2>
+					<div class="d-flex align-items-center gap-2">
+						<select class="form-select" style="width: 250px;"
+							onchange="changeProject(this.value)">
+							<option value="0">-- 프로젝트를 선택하세요 --</option>
+							<c:forEach items="${myProjectList}" var="p">
+								<option value="${p.projectNo}"
+									${p.projectNo == projectNo ? 'selected' : ''}>
+									${p.projectName}</option>
+							</c:forEach>
+						</select>
+					</div>
+
+				</div>
+
+
+				<!-- ================ 미니 위젯 ================ -->
+
+
+				<div class="summary-container mb-5">
+					<c:choose>
+						<%-- [1] 기안자 입장 (ROLE_MEMBER 권한을 가진 사람) --%>
+						<%-- [1] MANAGER(기안자)용 카드 구성 --%>
+						<c:when test="${projectRole eq 'MANAGER' or projectRole eq 'MEMBER' or (projectNo == 0 and userAuth eq 'ROLE_MEMBER')}">
+							<div class="summary-card">
+								<span class="summary-label">결재 진행</span>
+								<div class="summary-value">${stats.PROGRESS_COUNT}<small>건</small></div>
+								<span class="summary-badge bg-primary text-white">진행 중</span>
+							</div>
+
+							<div class="summary-card">
+								<span class="summary-label">반려된 문서</span>
+								<div class="summary-value">${stats.REJECT_COUNT}
+									<small>건</small>
+								</div>
+								<span class="summary-badge bg-danger text-white">확인 필요</span>
+							</div>
+
+							<div class="summary-card">
+								<span class="summary-label">임시 보관</span>
+								<div class="summary-value">${stats.TEMP_COUNT}
+									<small>건</small>
+								</div>
+								<span class="summary-badge bg-secondary text-white">작성 중</span>
+							</div>
+
+							<div class="summary-card">
+								<span class="summary-label">장기 미결</span>
+								<div class="summary-value text-danger">${stats.LONG_TERM_COUNT}
+									<small>건</small>
+								</div>
+								<span
+									class="summary-badge ${stats.LONG_TERM_COUNT > 0 ? 'bg-warning text-dark' : 'bg-light text-muted'}">
+									재촉 필요 </span>
+							</div>
+						</c:when>
+						
+						<%-- [2] 결재자 입장 (ROLE_CLIENT 권한을 가진 사람) --%>
+						<%-- [2] CLIENT(결재자)용 카드 구성 --%>
+						<c:when test="${projectRole eq 'CLIENT' or (projectNo == 0 and userAuth eq 'ROLE_CLIENT')}">
+							<div class="summary-card">
+								<span class="summary-label">결재 대기</span>
+								<div class="summary-value">${stats.WAIT_COUNT}
+									<small>건</small>
+								</div>
+								<span class="summary-badge bg-warning text-dark">내 결재 순서</span>
+							</div>
+
+							<div class="summary-card">
+								<span class="summary-label">반려한 문서</span>
+								<div class="summary-value">${stats.MY_REJECT_COUNT}
+									<small>건</small>
+								</div>
+								<span class="summary-badge bg-light text-muted">반려 이력</span>
+							</div>
+
+							<div class="summary-card">
+								<span class="summary-label">결재 완료</span>
+								<div class="summary-value">${stats.COMPLETE_COUNT}
+									<small>건</small>
+								</div>
+								<span class="summary-badge bg-success text-white">처리 완료</span>
+							</div>
+
+							<div class="summary-card">
+								<span class="summary-label">장기 미결</span>
+								<div class="summary-value text-danger">${stats.LONG_TERM_COUNT}
+									<small>건</small>
+								</div>
+								<span
+									class="summary-badge ${stats.LONG_TERM_COUNT > 0 ? 'bg-danger text-white' : 'bg-light text-muted'}">
+									빠른 처리 요망 </span>
+							</div>
+						</c:when>
+						
+						<%-- [3] 전체보기(projectNo=0)일 때 기본 카드 --%>
+				        <c:otherwise>
+				            <div class="summary-card">
+				                <span class="summary-label">전체 결재 건수</span>
+				                <div class="summary-value">${pagingVO.totalRecord}<small>건</small></div>
+				                <span class="summary-badge bg-dark text-white">전체 현황</span>
+				            </div>
+			            </c:otherwise>
+					</c:choose>
+				</div>
+
+				<!-- ================ TAB ================ -->
+
+				<div class="tudio-scope">
+					<ul class="nav nav-tabs custom-index-tabs border-0"
+						id="approvalTabs" role="tablist">
+
+						<li class="nav-item">
+							<button
+								class="nav-link ${param.tabType == 'ALL' or empty param.tabType ? 'active' : ''}"
+								onclick="changeTab('ALL')" type="button">
+								<i class="bi bi-list-ul"></i> <span>전체</span>
+							</button>
+						</li>
+
+						<%-- [MANAGER / MEMBER] 전용 탭 --%>
+						<c:if
+							test="${projectRole eq 'MANAGER' or projectRole eq 'MEMBER' or projectNo == 0}">
+							<li class="nav-item">
+								<button
+									class="nav-link ${param.tabType == 'PROGRESS' ? 'active' : ''}"
+									onclick="changeTab('PROGRESS')" type="button">
+									<i class="bi bi-hourglass-split"></i> <span>결재 진행</span>
+								</button>
+							</li>
+							<li class="nav-item">
+								<button
+									class="nav-link ${param.tabType == 'TEMP' ? 'active' : ''}"
+									onclick="changeTab('TEMP')" type="button">
+									<i class="bi bi-pencil-square"></i> <span>임시보관</span>
+								</button>
+							</li>
+						</c:if>
+
+						<%-- [CLIENT] 전용 탭 --%>
+						<c:if test="${projectRole eq 'CLIENT' or projectNo == 0}">
+							<li class="nav-item">
+								<button
+									class="nav-link ${param.tabType == 'WAIT' ? 'active' : ''}"
+									onclick="changeTab('WAIT')"
+									type="button">
+									<i class="bi bi-file-earmark-check"></i> <span>결재 대기</span>
+								</button>
+							</li>
+						</c:if>
+
+						<li class="nav-item">
+							<button
+								class="nav-link ${param.tabType == 'REJECT' ? 'active' : ''}"
+								onclick="changeTab('REJECT')" type="button">
+								<i class="bi bi-exclamation-octagon"></i> <span>반려</span>
+							</button>
+						</li>
+
+						<li class="nav-item">
+							<button
+								class="nav-link ${param.tabType == 'COMPLETE' ? 'active' : ''}"
+								onclick="changeTab('COMPLETE')"
+								type="button">
+								<i class="bi bi-check-all"></i> <span>최종 승인</span>
+							</button>
+						</li>
+					</ul>
+
+					<div class="tab-content tab-content-card" id="approvalTabContent">
+						<div class="table-responsive">
+							<table class="table table-hover mt-3">
+								<thead class="table-light">
+									<tr>
+										<th>번호</th>
+										<th>프로젝트</th>
+										<th>유형</th>
+										<th>제목</th>
+										<th>기안자</th>
+										<th>기안일</th>
+										<th>상태</th>
+									</tr>
+								</thead>
+								<tbody>
+									<c:choose>
+										<c:when test="${empty pagingVO.dataList}">
+											<tr>
+												<td colspan="7" class="text-center py-5">해당하는 문서가 없습니다.</td>
+											</tr>
+										</c:when>
+										<c:otherwise>
+											<c:forEach items="${pagingVO.dataList}" var="draft">
+												<tr>
+													<td>${draft.documentNo}</td>
+													<td><span class="badge bg-secondary">${draft.projectName}</span>
+													</td>
+													<td>${draft.documentType}</td>
+													<td><a href="/approval/detail?no=${draft.documentNo}"
+														class="text-decoration-none text-dark">
+															${draft.documentTitle} </a></td>
+													<td>${draft.drafterName}</td>
+													<td>${draft.documentRegdate}</td>
+													<td><span
+														class="badge 
+                                            ${draft.documentStatus == 611 ? 'bg-warning' : 
+                                              draft.documentStatus == 612 ? 'bg-primary' : 
+                                              draft.documentStatus == 613 ? 'bg-success' : 
+                                              draft.documentStatus == 614 ? 'bg-danger' : 'bg-secondary'}">
+															<c:choose>
+																<c:when test="${draft.documentStatus == 611}">대기</c:when>
+																<c:when test="${draft.documentStatus == 612}">진행중</c:when>
+																<c:when test="${draft.documentStatus == 613}">완료</c:when>
+																<c:when test="${draft.documentStatus == 614}">반려</c:when>
+																<c:when test="${draft.documentStatus == 616}">임시보관</c:when>
+															</c:choose>
+													</span></td>
+												</tr>
+											</c:forEach>
+										</c:otherwise>
+									</c:choose>
+								</tbody>
+							</table>
+						</div>
+						<div class="approval-pager mt-4">
+							${pagingVO.getPagingHTML()}</div>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+	<jsp:include page="/WEB-INF/views/include/footer.jsp" />
+	</div>
+	<script type="text/javascript">
+		$(function() {
+			// 1. 페이징 버튼 클릭 이벤트
+			// 공통 VO가 만든 .page-link를 클릭했을 때 동작합니다.
+			$(".approval-pager").on("click", ".page-link", function(e) {
+				e.preventDefault(); // a 태그 기본 이동 막기
+
+				let page = $(this).data("page"); // 클릭한 페이지 번호
+				if (!page)
+					return; // 번호가 없으면 무시
+
+				// 현재 URL의 파라미터들을 유지하면서 페이지 번호만 바꿉니다.
+				let url = new URL(window.location.href);
+				url.searchParams.set("page", page);
+
+				location.href = url.href;
+			});
+
+			// 2. 검색 버튼 클릭 이벤트
+			$("#searchBtn").on("click", function() {
+				let searchType = $("#searchType").val();
+				let searchWord = $("#searchWord").val();
+
+				let url = new URL(window.location.href);
+				url.searchParams.set("page", "1"); // 검색 시 1페이지로 리셋
+				url.searchParams.set("searchType", searchType);
+				url.searchParams.set("searchWord", searchWord);
+
+				location.href = url.href;
+			});
+		});
+
+		/**
+		 * 3. 프로젝트 변경 함수 (추가/수정)
+		 * 셀렉트 박스에서 프로젝트를 선택했을 때 실행
+		 */
+		function changeProject(pNo) {
+			let url = new URL("/tudio/approval/list", window.location.origin);
+
+			if (pNo && pNo !== "0") {
+				url.searchParams.set("projectNo", pNo);
+			}
+
+			url.searchParams.set("menu", "approval");
+
+			location.href = url.href;
+		}
+
+		/**
+		 * 탭 이동 함수
+		 * 탭을 클릭할 때 tabType을 파라미터로 넘깁니다.
+		 */
+		function changeTab(tabType) {
+			let url = new URL(window.location.href);
+			url.searchParams.set("tabType", tabType);
+			url.searchParams.set("page", "1"); // 탭 이동 시에도 1페이지로 리셋
+			url.searchParams.set("menu", "approval");
+
+			location.href = url.href;
+		}
+	</script>
+</body>
+</html>

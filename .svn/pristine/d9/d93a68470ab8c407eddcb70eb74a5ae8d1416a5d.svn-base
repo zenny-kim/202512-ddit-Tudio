@@ -1,0 +1,87 @@
+@charset "UTF-8";
+
+/* =========================================================
+   Project Form Page Only (project_common.css 위에 얹는 최소분)
+   - 전역 오염 방지: project-main 안에서만 적용
+   ========================================================= */
+
+/* ✅ 공통 레이아웃과 충돌 방지: main-content-wrap 건드리지 말고 project-main에 패딩 */
+.project-main{
+  padding: 20px; /* 기존 main-content-wrap padding 대체 */
+}
+
+/* KPI 카드(쓰는 곳이 있다면 유지) */
+.project-main .kpi-card-project{
+  min-height: 100px; /* height 고정 대신 min-height 추천 */
+}
+
+/* ✅ 전역(tab-content) 오염 방지: 이 페이지 안에서만 */
+.project-main .tab-content{
+  background-color: #ffffff;
+  padding: 20px;
+  border: 1px solid var(--border-blue);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+}
+
+/* ✅ 관리자 안내 박스 (권장: alert로 대체 가능하지만, 유지한다면 톤 통일) */
+.project-main .admin-note{
+  background: #ffffff;
+  color: var(--text-main);
+  border: 1px solid var(--border-blue);
+  border-left: 4px solid var(--main-blue);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+/* ✅ 테이블: 공통 thead는 그대로 쓰고, 이 페이지는 정렬만 */
+.project-main .table th,
+.project-main .table td{
+  vertical-align: middle;
+}
+
+/* ✅ 탭 설정 카드(드래그 카드 UI 쓰는 경우) - 공통 톤 맞춤 */
+.project-main .tab-setting-card{
+  border: 1px solid #e6edf6;
+  border-radius: 12px;
+  padding: 14px;
+  transition: .15s ease;
+  background-color: #fff;
+  height: 100%;
+  cursor: grab;
+}
+
+.project-main .tab-setting-card:hover{
+  border-color: var(--border-blue);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+  transform: translateY(-1px);
+}
+
+/* 필수/비활성 카드 */
+.project-main .tab-setting-card.disabled-card{
+  background-color: var(--bg-body);
+  border-color: #eef2f7;
+  color: var(--text-muted);
+  pointer-events: none;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* SortableJS 드래그 중 표시 */
+.project-main .sortable-ghost{
+  opacity: 0.55;
+  background-color: var(--bg-body);
+  border: 1px dashed #94a3b8;
+}
+
+/* 드래그 핸들 */
+.project-main .drag-handle{
+  cursor: grab;
+  color: #94a3b8;
+}
+.project-main .drag-handle:active{
+  cursor: grabbing;
+}
+

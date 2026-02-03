@@ -1,0 +1,138 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- 
+    파일명: approval_view_client.jsp
+    설명: 고객사 전용 결재 상세 조회 및 승인/반려 처리 페이지
+--%>
+
+<div class="main-content-wrap">
+    <div class="container-fluid p-0" style="max-width: 900px; margin: 0 auto;">
+        
+        <div class="d-flex align-items-center mb-4">
+            <a href="approval_client_list.jsp" class="btn btn-light border rounded-circle me-3" title="목록으로"><i class="bi bi-arrow-left"></i></a>
+            <div>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-primary bg-opacity-10 text-primary me-2">결재 대기</span>
+                    <h3 class="fw-bold mb-0">신규 프로젝트 'Alpha' 장비 구매 요청</h3>
+                </div>
+                <p class="text-muted small m-0 mt-1">문서번호: APL-2025-002 | 기안일: 2025.12.16</p>
+            </div>
+        </div>
+
+        <div class="doc-card mb-4">
+            <div class="p-4 border-bottom">
+                <div class="row align-items-start">
+                    <div class="col-md-7">
+                        <table class="info-table border">
+                            <tr>
+                                <th>프로젝트</th>
+                                <td>Alpha 프로젝트</td>
+                            </tr>
+                            <tr>
+                                <th>기안자</th>
+                                <td>박개발 (Tudio 개발팀)</td>
+                            </tr>
+                            <tr>
+                                <th>연락처</th>
+                                <td>010-1234-5678 (dev@tudio.com)</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-5">
+                        <div class="approval-line-box">
+                            <div class="approval-stamp">
+                                <div class="role">기안</div>
+                                <div class="sign"><span class="stamp-approved" style="font-size:0.7rem; width:40px; height:40px;">박개발</span></div>
+                                <div class="date">12.16</div>
+                            </div>
+                            <div class="approval-stamp border-primary bg-light">
+                                <div class="role text-primary fw-bold">승인(고객사)</div>
+                                <div class="sign text-muted small">결재 대기</div>
+                                <div class="date">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doc-body">
+안녕하세요, Tudio 박개발입니다.
+
+Alpha 프로젝트의 모바일 호환성 검증을 위해 테스트용 단말기가 필요하여 구매를 요청드립니다.
+
+1. iOS 환경 테스트용: iPhone 15 Pro (1대)
+2. Android 환경 테스트용: Galaxy S24 (1대)
+
+총 예상 소요 비용은 약 270만 원(VAT 포함)입니다.
+해당 장비는 프로젝트 종료 시 귀사로 자산 이관될 예정입니다.
+
+상세 견적서는 첨부파일을 확인 부탁드립니다.
+감사합니다.
+            </div>
+
+            <div class="p-4 border-top bg-light">
+                <h6 class="fw-bold small text-muted mb-2"><i class="bi bi-paperclip me-1"></i>첨부파일 (1개)</h6>
+                <div class="card p-2 border-0 shadow-sm d-inline-block bg-white pe-3">
+                    <a href="#" class="text-decoration-none text-dark d-flex align-items-center">
+                        <i class="bi bi-file-earmark-pdf text-danger fs-4 me-2 ms-1"></i>
+                        <div>
+                            <div style="font-size: 0.9rem;">견적서_20251216.pdf</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">245 KB</div>
+                        </div>
+                        <i class="bi bi-download text-muted ms-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-5">
+            <div class="action-bar bg-white rounded-3">
+                <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2"></i>결재 처리</h5>
+                
+                <div class="mb-3">
+                    <label for="approvalComment" class="form-label fw-bold small text-muted">결재 의견 (선택)</label>
+                    <textarea class="form-control" id="approvalComment" rows="3" placeholder="승인 시 특이사항이나, 반려 시 구체적인 사유를 입력해주세요."></textarea>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-outline-secondary px-4" onclick="location.href='approval_client_list.jsp'">목록으로</button>
+                    <button type="button" class="btn btn-danger px-4" onclick="submitDecision('reject')">
+                        <i class="bi bi-x-lg me-2"></i>반려
+                    </button>
+                    <button type="button" class="btn btn-primary px-5" style="background-color: var(--client-color); border-color: var(--client-color);" onclick="submitDecision('approve')">
+                        <i class="bi bi-check-lg me-2"></i>승인
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* ============================================================
+       [Logic] 결재 처리 (승인/반려) 스크립트
+    ============================================================ */
+    function submitDecision(type) {
+        const comment = document.getElementById('approvalComment').value;
+        const actionName = type === 'approve' ? '승인' : '반려';
+        
+        // 반려 시 의견 필수 입력 체크
+        if (type === 'reject' && comment.trim() === '') {
+            alert('반려 처리를 위해서는 [결재 의견]에 반려 사유를 반드시 입력해야 합니다.');
+            document.getElementById('approvalComment').focus();
+            return;
+        }
+
+        if (confirm(`정말로 이 문서를 [\${actionName}] 처리하시겠습니까?`)) {
+            // [실제 개발 시] AJAX 호출로 서버에 상태 업데이트 요청
+            // const data = { docId: 'APL-2025-002', status: type, comment: comment };
+            // fetch('/approval/process', { method: 'POST', body: JSON.stringify(data) ... });
+
+            console.log(`Action: \${type}, Comment: \${comment}`);
+            
+            alert(`\${actionName} 처리가 완료되었습니다.`);
+            location.href = 'approval_client_list.jsp'; // 목록 페이지로 이동
+        }
+    }
+</script>

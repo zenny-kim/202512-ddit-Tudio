@@ -1,0 +1,30 @@
+package kr.or.ddit.vo.log;
+
+import java.util.Date;
+
+import lombok.Data;
+
+/**
+ * 배치 로그 (자동화 작업 기록)
+ */
+@Data
+public class LogBatchVO {
+	
+	// 배치로그 ID
+    private int batchLogId;
+
+    // 작업명
+    private String jobName;
+
+    // 작업 상태 
+    private String batchStatus;
+
+    // 결과 메시지 
+    private String resultMsg;
+
+    // 시작 일시
+    private Date startDate;
+
+    // 종료 일시
+    private Date regDate;
+}

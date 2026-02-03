@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.file.mapper.IFileMapper">
+	
+	<update id="updateMemberProfileImg" parameterType="kr.or.ddit.vo.MemberVO">
+	    UPDATE MEMBER
+	       SET MEMBER_PROFILEIMG = #{memberProfileimg}
+	     WHERE MEMBER_NO = #{memberNo}
+	</update>
+	
+	
+	<!-- 파일 목록 조회 -->
+	<select id="selectFileDetailList" parameterType="int" resultType="kr.or.ddit.vo.FileDetailVO">
+	    SELECT 
+	        FILE_NO,
+	        FILE_GROUP_NO,
+	        FILE_ORIGINAL_NAME,
+	        FILE_REGDATE,
+	        FILE_SAVE_NAME,
+	        FILE_PATH,
+	        FILE_SIZE,
+	        FILE_FANCYSIZE,
+	        FILE_EXTENSION,
+	        FILE_MIME,
+	        FILE_DOWNLOAD_CNT,
+	        FILE_DELETE,
+	        FILE_DELDATE
+	    FROM FILE_DETAIL
+	    WHERE FILE_GROUP_NO = #{fileGroupNo}
+	      AND FILE_DELETE = 'N'
+	    ORDER BY FILE_NO ASC
+	</select>
+	
+	<!-- 파일 그룹 저장 -->
+	<insert id="insertFileGroup" parameterType="kr.or.ddit.vo.FileGroupVO">
+        <selectKey keyProperty="fileGroupNo" resultType="int" order="BEFORE">
+            SELECT SEQ_FILE_GROUP.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO FILE_GROUP (
+	        FILE_GROUP_NO, 
+	        FILE_GROUP_TYPE, 
+	        MEMBER_NO, 
+	        FILE_GROUP_REGDATE,
+	        FILE_URL
+        ) VALUES (
+	        #{fileGroupNo}, 
+	        #{fileGroupType}, 
+	        #{memberNo}, 
+	        CURRENT_TIMESTAMP,
+	        #{fileUrl}
+        )
+    </insert>
+
+	<!-- 파일 디테일 저장 -->
+    <insert id="insertFileDetail" parameterType="kr.or.ddit.vo.FileDetailVO">
+        INSERT INTO FILE_DETAIL (
+            FILE_NO,
+            FILE_GROUP_NO, 
+            FILE_ORIGINAL_NAME, 
+            FILE_SAVE_NAME,
+            FILE_PATH, 
+            FILE_SIZE, 
+            FILE_EXTENSION, 
+            FILE_MIME,
+            FILE_DOWNLOAD_CNT,
+            FILE_REGDATE, 
+            FILE_DELETE
+        ) VALUES (
+            SEQ_FILE.NEXTVAL, 
+            #{fileGroupNo}, 
+            #{fileOriginalName}, 
+            #{fileSaveName},
+            #{filePath}, 
+            #{fileSize}, 
+            #{fileExtension},
+            #{fileMime}, 
+            0, 
+            CURRENT_TIMESTAMP, 
+            'N'
+        )
+    </insert>
+    
+    <!-- 삭제 시 물리삭제 상태값 변경 ***파일 하나 삭제 시 쿼리***-->
+    <update id="updateFileDelete" parameterType="int">
+	    UPDATE FILE_DETAIL
+	    SET 
+	        FILE_DELETE = 'Y',
+	        FILE_DELDATE = CURRENT_TIMESTAMP
+	    WHERE FILE_NO = #{fileNo}
+	</update>
+	
+	<!-- 삭제 시 물리삭제 상태값 변경  ***게시글 자체(파일여러개) 삭제 시 쿼리***-->
+	<update id="updateFileGroupDelete" parameterType="int">
+	    UPDATE FILE_DETAIL
+	    SET 
+	        FILE_DELETE = 'Y',
+	        FILE_DELDATE = CURRENT_TIMESTAMP
+	    WHERE FILE_GROUP_NO = #{fileGroupNo}
+	</update>
+	
+	<!-- 프로필 변경 시 파일디테일 삭제 -->
+	<delete id="deleteProfileFile" parameterType="int">
+	    DELETE FROM FILE_DETAIL
+	    WHERE FILE_GROUP_NO = (
+	        SELECT FILE_GROUP_NO 
+	        FROM FILE_GROUP 
+	        WHERE MEMBER_NO = #{memberNo} AND FILE_GROUP_TYPE = '08'
+	    )
+	</delete>
+	
+	<!-- 프로필 변경 시 파일그룹 삭제 -->
+	<delete id="deleteProfileGroup" parameterType="int">
+	    DELETE FROM FILE_GROUP
+	    WHERE MEMBER_NO = #{memberNo} 
+	      AND FILE_GROUP_TYPE = '08'
+	</delete>
+	
+	<!-- 프로필 변경 전 위치 확인 -->
+    <select id="selectProfileFileDetail" parameterType="int" resultType="kr.or.ddit.vo.FileDetailVO">
+	    SELECT 
+	        FILE_NO,
+	        FILE_GROUP_NO,
+	        FILE_SAVE_NAME,
+	        FILE_PATH,
+	        FILE_EXTENSION
+	    FROM FILE_DETAIL
+	    WHERE FILE_GROUP_NO = (
+	        SELECT FILE_GROUP_NO 
+	        FROM FILE_GROUP 
+	        WHERE MEMBER_NO = #{memberNo} 
+	          AND FILE_GROUP_TYPE = '08'
+	    )
+	    AND FILE_DELETE = 'N' 
+	</select>
+	
+	<!-- 일정 파일 디테일 삭제 -->
+	<delete id="deleteScheduleFileDetail" parameterType="int">
+	    DELETE FROM FILE_DETAIL WHERE FILE_GROUP_NO = #{fileGroupNo}
+	</delete>
+	
+	<!-- 일정 파일 그룹 삭제 -->
+	<delete id="deleteScheduleFileGroup" parameterType="int">
+	    DELETE FROM FILE_GROUP WHERE FILE_GROUP_NO = #{fileGroupNo}
+	</delete>
+    
+	
+</mapper>

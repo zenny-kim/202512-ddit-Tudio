@@ -1,0 +1,35 @@
+package kr.or.ddit.projectBoard.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : projectBoard
+ * DESC : 프로젝트 게시판 목록, 수정, 조회, 삭제 컨트롤러
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 KMS
+ * @version 1.0, 2025.12.27
+ * 
+ */
+
+@Slf4j
+@Controller
+@RequestMapping("/tudio/board")
+public class projectBoard {
+	
+	
+	/**
+	 * 프로젝트 게시판 리스트
+	 * @return
+	 */
+	public String boardList() {
+		log.info("boardList() 메서드 실행~");
+		return "projectBoard/projectBoardList";
+	}
+
+}

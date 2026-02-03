@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.approval.mapper.IApprovalMapper">
+
+	<!-- 결재 목록 리스트 조회 -->
+	<select id="getApprovalList" parameterType="kr.or.ddit.vo.ApprovalPaginationInfoVO" resultType="kr.or.ddit.vo.DraftDocumentVO">
+	    SELECT 
+		    DOCUMENT_NO, PROJECT_NO, MEMBER_NO, DOCUMENT_TYPE, 
+	        DOCUMENT_STATUS, DOCUMENT_TITLE, DOCUMENT_REGDATE, 
+	        DOCUMENT_APPROVALDATE, DRAFTER_NAME, PROJECT_NAME, FILECOUNT
+		FROM (
+	        SELECT 
+	            A.*, ROWNUM RNUM 
+	        FROM (
+	            SELECT 
+	                D.DOCUMENT_NO,
+	                D.PROJECT_NO,
+	                D.MEMBER_NO,
+	                D.DOCUMENT_TYPE,
+	                D.DOCUMENT_STATUS,
+	                D.DOCUMENT_TITLE,
+	                TO_CHAR(D.DOCUMENT_REGDATE, 'YYYY-MM-DD') AS DOCUMENT_REGDATE, 
+            		TO_CHAR(D.DOCUMENT_APPROVALDATE, 'YYYY-MM-DD') AS DOCUMENT_APPROVALDATE,
+	                M.MEMBER_NAME AS DRAFTER_NAME,
+	                (SELECT COUNT(*) 
+			          FROM FILE_DETAIL FD 
+			          WHERE FD.FILE_GROUP_NO = D.FILE_GROUP_NO 
+			           AND FD.FILE_DELETE = 'N') AS FILECOUNT,
+	                P.PROJECT_NAME
+	            FROM DRAFT_DOCUMENT D
+	            JOIN MEMBER M ON D.MEMBER_NO = M.MEMBER_NO
+	            JOIN PROJECT P ON D.PROJECT_NO = P.PROJECT_NO	                               		 
+	            <where>
+                <choose>
+                    <when test="projectNo > 0">
+                        AND D.PROJECT_NO = #{projectNo}
+                    </when>
+                    <otherwise>
+                        AND D.PROJECT_NO IN (
+                            SELECT PROJECT_NO FROM PROJECT_MEMBER 
+                            WHERE MEMBER_NO = #{userNo} AND PROJECT_MEM_STATUS = 'Y'
+                        )
+                    </otherwise>
+                </choose>
+
+                <choose>
+                    <when test="(projectNo == 0 and userAuth == 'ROLE_MEMBER') or (projectRole == 'MANAGER' or projectRole == 'MEMBER')">
+                        AND D.MEMBER_NO = #{userNo}
+                        <choose>
+				            <when test="tabType == 'PROGRESS'"> AND D.DOCUMENT_STATUS = 612 </when>
+				            <when test="tabType == 'TEMP'"> AND D.DOCUMENT_STATUS = 616 </when>
+				            <when test="tabType == 'REJECT'"> AND D.DOCUMENT_STATUS = 614 </when>
+				            <when test="tabType == 'COMPLETE'"> AND D.DOCUMENT_STATUS = 613 </when>
+				            <otherwise></otherwise> 
+				        </choose>
+                    </when>
+                    <when test="(projectNo == 0 and userAuth == 'ROLE_CLIENT') or projectRole == 'CLIENT'">
+                        AND D.DOCUMENT_NO IN (
+                            SELECT DOCUMENT_NO FROM DRAFT_APPROVAL WHERE MEMBER_NO = #{userNo}
+                        )
+                        AND D.DOCUMENT_STATUS != 615
+                        <choose>
+				            <when test="tabType == 'WAIT'"> AND D.DOCUMENT_STATUS = 611 </when>
+				            <when test="tabType == 'REJECT'"> AND D.DOCUMENT_STATUS = 614 </when>
+				            <when test="tabType == 'COMPLETE'"> AND D.DOCUMENT_STATUS = 613 </when>
+				            <otherwise>
+					            AND D.DOCUMENT_STATUS NOT IN (615, 616)
+					        </otherwise>
+				        </choose>
+                    </when>
+                </choose>
+
+                <if test="searchWord != null and searchWord != ''">
+                    <choose>
+                        <when test="searchType == 'title'"> AND D.DOCUMENT_TITLE LIKE '%' || #{searchWord} || '%' </when>
+                        <otherwise>
+                            AND (D.DOCUMENT_TITLE LIKE '%' || #{searchWord} || '%' OR D.DOCUMENT_CONTENT LIKE '%' || #{searchWord} || '%')
+                        </otherwise>
+                    </choose>
+                </if>
+            </where>
+            ORDER BY D.DOCUMENT_REGDATE DESC
+        ) A
+    )
+    WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<!-- 권한 체크 -->
+	<select id="getProjectRole" resultType="String">
+	    SELECT PROJECT_ROLE 
+	    FROM PROJECT_MEMBER 
+	    WHERE PROJECT_NO = #{projectNo} 
+	      AND MEMBER_NO = #{userNo}
+	</select>
+	
+	<!-- 결재 카운트 -->
+	<select id="getApprovalCount" parameterType="kr.or.ddit.vo.ApprovalPaginationInfoVO" resultType="int">
+        SELECT COUNT(D.DOCUMENT_NO)
+        FROM DRAFT_DOCUMENT D
+        <where>
+            <choose>
+                <when test="projectNo > 0"> AND D.PROJECT_NO = #{projectNo} </when>
+                <otherwise>
+                    AND D.PROJECT_NO IN (SELECT PROJECT_NO FROM PROJECT_MEMBER WHERE MEMBER_NO = #{userNo} AND PROJECT_MEM_STATUS = 'Y')
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="projectRole == 'MANAGER' or projectRole == 'MEMBER' or (projectNo == 0 and tabType != 'WAIT')">
+                    AND D.MEMBER_NO = #{userNo}
+                    <choose>
+			            <when test="tabType == 'PROGRESS'"> AND D.DOCUMENT_STATUS = 612 </when>
+			            <when test="tabType == 'TEMP'"> AND D.DOCUMENT_STATUS = 616 </when>
+			            <when test="tabType == 'REJECT'"> AND D.DOCUMENT_STATUS = 614 </when>
+			            <when test="tabType == 'COMPLETE'"> AND D.DOCUMENT_STATUS = 613 </when>
+			            <otherwise></otherwise> 
+			        </choose>
+                </when>
+                <when test="projectRole == 'CLIENT' or (projectNo == 0 and tabType == 'WAIT')">
+                    AND D.DOCUMENT_NO IN (SELECT DOCUMENT_NO FROM DRAFT_APPROVAL WHERE MEMBER_NO = #{userNo})
+                    AND D.DOCUMENT_STATUS != 615
+                    <choose>
+			            <when test="tabType == 'WAIT'"> AND D.DOCUMENT_STATUS = 611 </when>
+			            <when test="tabType == 'REJECT'"> AND D.DOCUMENT_STATUS = 614 </when>
+			            <when test="tabType == 'COMPLETE'"> AND D.DOCUMENT_STATUS = 613 </when>
+			            <otherwise>
+                        AND D.DOCUMENT_STATUS NOT IN (615, 616)
+                    </otherwise>
+			        </choose>
+                </when>
+            </choose>
+            <if test="searchWord != null and searchWord != ''">
+                AND D.DOCUMENT_TITLE LIKE '%' || #{searchWord} || '%'
+            </if>
+        </where>
+    </select>
+	
+	<!-- 상태별 건수 조회 -->
+	<select id="getApprovalStats" parameterType="map" resultType="map">
+        SELECT 
+        <choose>
+            <when test="projectRole == 'MANAGER' or projectRole == 'MEMBER' or (projectNo == 0 and userAuth == 'ROLE_MEMBER')">
+                COUNT(CASE WHEN D.DOCUMENT_STATUS = 612 THEN 1 END) AS PROGRESS_COUNT,
+                COUNT(CASE WHEN D.DOCUMENT_STATUS = 614 THEN 1 END) AS REJECT_COUNT,
+                COUNT(CASE WHEN D.DOCUMENT_STATUS = 616 THEN 1 END) AS TEMP_COUNT,
+                COUNT(CASE WHEN D.DOCUMENT_STATUS = 612 AND D.DOCUMENT_REGDATE &lt;= CURRENT_TIMESTAMP - INTERVAL '3' DAY THEN 1 END) AS LONG_TERM_COUNT
+            </when>
+            <when test="projectRole == 'CLIENT' or (projectNo == 0 and userAuth == 'ROLE_CLIENT')">
+                COUNT(CASE WHEN D.DOCUMENT_STATUS = 611 THEN 1 END) AS WAIT_COUNT,
+                COUNT(CASE WHEN D.DOCUMENT_STATUS = 614 THEN 1 END) AS MY_REJECT_COUNT,
+                COUNT(CASE WHEN D.DOCUMENT_STATUS = 613 THEN 1 END) AS COMPLETE_COUNT,
+                COUNT(CASE WHEN D.DOCUMENT_STATUS = 611 AND D.DOCUMENT_REGDATE &lt;= CURRENT_TIMESTAMP - INTERVAL '3' DAY THEN 1 END) AS LONG_TERM_COUNT
+            </when>
+            <otherwise> COUNT(*) AS TOTAL_COUNT </otherwise>
+        </choose>
+        FROM DRAFT_DOCUMENT D
+        <where>
+            <choose>
+                <when test="projectNo > 0"> AND D.PROJECT_NO = #{projectNo} </when>
+                <otherwise>
+                    AND D.PROJECT_NO IN (SELECT PROJECT_NO FROM PROJECT_MEMBER WHERE MEMBER_NO = #{userNo} AND PROJECT_MEM_STATUS = 'Y')
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="projectRole == 'MANAGER' or projectRole == 'MEMBER' or (projectNo == 0 and userAuth == 'ROLE_MEMBER')">
+                    AND D.MEMBER_NO = #{userNo}
+                </when>
+                <when test="projectRole == 'CLIENT' or (projectNo == 0 and userAuth == 'ROLE_CLIENT')">
+                    AND D.DOCUMENT_NO IN (SELECT DOCUMENT_NO FROM DRAFT_APPROVAL WHERE MEMBER_NO = #{userNo})
+                </when>
+            </choose>
+        </where>
+    </select>
+
+	<!-- 프로젝트목록조회 , 페이징X , 셀렉트박스 용 -->
+	<select id="getMyProjectList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectVO">
+	    SELECT 
+	        P.PROJECT_NO, 
+	        P.PROJECT_NAME
+	    FROM PROJECT P
+	    JOIN PROJECT_MEMBER PM ON P.PROJECT_NO = PM.PROJECT_NO
+	    WHERE PM.MEMBER_NO = #{memberNo}
+	      AND PM.PROJECT_MEM_STATUS = 'Y'  AND P.PROJECT_STATUS != 2
+	 ORDER BY P.PROJECT_NAME ASC
+	</select>
+	
+	<!-- 결재 문서 저장 -->
+	<insert id="insertDraftDocument" parameterType="kr.or.ddit.vo.DraftDocumentVO">
+	    <selectKey keyProperty="documentNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_DRAFT_DOCUMENT.NEXTVAL FROM DUAL
+	    </selectKey>
+
+	    INSERT INTO DRAFT_DOCUMENT (
+	        DOCUMENT_NO, 
+	        PROJECT_NO, 
+	        MEMBER_NO, 
+	        DOCUMENT_TYPE, 
+	        DOCUMENT_STATUS, 
+	        DOCUMENT_TITLE, 
+	        DOCUMENT_CONTENT, 
+	        DOCUMENT_REGDATE,
+	        FILE_GROUP_NO,
+	        IS_PUBLIC
+	    ) VALUES (
+	        #{documentNo}, 
+	        #{projectNo}, 
+	        #{memberNo}, 
+	        #{documentType}, 
+	        #{documentStatus},
+	        #{documentTitle}, 
+	        #{documentContent}, 
+	        CURRENT_TIMESTAMP,
+	        #{fileGroupNo, jdbcType=INTEGER},
+	        #{isPublic}
+	    )
+	</insert>
+	
+	<!-- 결재라인 저장 -->
+	<insert id="insertDraftApproval" parameterType="kr.or.ddit.vo.DraftApprovalVO">
+	    INSERT INTO DRAFT_APPROVAL (
+	        APPROVER_NO, 
+	        DOCUMENT_NO, 
+	        MEMBER_NO, 
+	        APPROVAL_STATUS, 
+	        APPROVAL_STEP
+	    ) VALUES (
+	        SEQ_DRAFT_APPROVAL.NEXTVAL, 
+	        #{documentNo}, 
+	        #{memberNo}, 
+	        #{approvalStatus}, 
+	        #{approvalStep}
+	    )
+	</insert>
+	
+	<!-- 기업담당자조회 -->
+	<select id="getProjectClientList" parameterType="int" resultType="kr.or.ddit.vo.MemberVO">
+	    SELECT 
+	        A.MEMBER_NO, 
+	        A.MEMBER_NAME, 
+	        A.MEMBER_DEPARTMENT, 
+	        A.MEMBER_POSITION,
+	        A.MEMBER_PROFILEIMG
+	    FROM MEMBER A
+	    JOIN PROJECT_MEMBER B ON A.MEMBER_NO = B.MEMBER_NO
+	    WHERE B.PROJECT_NO = #{projectNo}
+	      AND B.PROJECT_ROLE = 'CLIENT'  
+	      AND B.PROJECT_MEM_STATUS = 'Y' 
+	    ORDER BY A.MEMBER_DEPARTMENT ASC, 
+	             CASE A.MEMBER_POSITION 
+	                WHEN '부장' THEN 1 
+	                WHEN '차장' THEN 2 
+	                WHEN '과장' THEN 3 
+	                WHEN '대리' THEN 4 
+	                WHEN '사원' THEN 5 
+	                ELSE 6 
+	             END ASC
+	</select>
+	
+	<!-- 문서 상세 정보 조회 -->
+	<select id="selectDraftDetail" resultType="kr.or.ddit.vo.DraftDocumentVO">
+	    SELECT 
+	        D.DOCUMENT_NO,
+	        D.PROJECT_NO,
+	        D.MEMBER_NO,
+	        D.DOCUMENT_TYPE,
+	        D.DOCUMENT_STATUS,
+	        D.DOCUMENT_TITLE,
+	        D.DOCUMENT_CONTENT,
+	        TO_CHAR(D.DOCUMENT_REGDATE, 'YYYY-MM-DD') AS DOCUMENT_REGDATE, 
+	        D.DOCUMENT_APPROVALDATE,
+	        D.FILE_GROUP_NO,
+	        P.PROJECT_NAME AS projectName,      
+	        M.MEMBER_NAME AS drafterName,
+	        M.MEMBER_DEPARTMENT AS drafterDept, 
+	        D.IS_PUBLIC AS ISPUBLIC,
+	        M.MEMBER_POSITION   AS drafterPos       
+        FROM DRAFT_DOCUMENT D
+	    JOIN PROJECT P ON D.PROJECT_NO = P.PROJECT_NO
+	    JOIN MEMBER M ON D.MEMBER_NO = M.MEMBER_NO
+	    WHERE D.DOCUMENT_NO = #{documentNo}
+	</select>
+	
+	<!-- 결재라인 전체조회 -->
+	<select id="selectApprovalList" resultType="kr.or.ddit.vo.DraftApprovalVO">
+	    SELECT 
+	        A.APPROVER_NO,
+	        A.DOCUMENT_NO,
+	        A.APPROVAL_STATUS,
+	        A.MEMBER_NO,
+	        A.APPROVAL_DATE,
+	        A.REJECTION_REASON,
+	        A.APPROVAL_STEP,
+	        M.MEMBER_NAME,
+	        M.MEMBER_POSITION        
+        FROM DRAFT_APPROVAL A
+	    JOIN MEMBER M ON A.MEMBER_NO = M.MEMBER_NO
+	    WHERE A.DOCUMENT_NO = #{documentNo}
+	    ORDER BY A.APPROVAL_STEP ASC 
+    </select>
+	
+	<!-- 내가 마지막 결재자인지 확인 -->
+	<select id="countRemainingApprovers" resultType="int">
+	    SELECT COUNT(*)
+	    FROM DRAFT_APPROVAL
+	    WHERE DOCUMENT_NO = #{documentNo}
+	      AND APPROVAL_STATUS IN (607, 608)
+	</select>
+	
+	<!-- 결재자 상태 업데이트 -->
+	<update id="updateApproverStatus">
+	    UPDATE DRAFT_APPROVAL
+	    SET APPROVAL_STATUS = #{status},
+	        APPROVAL_DATE = CURRENT_TIMESTAMP
+	    WHERE DOCUMENT_NO = #{documentNo}
+	      AND MEMBER_NO = #{memberNo}
+	</update>
+	
+	<!-- 문서상태 업데이트 -->
+	<update id="updateDocumentStatus">
+	    UPDATE DRAFT_DOCUMENT
+	    SET DOCUMENT_STATUS = #{status}
+	    <if test="status == 613">
+	        , DOCUMENT_APPROVALDATE = CURRENT_TIMESTAMP </if>
+	    WHERE DOCUMENT_NO = #{documentNo}
+	</update>
+	
+	<!-- 반려처리 -->
+	<update id="updateApproverReject">
+	    UPDATE DRAFT_APPROVAL
+	    SET APPROVAL_STATUS = #{status},
+	        REJECTION_REASON = #{rejectionReason, jdbcType=CLOB}, APPROVAL_DATE = CURRENT_TIMESTAMP
+	    WHERE DOCUMENT_NO = #{documentNo}
+	      AND MEMBER_NO = #{memberNo}
+	</update>
+	
+	<!-- 회수처리 -->
+	<update id="recallDocument">
+	    UPDATE DRAFT_DOCUMENT
+	    SET DOCUMENT_STATUS = 615 
+	    WHERE DOCUMENT_NO = #{documentNo}
+	      AND MEMBER_NO = #{memberNo} 
+	      AND DOCUMENT_STATUS = 611  
+	</update>
+</mapper>

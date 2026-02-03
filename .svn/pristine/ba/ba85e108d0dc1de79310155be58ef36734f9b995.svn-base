@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.projectMember.mapper.IProjectMemberMapper">
+
+
+<!-- 구성원 목록 -->
+<select id="list" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+SELECT 
+	  PM.PROJECT_NO
+    , PM.MEMBER_NO
+	, M.MEMBER_ID
+	, M.MEMBER_NAME
+	, M.MEMBER_TEL
+	, M.MEMBER_EMAIL
+	, M.MEMBER_PROFILEIMG 
+	, M.MEMBER_DEPARTMENT
+	, M.MEMBER_POSITION
+	, PM.PROJECT_MEM_REGDATE
+	, PM.PROJECT_ROLE
+	, CC.COMPANY_NAME
+
+FROM PROJECT_MEMBER PM
+INNER JOIN MEMBER M ON PM.MEMBER_NO = M.MEMBER_NO
+LEFT JOIN CLIENT_COMPANY CC ON M.COMPANY_NO = CC.COMPANY_NO
+WHERE PM.PROJECT_MEM_STATUS = 'Y' AND M.LEAVE_STATUS='N' AND PM.PROJECT_NO = #{projectNo}
+ORDER BY 
+	CASE PM.PROJECT_ROLE
+		WHEN 'MANAGER' THEN 1
+		WHEN 'CLIENT' THEN 2
+		ELSE 3
+	END,
+	M.MEMBER_NAME
+</select>
+
+
+<!-- 프로젝트 내 구성원 수 -->
+<select id="tabMemberCount" parameterType="int" resultType="int">
+	SELECT COUNT(*)
+	FROM PROJECT_MEMBER
+	WHERE PROJECT_NO = #{projectNo}
+	AND PROJECT_MEM_STATUS = 'Y'
+</select>
+
+
+
+<!-- 구성원 모달 정보 -->
+<select id="modalList" parameterType="kr.or.ddit.vo.project.ProjectMemberVO" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+SELECT
+      PM.PROJECT_MEM_NO      AS projectMemNo
+    , PM.PROJECT_NO          AS projectNo
+    , PM.MEMBER_NO           AS memberNo
+    , TO_CHAR(PM.PROJECT_MEM_REGDATE, 'YYYY-MM-DD') AS projectMemregdate
+    , PM.PROJECT_MEM_STATUS  AS projectMemStatus
+    , PM.PROJECT_ROLE        AS projectRole
+    , PM.PROJECT_BOOKMARK    AS projectBookmark
+
+    , M.MEMBER_ID            AS memberId
+    , M.MEMBER_NAME          AS memberName
+    , SUBSTR(M.MEMBER_TEL,1,3)||'-'||SUBSTR(M.MEMBER_TEL,4,4)||'-'||SUBSTR(M.MEMBER_TEL,8) AS memberTel
+    , M.MEMBER_EMAIL         AS memberEmail
+    , M.MEMBER_PROFILEIMG    AS memberProfileImg
+    , M.MEMBER_DEPARTMENT    AS memberDepartment
+    , M.MEMBER_POSITION      AS memberPosition
+    , CC.COMPANY_NO 		 AS companyNo
+    , CC.COMPANY_NAME		 AS companyName
+
+FROM PROJECT_MEMBER PM
+JOIN MEMBER M
+  ON M.MEMBER_NO = PM.MEMBER_NO
+LEFT JOIN CLIENT_COMPANY CC
+  ON CC.COMPANY_NO = M.COMPANY_NO
+WHERE PM.PROJECT_MEM_STATUS = 'Y'
+  AND M.LEAVE_STATUS = 'N'
+  AND PM.PROJECT_NO = #{projectNo}
+  AND PM.MEMBER_NO  = #{memberNo}
+</select>
+
+<!-- 구성원 모달 내 진행중인 업무 갯수 -->
+<select id="workCount" parameterType="kr.or.ddit.vo.project.ProjectMemberVO" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+
+SELECT
+  
+    COUNT(DISTINCT CASE WHEN workType='T' THEN workId END)
+  + COUNT(DISTINCT CASE WHEN workType='S' THEN workId END) AS totalCnt
+
+
+  , COUNT(DISTINCT CASE WHEN status=2 AND workType='T' THEN workId END)
+  + COUNT(DISTINCT CASE WHEN status=2 AND workType='S' THEN workId END) AS ingCnt
+
+  , COUNT(DISTINCT CASE WHEN status=3 AND workType='T' THEN workId END)
+  + COUNT(DISTINCT CASE WHEN status=3 AND workType='S' THEN workId END) AS doneCnt
+
+  
+  , COUNT(DISTINCT CASE WHEN workType='T' THEN workId END) AS taskCnt
+  , COUNT(DISTINCT CASE WHEN workType='S' THEN workId END) AS taskSubCnt
+
+FROM (
+   
+    SELECT
+          'T' AS workType
+        , ptm.work_id AS workId
+        , pt.task_status AS status
+    FROM project_task_manager ptm
+    JOIN project_task pt
+      ON ptm.work_type='T'
+     AND pt.task_id=ptm.work_id
+    WHERE ptm.member_no = #{memberNo}
+      AND pt.project_no = #{projectNo}
+
+    UNION ALL
+
+   
+    SELECT
+          'S' AS workType
+        , ptm.work_id AS workId
+        , pts.sub_status AS status
+    FROM project_task_manager ptm
+    JOIN project_task_sub pts
+      ON ptm.work_type='S'
+     AND pts.sub_id=ptm.work_id
+    JOIN project_task pt
+      ON pt.task_id=pts.task_id
+    WHERE ptm.member_no = #{memberNo}
+      AND pt.project_no = #{projectNo}
+)
+
+
+</select>
+
+
+<!-- 구성원 차트 업무갯수-->
+<select id="chartList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+
+SELECT
+    pm.member_no AS memberNo,
+    m.member_name AS memberName,
+
+    COUNT(DISTINCT CASE
+        WHEN ptm.work_type = 'T' AND pt.task_id IS NOT NULL
+        THEN ptm.work_id
+    END)
+  + COUNT(DISTINCT CASE
+        WHEN ptm.work_type = 'S' AND pt2.task_id IS NOT NULL
+        THEN ptm.work_id
+    END) AS totalWorkCnt
+
+FROM project_member pm
+JOIN member m
+  ON m.member_no = pm.member_no
+
+LEFT JOIN project_task_manager ptm
+  ON ptm.member_no = pm.member_no
+
+
+LEFT JOIN project_task pt
+  ON ptm.work_type = 'T'
+ AND pt.task_id    = ptm.work_id
+ AND pt.project_no = pm.project_no
+
+
+LEFT JOIN project_task_sub pts
+  ON ptm.work_type = 'S'
+ AND pts.sub_id    = ptm.work_id
+
+LEFT JOIN project_task pt2
+  ON pt2.task_id    = pts.task_id
+ AND pt2.project_no = pm.project_no
+
+WHERE pm.project_no = #{projectNo}
+  AND pm.project_mem_status = 'Y'
+
+GROUP BY pm.member_no, m.member_name
+ORDER BY m.member_name
+
+</select>
+
+
+
+
+
+</mapper>

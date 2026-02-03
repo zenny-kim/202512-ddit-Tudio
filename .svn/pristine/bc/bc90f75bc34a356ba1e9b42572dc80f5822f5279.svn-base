@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.schedule.mapper.IScheduleMapper">
+
+    <insert id="insertSchedule" parameterType="kr.or.ddit.vo.project.ProjectScheduleVO">
+        INSERT INTO PROJECT_SCHEDULE (
+             SCHEDULE_ID
+            ,PROJECT_NO
+            ,MEMBER_NO
+            ,SCHEDULE_TITLE
+            ,SCHEDULE_DESCRIPTION
+            ,SCHEDULE_STARTDATE
+            ,SCHEDULE_ENDDATE
+            ,SCHEDULE_ALLDAY
+            ,SCHEDULE_STATUS
+            ,SCHEDULE_REGDATE
+            ,SCHEDULE_UPDDATE
+            ,SCHEDULE_COLOR
+        ) VALUES (
+             SEQ_PROJECT_SCHEDULE.NEXTVAL
+            ,#{projectNo}
+            ,#{memberNo}
+            ,#{scheduleTitle}
+            ,#{scheduleDescription}
+            ,<choose>
+                <when test='scheduleAllday == "Y"'>
+                    TO_TIMESTAMP(SUBSTR(#{scheduleStartdate}, 1, 10) || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+                   ,TO_TIMESTAMP(SUBSTR(#{scheduleEnddate}, 1, 10) || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+                </when>
+                <otherwise>
+                    TO_TIMESTAMP(REPLACE(SUBSTR(#{scheduleStartdate}, 1, 16), 'T', ' '), 'YYYY-MM-DD HH24:MI')
+                   ,TO_TIMESTAMP(REPLACE(SUBSTR(#{scheduleEnddate}, 1, 16), 'T', ' '), 'YYYY-MM-DD HH24:MI')
+                </otherwise>
+            </choose>
+            ,#{scheduleAllday}
+            ,#{scheduleStatus}
+            ,CURRENT_TIMESTAMP
+            ,NULL
+            ,#{scheduleColor}
+        )
+    </insert>
+    
+    <select id="getMyProjects" resultType="kr.or.ddit.vo.project.ProjectVO">
+        SELECT 
+             p.PROJECT_NO
+            ,p.PROJECT_NAME
+        FROM PROJECT p
+        JOIN PROJECT_MEMBER pm ON p.PROJECT_NO = pm.PROJECT_NO
+        WHERE pm.MEMBER_NO = #{memberNo} 
+          AND pm.PROJECT_MEM_STATUS = 'Y'
+        ORDER BY p.PROJECT_NO DESC
+    </select>
+    
+	<select id="getScheduleList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectScheduleVO">
+        /* 3-1. 개인 일정 */
+        SELECT 
+             'SCHEDULE' AS scheduleType
+            ,0 AS projectNo
+            ,TO_CHAR(SCHEDULE_ID) AS scheduleId
+            ,SCHEDULE_TITLE AS scheduleTitle
+            ,CAST(SCHEDULE_DESCRIPTION AS VARCHAR2(4000)) AS scheduleDescription
+            ,SCHEDULE_STATUS AS scheduleStatus
+            ,TO_CHAR(SCHEDULE_STARTDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleStartdate
+            ,TO_CHAR(SCHEDULE_ENDDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleEnddate
+            ,SCHEDULE_COLOR AS scheduleColor
+            ,SCHEDULE_ALLDAY AS scheduleAllday
+            ,MEMBER_NO AS memberNo
+            ,1 AS myTask
+        FROM PROJECT_SCHEDULE
+        WHERE MEMBER_NO = #{memberNo}
+    
+        UNION ALL
+    
+        /* 3-2. 프로젝트 */
+        SELECT 
+             'PROJECT' AS scheduleType
+            ,PROJECT_NO AS projectNo
+            ,TO_CHAR(PROJECT_NO) AS scheduleId
+            ,PROJECT_NAME AS scheduleTitle
+            ,PROJECT_DESC AS scheduleDescription
+            ,PROJECT_STATUS AS scheduleStatus
+            ,TO_CHAR(PROJECT_STARTDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleStartdate
+            ,TO_CHAR(PROJECT_ENDDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleEnddate
+            ,'#e6f7ff' AS scheduleColor
+            ,'Y' AS scheduleAllday
+            ,0 AS memberNo
+            ,0 AS myTask
+        FROM PROJECT
+        WHERE PROJECT_NO IN (
+            SELECT PROJECT_NO FROM PROJECT_MEMBER 
+            WHERE MEMBER_NO = #{memberNo} AND PROJECT_MEM_STATUS = 'Y'
+        )
+    
+        UNION ALL
+    
+        /* 3-3. 상위 업무 */
+        SELECT 
+             'TASK' AS scheduleType
+            ,PROJECT_NO AS projectNo
+            ,TO_CHAR(TASK_ID) AS scheduleId
+            ,TASK_TITLE AS scheduleTitle
+            ,CAST(TASK_CONTENT AS VARCHAR2(4000)) AS scheduleDescription
+            ,TASK_STATUS AS scheduleStatus
+            ,TO_CHAR(TASK_STARTDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleStartdate
+            ,TO_CHAR(TASK_ENDDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleEnddate
+            ,'#ffeded' AS scheduleColor
+            ,'N' AS scheduleAllday
+            ,0 AS memberNo
+            ,(CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM PROJECT_TASK_MANAGER PTM
+                    WHERE PTM.WORK_TYPE = 'T'
+                      AND PTM.WORK_ID = PROJECT_TASK.TASK_ID
+                      AND PTM.MEMBER_NO = #{memberNo}
+                ) THEN 1 
+                ELSE 0 
+            END) AS myTask
+        FROM PROJECT_TASK
+        WHERE PROJECT_NO IN (
+            SELECT PROJECT_NO FROM PROJECT_MEMBER 
+            WHERE MEMBER_NO = #{memberNo} AND PROJECT_MEM_STATUS = 'Y'
+        )
+        
+        UNION ALL
+    
+        /* 3-4. 하위 업무 */
+        SELECT 
+             'SUB' AS scheduleType
+            ,(SELECT PROJECT_NO FROM PROJECT_TASK WHERE TASK_ID = T.TASK_ID) AS projectNo
+            ,TO_CHAR(SUB_ID) AS scheduleId
+            ,SUB_TITLE AS scheduleTitle
+            ,CAST(SUB_CONTENT AS VARCHAR2(4000)) AS scheduleDescription
+            ,SUB_STATUS AS scheduleStatus
+            ,TO_CHAR(SUB_STARTDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleStartdate
+            ,TO_CHAR(SUB_ENDDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleEnddate
+            ,'#fffbe6' AS scheduleColor
+            ,'N' AS scheduleAllday
+            ,0 AS memberNo
+            ,(CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM PROJECT_TASK_MANAGER PTM
+                    WHERE PTM.WORK_TYPE = 'S'
+                      AND PTM.WORK_ID = T.SUB_ID
+                      AND PTM.MEMBER_NO = #{memberNo}
+                ) THEN 1 
+                ELSE 0 
+            END) AS myTask
+        FROM PROJECT_TASK_SUB T
+        WHERE TASK_ID IN (
+            SELECT TASK_ID FROM PROJECT_TASK 
+            WHERE PROJECT_NO IN (SELECT PROJECT_NO FROM PROJECT_MEMBER WHERE MEMBER_NO = #{memberNo} AND PROJECT_MEM_STATUS = 'Y')
+        )
+
+        UNION ALL
+
+        /* 3-5. 회의 일정 (MEETING) - 타입 충돌 방지 처리 완료 */
+        SELECT 
+             'MEETING' AS scheduleType
+            ,PROJECT_NO AS projectNo
+            ,TO_CHAR(RESERVATION_ID) AS scheduleId
+            ,RES_MEETING_TITLE AS scheduleTitle
+            ,CAST(RES_MEMO AS VARCHAR2(4000)) AS scheduleDescription
+            ,RES_STATUS AS scheduleStatus
+            ,TO_CHAR(RES_STARTDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleStartdate
+            ,TO_CHAR(RES_ENDDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleEnddate
+            ,'#f6ffed' AS scheduleColor
+            ,'N' AS scheduleAllday
+            ,MEMBER_NO AS memberNo
+            ,1 AS myTask
+        FROM MEETING_RESERVATION MR
+        WHERE PROJECT_NO IN (
+            SELECT PROJECT_NO FROM PROJECT_MEMBER 
+            WHERE MEMBER_NO = #{memberNo} AND PROJECT_MEM_STATUS = 'Y'
+        )
+        AND RES_TYPE = 'P'
+        AND (
+            MEMBER_NO = #{memberNo} 
+            OR 
+            EXISTS (
+                SELECT 1 FROM MEETING_ROOM_MEMBER MRM
+                WHERE MRM.RESERVATION_ID = MR.RESERVATION_ID
+                AND MRM.MEMBER_NO = #{memberNo}
+            )
+        )
+    </select>
+    
+    <select id="getScheduleDetail" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectScheduleVO">
+        SELECT 
+             SCHEDULE_ID
+            ,PROJECT_NO
+            ,MEMBER_NO
+            ,SCHEDULE_TITLE
+            ,SCHEDULE_DESCRIPTION
+            ,SCHEDULE_STARTDATE
+            ,SCHEDULE_ENDDATE
+            ,SCHEDULE_ALLDAY
+            ,SCHEDULE_STATUS
+            ,SCHEDULE_COLOR
+        FROM PROJECT_SCHEDULE
+        WHERE SCHEDULE_ID = #{scheduleId}
+    </select>
+    
+    <delete id="deleteSchedule" parameterType="int">
+        DELETE FROM PROJECT_SCHEDULE
+        WHERE SCHEDULE_ID = #{scheduleId}
+    </delete>
+    
+   	<select id="getProjectScheduleList" parameterType="map" resultType="kr.or.ddit.vo.project.ProjectScheduleVO">
+	    /* 1. 개인 일정 (본인 이름만 가져옴) */
+	    SELECT 
+	         'SCHEDULE' AS scheduleType
+	        ,0 AS projectNo
+	        ,TO_CHAR(S.SCHEDULE_ID) AS scheduleId
+	        ,S.SCHEDULE_TITLE AS scheduleTitle
+	        ,CAST(S.SCHEDULE_DESCRIPTION AS VARCHAR2(4000)) AS scheduleDescription
+	        ,TO_CHAR(S.SCHEDULE_STATUS) AS scheduleStatus
+	        ,TO_CHAR(S.SCHEDULE_STARTDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleStartdate
+	        ,TO_CHAR(S.SCHEDULE_ENDDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleEnddate
+	        ,S.SCHEDULE_COLOR AS scheduleColor
+	        ,S.SCHEDULE_ALLDAY AS scheduleAllday
+	        ,S.MEMBER_NO AS memberNo
+	        ,(SELECT MEMBER_NAME FROM MEMBER WHERE MEMBER_NO = S.MEMBER_NO) AS memberName
+	        ,(CASE WHEN S.MEMBER_NO = #{memberNo} THEN 1 ELSE 0 END) AS myTask
+	    FROM PROJECT_SCHEDULE S
+	    WHERE S.PROJECT_NO = #{projectNo}
+	
+	    UNION ALL
+	
+	    /* 2. 상위 업무 (담당자 여러 명 합치기) */
+	    SELECT 
+	         'TASK' AS scheduleType
+	        ,T.PROJECT_NO AS projectNo
+	        ,TO_CHAR(T.TASK_ID) AS scheduleId
+	        ,T.TASK_TITLE AS scheduleTitle
+	        ,CAST(T.TASK_CONTENT AS VARCHAR2(4000)) AS scheduleDescription
+	        ,TO_CHAR(T.TASK_STATUS) AS scheduleStatus
+	        ,TO_CHAR(T.TASK_STARTDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleStartdate
+	        ,TO_CHAR(T.TASK_ENDDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleEnddate
+	        ,'#ffeded' AS scheduleColor
+	        ,'N' AS scheduleAllday
+	        ,0 AS memberNo
+	        ,(SELECT LISTAGG(M.MEMBER_NAME, ', ') WITHIN GROUP (ORDER BY M.MEMBER_NAME)
+	          FROM PROJECT_TASK_MANAGER PTM
+	          JOIN MEMBER M ON PTM.MEMBER_NO = M.MEMBER_NO
+	          WHERE PTM.WORK_TYPE = 'T' AND PTM.WORK_ID = T.TASK_ID) AS memberName
+	        ,(CASE WHEN EXISTS (SELECT 1 FROM PROJECT_TASK_MANAGER PTM WHERE PTM.WORK_TYPE = 'T' AND PTM.WORK_ID = T.TASK_ID AND PTM.MEMBER_NO = #{memberNo}) THEN 1 ELSE 0 END) AS myTask
+	    FROM PROJECT_TASK T
+	    WHERE T.PROJECT_NO = #{projectNo}
+	    
+	    UNION ALL
+	
+	    /* 3. 하위 업무 (담당자 여러 명 합치기) */
+	    SELECT 
+	         'SUB' AS scheduleType
+	        ,(SELECT PROJECT_NO FROM PROJECT_TASK WHERE TASK_ID = S.TASK_ID) AS projectNo
+	        ,TO_CHAR(S.SUB_ID) AS scheduleId
+	        ,S.SUB_TITLE AS scheduleTitle
+	        ,CAST(S.SUB_CONTENT AS VARCHAR2(4000)) AS scheduleDescription
+	        ,TO_CHAR(S.SUB_STATUS) AS scheduleStatus
+	        ,TO_CHAR(S.SUB_STARTDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleStartdate
+	        ,TO_CHAR(S.SUB_ENDDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleEnddate
+	        ,'#fffbe6' AS scheduleColor
+	        ,'N' AS scheduleAllday
+	        ,0 AS memberNo
+	        ,(SELECT LISTAGG(M.MEMBER_NAME, ', ') WITHIN GROUP (ORDER BY M.MEMBER_NAME)
+	          FROM PROJECT_TASK_MANAGER PTM
+	          JOIN MEMBER M ON PTM.MEMBER_NO = M.MEMBER_NO
+	          WHERE PTM.WORK_TYPE = 'S' AND PTM.WORK_ID = S.SUB_ID) AS memberName
+	        ,(CASE WHEN EXISTS (SELECT 1 FROM PROJECT_TASK_MANAGER PTM WHERE PTM.WORK_TYPE = 'S' AND PTM.WORK_ID = S.SUB_ID AND PTM.MEMBER_NO = #{memberNo}) THEN 1 ELSE 0 END) AS myTask
+	    FROM PROJECT_TASK_SUB S
+	    WHERE S.TASK_ID IN (SELECT TASK_ID FROM PROJECT_TASK WHERE PROJECT_NO = #{projectNo})
+	    
+	    UNION ALL
+	    
+	    /* 4. 회의 일정 (예약자 이름 가져오기) */
+	    SELECT 
+	         'MEETING' AS scheduleType
+	        ,MR.PROJECT_NO AS projectNo
+	        ,TO_CHAR(MR.RESERVATION_ID) AS scheduleId
+	        ,'[회의] ' || MR.RES_MEETING_TITLE AS scheduleTitle
+	        ,CAST(MR.RES_MEMO AS VARCHAR2(4000)) AS scheduleDescription
+	        ,TO_CHAR(MR.RES_STATUS) AS scheduleStatus
+	        ,TO_CHAR(MR.RES_STARTDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleStartdate
+	        ,TO_CHAR(MR.RES_ENDDATE, 'YYYY-MM-DD"T"HH24:MI:SS') AS scheduleEnddate
+	        ,'#f6ffed' AS scheduleColor
+	        ,'N' AS scheduleAllday
+	        ,MR.MEMBER_NO AS memberNo
+	        ,(SELECT MEMBER_NAME FROM MEMBER WHERE MEMBER_NO = MR.MEMBER_NO) AS memberName
+	        ,1 AS myTask
+	    FROM MEETING_RESERVATION MR
+	    WHERE MR.PROJECT_NO = #{projectNo}
+	    AND MR.RES_TYPE = 'P'
+	    AND (MR.MEMBER_NO = #{memberNo} OR EXISTS (SELECT 1 FROM MEETING_ROOM_MEMBER MRM WHERE MRM.RESERVATION_ID = MR.RESERVATION_ID AND MRM.MEMBER_NO = #{memberNo}))
+	</select>
+    
+    <update id="updateScheduleDate" parameterType="map">
+        <choose>
+            <when test='type == "SCHEDULE"'>
+                UPDATE PROJECT_SCHEDULE
+                SET SCHEDULE_STARTDATE = TO_TIMESTAMP(#{start}, 'YYYY-MM-DD HH24:MI:SS')
+                   ,SCHEDULE_ENDDATE = TO_TIMESTAMP(#{end}, 'YYYY-MM-DD HH24:MI:SS')
+                WHERE SCHEDULE_ID = #{id}
+                  AND MEMBER_NO = #{memberNo}
+            </when>
+
+            <when test='type == "TASK"'>
+                UPDATE PROJECT_TASK
+                SET TASK_STARTDATE = TO_TIMESTAMP(#{start}, 'YYYY-MM-DD HH24:MI:SS')
+                   ,TASK_ENDDATE = TO_TIMESTAMP(#{end}, 'YYYY-MM-DD HH24:MI:SS')
+                WHERE TASK_ID = #{id}
+                  AND EXISTS (
+                      SELECT 1 
+                      FROM PROJECT_TASK_MANAGER 
+                      WHERE WORK_TYPE = 'T' 
+                        AND WORK_ID = #{id} 
+                        AND MEMBER_NO = #{memberNo}
+                  )
+            </when>
+
+            <when test='type == "SUB"'>
+                UPDATE PROJECT_TASK_SUB
+                SET SUB_STARTDATE = TO_TIMESTAMP(#{start}, 'YYYY-MM-DD HH24:MI:SS')
+                   ,SUB_ENDDATE = TO_TIMESTAMP(#{end}, 'YYYY-MM-DD HH24:MI:SS')
+                WHERE SUB_ID = #{id}
+                  AND EXISTS (
+                      SELECT 1 
+                      FROM PROJECT_TASK_MANAGER 
+                      WHERE WORK_TYPE = 'S' 
+                        AND WORK_ID = #{id} 
+                        AND MEMBER_NO = #{memberNo}
+                  )
+            </when>
+        </choose>
+    </update>
+
+</mapper>

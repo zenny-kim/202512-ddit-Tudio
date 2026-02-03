@@ -1,0 +1,42 @@
+package kr.or.ddit.projectTask.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import kr.or.ddit.projectTask.service.IProjectTaskService;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : ProjectTaskController
+ * DESC : 프로젝트 상위업무 생성, 수정, 삭제, 목록 컨트롤러
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 PSE
+ * @version 1.0, 2025.01.02
+ * 
+ */
+@Controller
+@Slf4j
+//@RequestMapping("/tudio/project/{projectNo}")
+@RequestMapping("/tudio/projectTask")
+public class ProjectTaskController {
+	
+	@Autowired
+	private IProjectTaskService projectTaskService;
+	
+	@GetMapping("/main.do")
+	public String ProjectTask() {
+		return "project/project_tasks";
+	}
+	
+	@GetMapping("/list.do")
+	public String projectTaskList() {
+		log.info("projectTaskList() 실행~");
+		
+		return "project/tabs/tab_tasks";
+	}
+}

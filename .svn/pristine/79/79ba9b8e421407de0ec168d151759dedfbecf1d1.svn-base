@@ -1,0 +1,244 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tudio - 프로젝트 상세</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">    
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/header.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/sidebar.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/footer.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/tab_board.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/projectMain.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/projectTabMemberList.css">
+    
+</head>
+<body data-context-path="${pageContext.request.contextPath}" 
+    data-project-no="${project.projectNo}">
+
+    <jsp:include page="../include/header_user.jsp"/>
+    
+    <jsp:include page="../include/sidebar_user.jsp">
+          <jsp:param name="menu" value="project_list" />
+    </jsp:include>
+
+    <main class="main-content-wrap">
+        <div class="container-fluid">
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h3 text-gray-800">
+                    ${project.projectName} 
+                    <c:choose>
+                        <c:when test="${project.projectStatus eq 0}">
+                            <span class="badge bg-success fs-6 ms-3">진행 중</span>
+                        </c:when>
+                        <c:when test="${project.projectStatus eq 1}">
+                            <span class="badge bg-secondary fs-6 ms-3">완료</span>
+                        </c:when>
+                    </c:choose>
+                </h1>
+                
+                <div>
+                <!-- 프로젝트 관리자인 경우 설정 버튼 노출 -->
+                <c:if test="${loginMember eq project.memberNo}">
+                    <button class="btn btn-outline-secondary btn-sm me-2" onclick="location.href='/tudio/project/update?projectNo=${project.projectNo}'">
+                    	<i class="bi bi-gear me-1"></i> 설정
+                    </button>
+                </c:if>
+                	
+                	<!-- 프로젝트 북마크 설정 버튼 -->
+	           		<button type="button" class="btn btn-outline-warning btn-sm ms-1" id="btnBookmark"
+					    title="북마크 ${bookmark eq 'Y' ? '해제' : '등록'}">
+					    <span id="bookmarkText">${bookmark eq 'Y' ? '북마크 해제' : '북마크 등록'}</span>
+					    <i class="bi ${bookmark eq 'Y' ? 'bi-star-fill' : 'bi-star'}"></i>
+					</button>
+				</div>
+            </div>
+			
+			<!-- 미니 위젯 -->
+			<!-- 1. 디데이 -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6">
+					<div class="card shadow kpi-card-project">
+						<div class="card-body">
+							<h6 class="text-primary fw-bold mb-1">기간</h6>
+                            
+                            <p class="small mb-0">
+				                <fmt:formatDate value="${project.projectStartdate}" pattern="yyyy.MM.dd"/> ~ 
+				                <fmt:formatDate value="${project.projectEnddate}" pattern="yyyy.MM.dd"/>
+				            </p>
+				            
+				            <!-- D-day 조건 분기 -->
+				            <p class="small fw-bold mb-0 ${project.dday < 0 ? 'text-secondary' : 'text-success'}">
+				                <c:choose>
+				                    <%-- 1. 날짜가 지난 경우 (음수) --%>
+				                    <c:when test="${project.dday < 0}">
+				                        <i class="bi bi-check-circle-fill me-1"></i>
+				                        종료됨 (D+${project.dday * -1})
+				                    </c:when>
+				                    
+				                    <%-- 2. 오늘인 경우 (0) --%>
+				                    <c:when test="${project.dday == 0}">
+				                        <span class="badge bg-danger">D-Day</span> 오늘 마감
+				                    </c:when>
+				                    
+				                    <%-- 3. 남은 경우 (양수) --%>
+				                    <c:otherwise>
+				                        D-${project.dday}
+				                    </c:otherwise>
+				                </c:choose>
+				            </p>
+                            
+						</div>
+					</div>
+				</div>
+                
+                <!-- 2. 프로젝트 진행률 -->
+                <div class="col-xl-3 col-md-6">
+				    <div class="card shadow kpi-card-project">
+				        <div class="card-body">
+				            <div class="row no-gutters align-items-center">
+				                <div class="col mr-2">
+				                    <h6 class="text-info fw-bold mb-1">완료율</h6>
+				                    <div class="row no-gutters align-items-center">
+				                        <div class="col-auto">
+				                            <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+				                                ${project.projectProgress}%
+				                            </div>
+				                        </div>
+				                        <div class="col">
+				                            <div class="progress progress-sm mr-2">
+				                                <div class="progress-bar bg-info" role="progressbar"
+				                                     style="width: ${project.projectProgress}%" 
+				                                     aria-valuenow="${project.projectProgress}" 
+				                                     aria-valuemin="0" aria-valuemax="100">
+				                                </div>
+				                            </div>
+				                        </div>
+				                    </div>
+				                    <div class="mt-2 small text-muted">
+				                        <i class="bi bi-list-check me-1"></i>
+				                        전체 <strong>${project.totalTaskCount}</strong>개 업무 중 
+				                        <strong>${project.completedTaskCount}</strong>개 완료
+				                    </div>
+				                </div>
+				            </div>
+				        </div>
+				    </div>
+				</div>
+                
+                <!-- 프로젝트 구성원 -->
+				<div class="col-xl-3 col-md-6">
+					<div class="card shadow kpi-card-project">
+						<div class="card-body">
+							<h6 class="text-warning fw-bold mb-1">투입 인력</h6>
+							
+							<div class="h5 mb-0 font-weight-bold text-gray-800">
+                        		${project.projectMemberCount}명
+                    		</div>
+							<div class="mt-2 small text-muted">
+                        		<i class="bi bi-check-circle me-1"></i>참여 중인 구성원
+                    		</div>
+						</div>
+					</div>
+				</div>
+				
+				<!-- 프로젝트 지연 업무 -->
+				<div class="col-xl-3 col-md-6">
+					<div class="card shadow kpi-card-project">
+						<div class="card-body">
+							<h6 class="text-danger fw-bold mb-1">지연 업무</h6>
+							<p class="small fw-bold fs-5 mb-0">${project.delayedTaskCount} 건</p>
+						</div>
+					</div>
+				</div>
+            </div>
+			
+            <div class="card shadow">
+                <ul class="nav nav-tabs" id="projectTabs">
+                    
+                    <c:set var="rawTabs" value="${project.miniheader.fixTab}" />
+                    
+                    <c:if test="${empty rawTabs}">
+                        <c:set var="rawTabs" value="1,2,3,4,5,6" />
+                    </c:if>
+
+                    <c:set var="cleanTabs" value="${fn:replace(rawTabs, ' ', '')}" />
+                    <c:set var="tabOrder" value="${fn:split(cleanTabs, ',')}" />
+                    
+                    <c:forEach items="${tabOrder}" var="tabId" varStatus="status">
+                    	<!-- 첫 번째 탭 활성화 -->
+                        <c:set var="isActive" value="${status.first ? 'active' : ''}" />
+                        
+                        <li class="nav-item">
+                            <c:choose>
+                                <c:when test="${tabId eq '1'}">
+                                    <a class="nav-link ${isActive}" data-tab="task" onclick="loadTab('task', this)">
+                                        <i class="bi bi-check2-square me-1"></i> 업무
+                                    </a>
+                                </c:when>
+                                
+                                <c:when test="${tabId eq '2'}">
+                                    <a class="nav-link ${isActive}" data-tab="gantt" onclick="loadTab('gantt', this)">
+                                        <i class="bi bi-bar-chart-steps me-1"></i> 차트
+                                    </a>
+                                </c:when>
+                                
+                                <c:when test="${tabId eq '3'}">
+                                    <a class="nav-link ${isActive}" data-tab="board" onclick="loadTab('board', this)">
+                                        <i class="bi bi-card-list me-1"></i> 게시판
+                                    </a>
+                                </c:when>
+                                
+                                <c:when test="${tabId eq '4'}">
+                                    <a class="nav-link ${isActive}" data-tab="calendar" onclick="loadTab('calendar', this)">
+                                        <i class="bi bi-calendar3 me-1"></i> 일정
+                                    </a>
+                                </c:when>
+                                
+                                <c:when test="${tabId eq '5'}">
+                                    <a class="nav-link ${isActive}" data-tab="library" onclick="loadTab('library', this)">
+                                        <i class="bi bi-folder-fill me-1"></i> 자료실
+                                    </a>
+                                </c:when>
+                                
+                                <c:when test="${tabId eq '6'}">
+                                    <a class="nav-link ${isActive}" data-tab="members" onclick="loadTab('members', this)">
+                                        <i class="bi bi-people-fill me-1"></i> 구성원
+                                    </a>
+                                </c:when>
+                            </c:choose>
+                        </li>
+                    </c:forEach>
+                </ul>
+                
+                <div id="tabContentArea">
+                    <div class="loading-spinner-container pt-5 text-center">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <jsp:include page="../include/footer.jsp"/>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/js/footer.js"></script>
+    
+    <script>
+        const projectNo = "${project.projectNo}"; 
+    </script>
+    
+    <script src="${pageContext.request.contextPath}/js/projectMain.js"></script>
+
+</body>
+</html>

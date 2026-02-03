@@ -1,0 +1,159 @@
+@charset "UTF-8";
+
+/* ==========================
+   New Chat Layout (Clean White Theme)
+========================== */
+.new-chat-container { 
+	display: flex; 
+	flex-direction: column; 
+	height: 100%; 
+	background-color: #ffffff; 
+	position: relative; 
+}
+.new-chat-container .chat-room-header { background-color: #ffffff; border-bottom: none; padding: 12px 20px; position: relative; display: flex; align-items: center; justify-content: center; height: 60px; flex-shrink: 0; }
+.new-chat-container .header-left { position: absolute; left: 20px; z-index: 10; }
+.new-chat-container .header-btn { color: #000000; padding: 0; }
+.new-chat-container .room-title { font-size: 18px; font-weight: 700; color: #000000; position: absolute; left: 50%; transform: translateX(-50%); margin: 0; }
+
+/* ==========================
+   2. Search Area
+========================== */
+.search-area {
+    /* [수정] 아래 패딩 15px로 설정하여 태그 영역과 적절한 간격 유지 */
+    padding: 0 20px 15px; 
+    background-color: #ffffff;
+    flex-shrink: 0;
+    z-index: 5; 
+    position: relative;
+}
+
+.search-input-wrapper { width: 100%; height: 46px; background-color: #f2f2f7; border-radius: 12px; display: flex; align-items: center; padding: 0 12px; }
+.search-icon { color: #8e8e93; margin-right: 8px; }
+.search-input { border: none; background: transparent; width: 100%; height: 100%; font-size: 16px; color: #000; outline: none; }
+.search-input::placeholder { color: #aeaeb2; }
+
+/* =========================================
+   [핵심] 선택된 사용자 영역 (알약 태그 + 줄바꿈 + 커스텀 스크롤)
+   ========================================= */
+.selected-users-area {
+    background-color: #ffffff;
+    width: 100%;
+    padding: 0; 
+    flex-shrink: 0; 
+    border-bottom: 1px solid #f2f2f7; 
+}
+
+/* 태그 담는 컨테이너 */
+.selected-users-container {
+    display: flex;
+    flex-wrap: wrap;  /* 줄바꿈 허용 */
+    gap: 8px;         /* 태그 간격 */
+    align-items: flex-start;
+    
+    /* 패딩: 스크롤바 공간(14px) 고려하여 우측 패딩 조정 */
+    padding: 0 10px 15px 20px; 
+    
+    /* [핵심] 높이 제한 (딱 2줄 정도만 보이게 설정) */
+    max-height: 100px; 
+    overflow-y: auto; 
+}
+
+/* =========================================
+   [핵심] 커스텀 스크롤바 (채팅 목록 스타일 완벽 이식)
+   ========================================= */
+.selected-users-container::-webkit-scrollbar {
+    width: 14px; /* 투명 테두리를 위한 공간 확보 */
+}
+
+.selected-users-container::-webkit-scrollbar-thumb {
+    background-color: #d1d1d6; 
+    border-radius: 10px;
+    background-clip: padding-box; /* 내용물만 색칠 */
+    border: 4px solid transparent; /* 투명 테두리로 공백 만들기 */
+}
+
+.selected-users-container::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+/* ==========================
+   [Tag Design] 알약 태그 스타일 (토스/iOS)
+========================== */
+.selected-user-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: #f2f4f6; /* 토스 스타일 연회색 */
+    border-radius: 20px;       /* 완전 둥근 알약 */
+    padding: 4px 10px 4px 4px; /* 이미지 쪽 패딩 작게 */
+    animation: popIn 0.2s ease-out;
+    max-width: 100%;
+    border: 1px solid transparent; /* 높이 보정용 */
+}
+
+/* 태그 안의 작은 프로필 이미지 */
+.tag-profile-img, .tag-default-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+.tag-default-avatar {
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    color: white;
+}
+.tag-default-avatar svg { 
+    width: 12px;       /* 14px -> 12px (조금 더 작게) */
+    height: 12px;
+    stroke-width: 1.5; /* 선 두께를 얇게! (기본 2 -> 1.5) */
+}
+
+/* 태그 안의 이름 */
+.tag-user-name {
+    font-size: 14px;
+    color: #4e5968; /* 조금 더 부드러운 진회색 */
+    font-weight: 500;
+    margin-right: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;
+}
+
+/* 태그 안의 X 버튼 */
+.tag-remove-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px;
+    background-color: #b0b8c1; /* 연한 회색 아이콘 배경 */
+    border-radius: 50%; border: none; padding: 0;
+    color: white; cursor: pointer; transition: all 0.2s;
+    flex-shrink: 0;
+}
+.tag-remove-btn:hover { background-color: #8b95a1; }
+.tag-remove-btn i { width: 10px; height: 10px; }
+
+/* 애니메이션 */
+.selected-user-tag.removing { animation: popOutTag 0.2s forwards; pointer-events: none; }
+@keyframes slideDown { from { opacity: 0; margin-bottom: -20px; } to { opacity: 1; margin-bottom: 0; } }
+@keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes popOutTag { from { transform: scale(1); opacity: 1; } to { transform: scale(0); opacity: 0; width: 0; padding: 0; margin: 0; } }
+
+/* 나머지 (리스트, 버튼 등 기존 유지) */
+.user-list-area { flex-grow: 1; overflow-y: auto; padding-bottom: 110px; -ms-overflow-style: none; scrollbar-width: none; }
+.user-list-area::-webkit-scrollbar { display: none; }
+.section-title { font-size: 13px; color: #8e8e93; font-weight: 600; padding: 20px 20px 10px; background-color: #ffffff; }
+.user-list { list-style: none; padding: 0; margin: 0; }
+.user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; cursor: pointer; background-color: #fff; transition: background-color 0.2s; }
+.user-item:hover { background-color: #f5f5f5; }
+.user-info-wrapper { display: flex; align-items: center; }
+.user-text { margin-left: 14px; display: flex; flex-direction: column; }
+.user-name { font-size: 16px; font-weight: 700; color: #000; margin-bottom: 3px; }
+.user-status { font-size: 13px; color: #8e8e93; }
+.checkbox-wrapper { width: 24px; height: 24px; position: relative; display: flex; align-items: center; justify-content: center; }
+.user-checkbox { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
+.checkmark { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #c7c7cc; background-color: transparent; transition: all 0.2s ease; box-sizing: border-box; }
+.user-checkbox:checked + .checkmark { background-color: var(--primary-color); border-color: var(--primary-color); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E"); background-size: 16px; background-repeat: no-repeat; background-position: center; }
+.bottom-action-area { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px; z-index: 20; background-color: #ffffff; pointer-events: auto; }
+.start-chat-btn { width: 100%; height: 56px; border: none; border-radius: 16px; font-size: 17px; font-weight: 600; pointer-events: auto; transition: all 0.2s ease; background-color: #F2F4F6; color: #B0B8C1; cursor: not-allowed; box-shadow: none; }
+.start-chat-btn.active { background-color: var(--primary-color); color: white; cursor: pointer; box-shadow: 0 8px 20px rgba(0, 122, 255, 0.25); }
+.start-chat-btn:active { transform: scale(0.98); }

@@ -1,0 +1,60 @@
+package kr.or.ddit.projectSchedule.service.impl;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.transaction.Transactional;
+import kr.or.ddit.file.mapper.IFileMapper;
+import kr.or.ddit.file.service.IFileService;
+import kr.or.ddit.projectSchedule.mapper.IProjectScheduleMapper;
+import kr.or.ddit.projectSchedule.service.IProjectScheduleService;
+import kr.or.ddit.vo.FileDetailVO;
+import kr.or.ddit.vo.project.ProjectScheduleVO;
+import kr.or.ddit.vo.project.ProjectVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class ProjectScheduleServiceImpl implements IProjectScheduleService {
+
+	@Autowired
+	private IProjectScheduleMapper scheduleMapper;
+
+	@Transactional
+	@Override
+	public int insertSchedule(ProjectScheduleVO scheduleVO) {
+		log.info("insertSchedule()실행~", scheduleVO);
+		return scheduleMapper.insertSchedule(scheduleVO);
+	}
+
+	// 프로젝트 기간 조회
+	@Override
+	public List<ProjectVO> getMyProjects(int memberNo) {
+		return scheduleMapper.getMyProjects(memberNo);
+	}
+
+	// 스케줄 목록 조회
+	@Override
+	public List<ProjectScheduleVO> getScheduleList(int memberNo) {
+		return scheduleMapper.getScheduleList(memberNo);
+	}
+
+	// 개인 스케줄 삭제
+	@Transactional
+	@Override
+	public int deleteSchedule(int scheduleId) {
+		ProjectScheduleVO scheduleVO = scheduleMapper.getScheduleDetail(scheduleId);
+		if (scheduleVO == null) {
+			log.warn("삭제하려는 일정을 찾을 수 없음: ID {}", scheduleId);
+			return 0;
+		}
+		return scheduleMapper.deleteSchedule(scheduleId);
+	}
+
+}

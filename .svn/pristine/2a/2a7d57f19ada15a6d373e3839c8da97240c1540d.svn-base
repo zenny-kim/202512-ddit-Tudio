@@ -1,0 +1,33 @@
+package kr.or.ddit.vo;
+
+import java.time.LocalDateTime;
+
+import lombok.Data;
+
+@Data
+public class InquiryVO {
+	private int inquiryNo;
+    private int userNo;
+
+    private String inquiryTitle;
+    private String inquiryContent;
+    private String inquiryType;
+
+    private String inquiryRegdate;
+    private String inquiryUpddate;
+
+    private Integer inquiryHit;
+
+    // 관리자 답변 관련
+    private int replyNo;
+    private int adminNo;
+    private String replyContent;
+    private String replyDate;
+    private String replyStatus; // Y / N
+
+    private int fileGroupNo;
+    
+    // 화면에 표시할 이름
+    private String userName;   
+    private String adminName;  
+}

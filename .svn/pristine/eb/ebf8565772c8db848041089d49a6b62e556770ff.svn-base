@@ -1,0 +1,290 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="tudio-scope">
+
+    <div class="tudio-section mb-4">
+        <div class="tudio-section-header">
+            <h5 class="m-0 fw-bold text-primary-dark">
+                <i class="bi bi-pie-chart-fill me-2"></i>프로젝트 인사이트
+            </h5>
+            <div class="d-flex gap-2">
+                <div class="tudio-search bg-white">
+                    <i class="bi bi-calendar4-week text-muted ms-2"></i>
+                    <select class="form-select border-0 bg-transparent shadow-none py-0" style="width: 130px; font-size: 13px;">
+                        <option>전체 기간</option>
+                        <option>이번 주</option>
+                        <option>이번 달</option>
+                    </select>
+                </div>
+                <button class="tudio-btn tudio-btn-outline" onclick="window.print()">
+                    <i class="bi bi-printer"></i> 리포트 출력
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="tudio-card p-3 h-100 d-flex flex-column justify-content-between">
+                <span class="text-muted small fw-bold">총 업무</span>
+                <div class="d-flex align-items-end justify-content-between mt-2">
+                    <h2 class="fw-bold m-0 text-primary-dark">128<span class="fs-6 fw-normal text-muted ms-1">건</span></h2>
+                    <i class="bi bi-check2-square fs-3 text-primary-light" style="opacity:0.3"></i>
+                </div>
+                <div class="mt-2 text-end">
+                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2" style="font-size:11px;">
+                        <i class="bi bi-arrow-up-short"></i> 전주 대비 +12
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="tudio-card p-3 h-100 d-flex flex-column justify-content-between">
+                <span class="text-muted small fw-bold">전체 진행률</span>
+                <div class="d-flex align-items-end justify-content-between mt-2">
+                    <h2 class="fw-bold m-0 text-primary">68<span class="fs-6 fw-normal text-muted ms-1">%</span></h2>
+                    <i class="bi bi-graph-up-arrow fs-3 text-primary" style="opacity:0.3"></i>
+                </div>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar" role="progressbar" style="width: 68%; background-color: var(--main-blue);" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="tudio-card p-3 h-100 d-flex flex-column justify-content-between" style="border-left: 4px solid #ef4444 !important;">
+                <span class="text-muted small fw-bold">지연 업무</span>
+                <div class="d-flex align-items-end justify-content-between mt-2">
+                    <h2 class="fw-bold m-0 text-danger">7<span class="fs-6 fw-normal text-muted ms-1">건</span></h2>
+                    <i class="bi bi-exclamation-triangle-fill fs-3 text-danger" style="opacity:0.3"></i>
+                </div>
+                <div class="mt-2 text-muted small">
+                    전체 업무의 <span class="text-danger fw-bold">5.4%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="tudio-card p-3 h-100 d-flex flex-column justify-content-between">
+                <span class="text-muted small fw-bold">남은 기간</span>
+                <div class="d-flex align-items-end justify-content-between mt-2">
+                    <h2 class="fw-bold m-0 text-dark">D-14</h2>
+                    <i class="bi bi-hourglass-split fs-3 text-muted" style="opacity:0.3"></i>
+                </div>
+                <div class="mt-2 text-muted small">
+                    종료일: 2026.02.28
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="tudio-card p-4 h-100">
+                <h6 class="fw-bold mb-4 text-primary-dark">업무 상태 분포</h6>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="taskStatusChart"></canvas>
+                </div>
+                <div class="mt-3 text-center small text-muted">
+                    완료된 업무가 전체의 60%를 차지합니다.
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="tudio-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold m-0 text-primary-dark">일정 준수 현황</h6>
+                    <span class="tudio-badge qna">총 85건 완료 기준</span>
+                </div>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="schedulePerformanceChart"></canvas>
+                </div>
+                <div class="row mt-3 text-center small">
+                    <div class="col text-success">
+                        <i class="bi bi-lightning-fill"></i> 조기 완료: 효율적 업무 수행
+                    </div>
+                    <div class="col text-primary">
+                        <i class="bi bi-check-circle-fill"></i> 정시 완료: 계획 준수
+                    </div>
+                    <div class="col text-danger">
+                        <i class="bi bi-clock-history"></i> 지연 완료: 일정 관리 필요
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tudio-section">
+        <div class="tudio-section-header">
+            <h6 class="m-0 fw-bold text-primary-dark">팀원별 업무 기여도</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table tudio-table-card table-hover m-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">이름 / 직책</th>
+                        <th class="text-center">배정된 업무</th>
+                        <th class="text-center">진행 중</th>
+                        <th class="text-center">완료</th>
+                        <th class="text-center text-danger">지연</th>
+                        <th class="text-center">완료율</th>
+                    </tr>
+                </thead>
+                <tbody id="memberStatsTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    /* * ==========================================
+     * [Dummy Data] 백엔드 연동 시 AJAX로 교체 필요
+     * ==========================================
+     */
+     
+    // 1. 업무 상태 데이터
+    const taskStats = {
+        todo: 15,
+        inProgress: 28,
+        review: 8,
+        done: 77
+    };
+
+    // 2. 일정 준수 현황 (완료된 업무 기준)
+    const scheduleStats = {
+        early: 20,   // 예정일보다 빨리 끝남
+        onTime: 45,  // 예정일에 딱 맞춰 끝남
+        delayed: 12  // 예정일 지나서 끝남
+    };
+
+    // 3. 팀원별 성과 데이터
+    const memberStats = [
+        { name: '김민수', position: 'PM', total: 10, doing: 2, done: 8, delayed: 0 },
+        { name: '이영희', position: 'PL', total: 25, doing: 5, done: 18, delayed: 2 },
+        { name: '박지성', position: 'Backend', total: 40, doing: 15, done: 22, delayed: 3 },
+        { name: '손흥민', position: 'Frontend', total: 35, doing: 10, done: 24, delayed: 1 },
+        { name: '오징어', position: 'Design', total: 18, doing: 4, done: 14, delayed: 0 },
+    ];
+
+    /* ==========================================
+     * Chart.js 렌더링
+     * ========================================== */
+
+    // 1. 업무 상태 파이 차트 (Doughnut)
+    const ctxStatus = document.getElementById('taskStatusChart').getContext('2d');
+    new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: ['할 일', '진행 중', '검토', '완료'],
+            datasets: [{
+                data: [taskStats.todo, taskStats.inProgress, taskStats.review, taskStats.done],
+                backgroundColor: ['#e2e8f0', '#3b82f6', '#f59e0b', '#22c55e'], // CSS 변수 톤 매칭
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+            },
+            cutout: '70%', // 도넛 두께
+        }
+    });
+
+    // 2. 일정 준수 바 차트 (Bar - Horizontal)
+    const ctxSchedule = document.getElementById('schedulePerformanceChart').getContext('2d');
+    new Chart(ctxSchedule, {
+        type: 'bar',
+        data: {
+            labels: ['조기 완료', '정시 완료', '지연 완료'],
+            datasets: [{
+                label: '건수',
+                data: [scheduleStats.early, scheduleStats.onTime, scheduleStats.delayed],
+                backgroundColor: [
+                    'rgba(34, 197, 94, 0.2)', // Green (Early)
+                    'rgba(59, 130, 246, 0.2)', // Blue (OnTime)
+                    'rgba(239, 68, 68, 0.2)'  // Red (Delayed)
+                ],
+                borderColor: [
+                    '#22c55e',
+                    '#3b82f6',
+                    '#ef4444'
+                ],
+                borderWidth: 1,
+                borderRadius: 5,
+                barThickness: 40
+            }]
+        },
+        options: {
+            indexAxis: 'y', // 가로형 막대
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { grid: { display: false }, beginAtZero: true },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+
+    /* ==========================================
+     * 테이블 렌더링
+     * ========================================== */
+    const tableBody = document.getElementById('memberStatsTableBody');
+    let html = '';
+
+    memberStats.forEach(member => {
+        // 완료율 계산
+        const rate = Math.round((member.done / member.total) * 100) || 0;
+        
+        // 지연 건수가 있으면 빨간색 강조
+        const delayedClass = member.delayed > 0 ? 'text-danger fw-bold' : 'text-muted';
+        const delayedBadge = member.delayed > 0 ? `<span class="badge bg-danger bg-opacity-10 text-danger ms-1">+${member.delayed}</span>` : '';
+
+        html += `
+            <tr>
+                <td class="ps-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-light text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width:36px; height:36px; font-weight:700;">
+                            ${member.name.charAt(0)}
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">${member.name}</div>
+                            <div class="small text-muted">${member.position}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-center align-middle fw-bold">${member.total}건</td>
+                <td class="text-center align-middle text-primary">${member.doing}</td>
+                <td class="text-center align-middle text-success">${member.done}</td>
+                <td class="text-center align-middle ${delayedClass}">
+                    ${member.delayed} ${delayedBadge}
+                </td>
+                <td class="text-center align-middle">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div class="progress" style="width: 80px; height: 6px; margin-right: 8px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: ${rate}%"></div>
+                        </div>
+                        <span class="small fw-bold text-primary">${rate}%</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    tableBody.innerHTML = html;
+
+})();
+</script>

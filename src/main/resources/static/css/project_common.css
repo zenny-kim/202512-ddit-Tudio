@@ -1,0 +1,1336 @@
+@charset "UTF-8";
+
+/* =========================================================
+   [0] 스윗알럿 사이즈 고정
+   ========================================================= */
+div:where(.swal2-container) .swal2-popup {
+    /* 1. 가로 넓이 강제 지정 (기본적으로 32em 정도가 예쁩니다) */
+    width: 32em !important; 
+    max-width: 100% !important;
+
+    /* 2. 박스 형태 계산법 초기화 (찌그러짐 방지 핵심) */
+    box-sizing: border-box !important;
+
+    /* 3. 그리드 배치 문제 해결 */
+    display: grid !important; 
+    grid-template-columns: minmax(0, 100%) !important; /* 내부 요소가 찌그러지지 않게 */
+}
+
+/* =========================================================
+   [1] 디자인 토큰 & 초기 설정 (Design Tokens)
+   - 사이트 전체에서 공통으로 사용할 색상, 너비, 높이 변수 정의
+   ========================================================= */
+:root {
+	--main-blue: #3B82F6;
+	--dark-navy: #00407F;
+	--header-blue: #D9E9FF;
+	/* 프로젝트 공통 테두리 색을 project_common 톤(#BFDBFE)과 통일 */
+	--border-blue: #BFDBFE;
+	--bg-body: #F8FAFC;
+	--text-main: #1E293B;
+	--text-muted: #64748B;
+	--sidebar-width: 90px; 
+  	--header-height: 70px;
+}
+
+body {
+	background-color: var(--bg-body);
+	color: var(--text-main);
+}
+
+/* 자주 쓰는 유틸 */
+.text-primary-dark {
+	color: var(--dark-navy) !important;
+}
+
+.bg-light-blue {
+	background-color: var(--header-blue) !important;
+}
+
+/* =========================================================
+   [2] 레이아웃 및 전체 구조 (Layout)
+   - .main-content-wrap: 사이드바를 제외한 실제 본문 영역
+   ========================================================= */
+/* 사이드바 사용 */
+.main-content-wrap {
+	margin-left: var(--sidebar-width);
+	width: calc(100% - var(--sidebar-width));
+	min-width: 0;
+	transition: margin-left 0.3s ease;
+	background-color: #f8fafc;
+	min-height: calc(100vh - var(--header-height));
+}
+/* 탭 내부 레이아웃 사용 */
+.main-content-wrap-tap {
+	transition: margin-left 0.3s ease;
+	/* background-color: #f8fafc; */
+}
+
+/* =========================================================
+   [3] 탭 메뉴 스타일 (Navigation Tabs)
+   - .custom-index-tabs: 대메뉴 탭
+   - .board-tabs: 게시판 내부 소분류
+   ========================================================= */
+/* 2. 상단 인덱스 탭 (Project Tabs) */
+.custom-index-tabs {
+	gap: 2px;
+	padding-left: 0; /* 왼쪽 끝에 붙이기 */
+}
+
+.custom-index-tabs .nav-link:hover {
+	background-color: #e9ecef;
+	color: #212529;
+}
+
+/* 활성화된 탭 (Active) - 하얀색 배경 고정 */
+.custom-index-tabs .nav-link.active {
+	background-color: #ffffff !important;
+	color: #3B82F6 !important;
+	font-weight: 700 !important;
+	border-top: 1px solid #BFDBFE !important;
+	border-left: 1px solid #BFDBFE !important;
+	border-right: 1px solid #BFDBFE !important;
+	border-bottom: 1px solid #ffffff !important;
+	position: relative;
+	z-index: 5;
+	margin-bottom: -1px;
+}
+
+/* 탭 아래 본문 카드 영역 */
+.tab-content-card {
+	background: #fff;
+	border: 1px solid #BFDBFE;
+	border-radius: 0 8px 8px 8px;
+	margin-top: -1px;
+	padding: 24px;
+}
+
+/* 3. 게시판 내부 카테고리 탭 (둥근 버튼 스타일) */
+.board-tabs {
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+/* ✅ 탭 버튼을 가로 정렬 + 세로 가운데 정렬 */
+.custom-index-tabs .nav-link {
+	display: inline-flex; /* 또는 flex 도 OK */
+	align-items: center;
+	gap: 6px; /* 아이콘-글씨 간격 */
+	flex-direction: row;
+	background-color: #f1f3f5;
+	border: 1px solid #BFDBFE !important;
+	border-bottom: none !important;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	color: #64748b;
+	padding: 12px 18px;
+	margin-right: 4px;
+	min-width: 110px;
+	justify-content: center;
+}
+
+/* ✅ 아이콘은 inline으로 */
+.custom-index-tabs .nav-link i {
+	font-size: 0.85rem;
+	display: inline-flex; /* 기존 display:flex 제거 */
+	align-items: center;
+	line-height: 1;
+	margin-right: 0; /* gap 쓰니까 margin 제거 */
+	margin-bottom: 0;
+	margin-top: 2px;
+	min-width: 24px; /* ✅ 탭 가로 길이(원하는 값으로 조절) */
+	justify-content: center; /* ✅ 아이콘+글씨를 가운데 정렬 */
+	white-space: nowrap; /* ✅ 글씨 줄바꿈 방지 */
+}
+
+.board-tabs .tab {
+	border: 1px solid #e6edf6;
+	background: #fff;
+	padding: 7px 16px;
+	border-radius: 999px;
+	font-size: 13px;
+	color: #495057;
+	font-weight: 500;
+	transition: .15s ease;
+}
+
+.board-tabs .tab:hover {
+	background-color: #f8f9fa;
+	transform: translateY(-1px);
+}
+
+.board-tabs .tab.is-active {
+	border-color: #0d6efd;
+	background: rgba(13, 110, 253, .08);
+	color: #0d6efd;
+	font-weight: 700;
+}
+
+/* =========================================================
+   [6] 섹션 및 필터 바 (Section Components)
+   - .board-filter: 필터 영역
+   ========================================================= */
+/* 4. 검색 필터 및 버튼 스타일 */
+.board-filter {
+	background-color: #f8fafc;
+	border: 1px solid #eef2f7;
+}
+
+/* =========================================================
+   [5] 공통 버튼 시스템 (Tudio Buttons)
+   ========================================================= */
+.btn-primary.rounded-pill {
+	font-weight: 600;
+	padding: 8px 20px;
+	box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+}
+
+/* =========================================================
+   [7] 카드형 테이블 & 리스트 (Data Display)
+   ========================================================= */
+/* 5. 게시판 테이블 (목록) 스타일 */
+.table {
+	font-size: 0.95rem;
+	border-collapse: separate;
+}
+
+/* 테이블 헤더 */
+.table thead th {
+	font-weight: 700;
+	color: #495057;
+	padding: 15px 10px;
+	background-color: #f8f9fa !important;
+	border-bottom: 2px solid #eef2f7;
+}
+
+/* 테이블 본문 행(Row) 애니메이션 */
+.table tbody tr {
+	transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+	background-color: #fcfdfe !important;
+	transform: scale(1.002);
+}
+
+.table tbody td {
+	font-weight: 500;
+	color: #495057;
+	padding: 16px 10px;
+	border-bottom: 1px solid #f1f5f9;
+}
+
+/* 제목 링크 스타일 */
+.table tbody td a {
+	color: #1e293b;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.table tbody td a:hover {
+	color: #0d6efd;
+}
+
+/* =========================================================
+   [8] 페이지네이션 (Pagination)
+   ========================================================= */
+/* 6. 페이지네이션 (Pagination) */
+.board-footer {
+	display: flex;
+	justify-content: center;
+	padding: 20px 0;
+}
+
+.pager {
+	display: flex;
+	gap: 5px;
+}
+
+.pg {
+	border: 1px solid #dee2e6;
+	background: #fff;
+	color: #495057;
+	padding: 8px 14px;
+	border-radius: 8px;
+	font-size: 14px;
+	text-decoration: none;
+	transition: .15s ease;
+}
+
+.pg:hover {
+	background: #f1f5ff;
+	color: #0d6efd;
+}
+
+.pg.is-active {
+	background: #0d6efd;
+	color: #fff;
+	border-color: #0d6efd;
+	font-weight: 700;
+}
+
+/* =========================================================
+   [4] 카드형 데이터 요약 (Summary Cards)
+   ========================================================= */
+/* 카드 레이아웃: 달력의 .calendar-wrapper 스타일 계승 */
+.summary-container {
+	display: flex;
+	gap: 16px;
+	margin-bottom: 25px;
+}
+
+.summary-card {
+	flex: 1;
+	background: #ffffff;
+	border: 1px solid #BFDBFE; /* 달력의 --border-blue 활용 */
+	border-radius: 16px; /* 게시판보다 조금 더 부드러운 라운딩 */
+	padding: 20px;
+	box-shadow: 0 4px 12px rgba(44, 62, 80, 0.05);
+	transition: all 0.2s ease;
+}
+
+.summary-card:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
+}
+
+/* 카드 내부 라벨 스타일 */
+.summary-label {
+	display: block;
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: #64748b; /* 게시판 탭 컬러와 통일 */
+	margin-bottom: 8px;
+}
+
+/* 카드 내부 수치 스타일 */
+.summary-value {
+	font-size: 1.35rem;
+	font-weight: 800;
+	color: #002B55; /* 달력 타이틀 컬러와 통일 */
+	margin-bottom: 5px;
+}
+
+/* 완료율 프로그레스 바: 달력의 --main-blue 활용 */
+.summary-progress-wrapper {
+	height: 6px;
+	background-color: #E2E8F0;
+	border-radius: 10px;
+	overflow: hidden;
+	margin-top: 12px;
+}
+
+.summary-progress-bar {
+	height: 100%;
+	background-color: #3B82F6; /* 달력의 --main-blue */
+	border-radius: 10px;
+}
+
+/* 배지 및 기타 텍스트 */
+.summary-subtext {
+	font-size: 0.75rem;
+	color: #94a3b8;
+}
+
+.summary-badge {
+	background-color: #D9E9FF; /* 달력의 --header-blue */
+	color: #1E40AF;
+	padding: 2px 8px;
+	border-radius: 6px;
+	font-size: 0.7rem;
+	font-weight: 700;
+}
+
+.text-danger-custom {
+	color: #ef4444 !important;
+}
+
+/* =========================================================
+   [추가 유틸리티 및 공통] (기존 코드 유지)
+   ========================================================= */
+
+/* A) 탭 내부 검색/툴바: 어떤 탭이든 같은 구조로 쓰기 */
+.tudio-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 14px;
+}
+
+/* board-filter 스타일을 다른 탭에서도 쓰기 쉬운 별칭 */
+.tudio-filter {
+	background-color: #f8fafc;
+	border: 1px solid #eef2f7;
+}
+
+/* 탭 컨텐츠 안의 인풋/셀렉트 톤 통일(범위 제한: tab-content-card 안에서만) */
+.tab-content-card .form-control, .tab-content-card .form-select {
+	border-radius: 10px;
+	border: 1px solid #e6edf6;
+	font-weight: 500;
+}
+
+.tab-content-card .form-control:focus, .tab-content-card .form-select:focus
+	{
+	border-color: #BFDBFE;
+	box-shadow: 0 0 0 4px rgba(59, 130, 246, .10);
+}
+
+/* B) 리스트형 UI(업무/자료실/구성원 등) 공통 */
+.tudio-list {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.tudio-item {
+	background: #fff;
+	border: 1px solid #e6edf6;
+	border-radius: 12px;
+	padding: 14px 14px;
+	transition: .15s ease;
+}
+
+.tudio-item:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+	border-color: #BFDBFE;
+}
+
+.tudio-item-title {
+	font-weight: 700;
+	color: #1e293b;
+}
+
+.tudio-item-sub {
+	font-size: .85rem;
+	color: #64748b;
+}
+
+/* C) 빈 상태(데이터 없을 때) 공통 */
+.tudio-empty {
+	border: 1px dashed #cbd5e1;
+	background: #ffffff;
+	border-radius: 16px;
+	padding: 26px;
+	text-align: center;
+	color: #64748b;
+}
+
+.tudio-empty i {
+	font-size: 28px;
+	display: block;
+	margin-bottom: 10px;
+	color: #94a3b8;
+}
+
+.tudio-empty .title {
+	font-weight: 700;
+	color: #1e293b;
+	margin-bottom: 6px;
+}
+
+/* =========================================================
+   ✅ Common Card / Wrapper (모든 페이지 통일)
+   ========================================================= */
+.tudio-card, .calendar-wrapper, .filter-wrapper, .post-card, .main-card,
+	.project-card {
+	background: #ffffff;
+	border: 1px solid var(--border-blue) !important;
+	border-radius: 12px !important;
+	box-shadow: 0 4px 12px rgba(0, 64, 127, 0.05) !important;
+}
+
+/* 프로젝트 페이지 main 공통(기존 inline style 제거용) */
+.project-main {
+	padding-top: 20px;
+	min-width: 0;
+}
+
+/* 버튼(일정페이지 ‘새 일정 생성’ 같은 버튼 통일) */
+.tudio-btn-block {
+	padding: 12px 0;
+	border-radius: 12px;
+	font-size: 0.95rem;
+}
+
+/* =========================================================
+   ✅ FullCalendar Common
+   ========================================================= */
+.fc .fc-toolbar-title {
+	color: var(--dark-navy);
+	font-weight: 700;
+}
+
+.fc .fc-col-header-cell {
+	background-color: var(--header-blue) !important;
+	padding: 10px 0 !important;
+}
+
+/* =========================================================
+   ✅ Common Modal Skin (모든 모달 톤 통일)
+   ========================================================= */
+.tudio-modal {
+	border-radius: 15px;
+	border: none;
+	overflow: hidden;
+}
+
+.tudio-modal .nav-tabs {
+	display: flex;
+	width: 100%;
+}
+
+.tudio-modal-header {
+	background-color: #f8fbff;
+	border-bottom: 1px solid var(--border-blue);
+}
+
+.tudio-modal-footer {
+	background-color: #f8fbff;
+	border-top: 1px solid var(--border-blue);
+}
+
+.tudio-modal-title {
+	color: var(--dark-navy);
+}
+
+/* 상세 모달 제목 링크 */
+.tudio-detail-title-link {
+	color: var(--dark-navy);
+	transition: 0.2s;
+}
+
+/* =========================================================
+   ✅ [ADD] Tab 내부 공통 컴포넌트 (추가분)
+   ========================================================= */
+:root{
+  --tudio-primary-strong: #2f6bff; /* btn-write 계열 */
+  --tudio-surface: #ffffff;
+  --tudio-surface-soft: #fbfcff;
+
+  --tudio-border-soft: #e6edf6;
+  --tudio-border-subtle: #eef2f7;
+
+  --tudio-shadow-md: 0 6px 22px rgba(18, 38, 63, 0.06);
+  --tudio-shadow-hover: 0 10px 20px rgba(18, 38, 63, 0.08);
+
+  --tudio-radius-lg: 16px;
+  --tudio-radius-md: 12px;
+  --tudio-ease: .15s ease;
+}
+
+/* 탭 컨텐츠 최상단에 class="tudio-scope" 붙이면, 공통 스킨을 그 영역에서만 적용 가능 */
+.tudio-scope{ color: var(--text-main); }
+
+/* 섹션 카드(=board-section 대체) */
+.tudio-section{
+  background: var(--tudio-surface);
+  border: 1px solid var(--tudio-border-soft);
+  border-radius: var(--tudio-radius-lg);
+  box-shadow: var(--tudio-shadow-md);
+  overflow: hidden;
+  width: 100%;
+}
+
+/* 섹션 헤더(=board-header 대체) */
+.tudio-section-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--tudio-border-subtle);
+  background: linear-gradient(180deg, var(--tudio-surface) 0%, var(--tudio-surface-soft) 100%);
+}
+
+/* 섹션 필터바(=board-filter 대체) */
+.tudio-section-filter{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--tudio-border-subtle);
+  background: var(--tudio-surface);
+}
+
+/* 공통 버튼 */
+.tudio-btn{
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--tudio-radius-md);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--tudio-ease);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tudio-btn-primary{
+  background: var(--tudio-primary-strong);
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(47, 107, 255, .18);
+}
+.tudio-btn-primary:hover{ transform: translateY(-1px); }
+
+/* ✅ 테두리가 있는 버튼 스타일 추가 */
+.tudio-btn-outline {
+    border: 1px solid var(--border-blue) !important; /* 프로젝트 공통 테두리 색상 */
+    background-color: #ffffff !important;
+    color: var(--text-main) !important;
+}
+
+.tudio-btn-outline:hover {
+    background-color: #f8fafc !important;
+    border-color: var(--main-blue) !important;
+    color: var(--main-blue) !important;
+}
+
+/* 삭제 버튼용 빨간 테두리 */
+.tudio-btn-outline-danger {
+    border: 1px solid #ef4444 !important;
+    background-color: #ffffff !important;
+    color: #ef4444 !important;
+}
+
+.tudio-btn-outline-danger:hover {
+    background-color: rgba(239, 68, 68, 0.05) !important;
+    color: #ef4444 !important;
+}
+
+
+/* 검색 아이콘 버튼 */
+.tudio-icon-btn{
+  border: none;
+  background: #f1f5ff;
+  color: #1d4ed8;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  transition: var(--tudio-ease);
+  cursor: pointer;
+}
+.tudio-icon-btn:hover{ background: #e7efff; }
+
+/* pills(=board-tabs/tab 대체) */
+.tudio-pills{ display:flex; gap: 8px; flex-wrap: wrap; }
+.tudio-pill{
+  border: 1px solid var(--tudio-border-soft);
+  background: var(--tudio-surface);
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #334155;
+  transition: var(--tudio-ease);
+}
+.tudio-pill:hover{ transform: translateY(-1px); }
+.tudio-pill.is-active{
+  border-color: var(--tudio-primary-strong);
+  background: rgba(47, 107, 255, .08);
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* 검색 래퍼 -------현진ver. start--------- */
+/* 검색창 래퍼 (입력창 + 아이콘 담는 상자) */
+.tudio-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--tudio-surface);
+  border: 1px solid var(--tudio-border-soft);
+  border-radius: 6px; /* 끝을 살짝 둥글게 (0.25rem 급) */
+  height: 34px; /* 높이를 34px로 살짝 키워 가독성 확보 */
+  transition: var(--tudio-ease);
+  flex: 1;
+}
+
+/* 포커스 되었을 때 테두리 색상 변경 */
+.tudio-search:focus-within {
+  border-color: var(--tudio-primary-strong);
+  box-shadow: 0 0 0 2px rgba(47, 107, 255, 0.1);
+}
+
+.tudio-search input {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+  font-size: 13px;
+  color: #333;
+}
+
+/* 검색창 전용 버튼 스타일 (높이를 검색창과 100% 일치시킴) */
+.tudio-search-btn {
+  height: 34px; /* .tudio-search와 동일하게 설정 */
+  padding: 0 16px;
+  background: var(--tudio-primary-strong);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: var(--tudio-ease);
+  box-shadow: 0 4px 10px rgba(47, 107, 255, .15); /* 주신 코드보다 약간 절제된 그림자 */
+}
+
+.tudio-search-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: var(--tudio-shadow-hover);
+  color: #fff;
+}
+
+.tudio-search-btn:active {
+  transform: scale(0.98);
+}
+
+/* 검색 래퍼 -------현진ver. end--------- */
+/* 검색 래퍼 -------기존--------- */
+/* .tudio-search{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--tudio-border-soft);
+  border-radius: var(--tudio-radius-md);
+  background: var(--tudio-surface);
+  border-radius: 6px;
+  height: 31px;	셀렉트 박스 높이와 일치
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+
+.tudio-search input{
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+  font-size: 13px;
+} */
+/* 검색 래퍼 -------기존--------- */
+
+/* 카드형 테이블 모드(=board-table 대체) */
+.tudio-table-card{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+.tudio-table-card thead th{
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-align: left;
+  padding: 10px 12px;
+}
+.tudio-table-card tbody tr{
+  background: var(--tudio-surface);
+  border: 1px solid #e9eef5;
+  box-shadow: 0 6px 14px rgba(18, 38, 63, 0.04);
+  transition: var(--tudio-ease);
+  border-radius: 0 !important;	/* 둥근 모서리 제거 */
+}
+.tudio-table-card tbody tr:hover{
+  transform: translateY(-1px);
+  box-shadow: var(--tudio-shadow-hover);
+}
+.tudio-table-card tbody td{
+  padding: 14px 12px;
+  border-top: 1px solid var(--tudio-border-subtle);
+  border-bottom: 1px solid var(--tudio-border-subtle);
+}
+.tudio-table-card tbody tr td:first-child{
+  border-left: 1px solid var(--tudio-border-subtle);
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+}
+.tudio-table-card tbody tr td:last-child{
+  border-right: 1px solid var(--tudio-border-subtle);
+  border-top-right-radius: 14px;
+  border-bottom-right-radius: 14px;
+}
+
+/* 배지(bootstrap .badge 충돌 피하려고 별도 클래스) */
+.tudio-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.tudio-badge.notice{ background: rgba(239, 68, 68, .10); color: #ef4444; }
+.tudio-badge.qna{ background: rgba(245, 158, 11, .12); color: #b45309; }
+.tudio-badge.free{ background: rgba(34, 197, 94, .12); color: #15803d; }
+
+/* pager 공통 */
+.tudio-pager {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 24px 0;      /* 위아래 여백을 24px로 넉넉히 주어 바닥 선과 띄웁니다 */
+    background: #fff;     /* 배경색을 흰색으로 고정 */
+}
+
+.tudio-pg {
+  border: none;              /* 테두리 제거 */
+  background: transparent;   /* 기본 배경 투명 */
+  color: #64748b;            /* 기본 글자색 (muted 톤) */
+  padding: 8px 14px;
+  border-radius: 8px;        /* 약간 덜 둥글게 */
+  font-size: 14px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.tudio-pg:hover {
+  background: #f1f5f9;       /* 마우스 올리면 연한 회색 */
+  color: var(--tudio-primary-strong);
+}
+
+.tudio-pg.is-active {
+  background: var(--tudio-primary-strong);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(47, 107, 255, 0.2); /* 강조 효과 */
+}
+
+/* responsive */
+/* @media ( max-width : 768px) {
+	.tudio-section-filter {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.tudio-search input {
+		min-width: 160px;
+	}
+} */
+
+/* =========================================================
+   업무 관련
+   ========================================================= */
+/* ==== 프로젝트 업무 - 중요도 (Priority) ==== */
+/* 낮음 (Low) */
+.task-priority-low {
+    background-color: rgba(156, 163, 175, 0.12);
+    color: #374151;
+}
+
+/* 보통 (Normal) */
+.task-priority-normal {
+    background-color: rgba(56, 189, 248, 0.12);
+    color: #0369A1;
+}
+
+/* 높음 (High) */
+.task-priority-high {
+    background-color: rgba(251, 146, 60, 0.12);
+    color: #C2410C;
+}
+
+/* 긴급 (Urgent) */
+.task-priority-urgent {
+    background-color: rgba(248, 113, 113, 0.12);
+    color: #B91C1C;
+    font-weight: 600;
+}
+
+/* ==== 프로젝트 업무 - 상태 (Status) ==== */
+/* 요청 (Request) */
+.task-status-request {
+    background-color: rgba(251, 191, 36, 0.12); 
+    color: #B45309; 
+}
+
+/* 진행 (Progress) */
+.task-status-progress {
+    background-color: rgba(96, 165, 250, 0.12); 
+    color: #1D4ED8; 
+}
+
+/* 완료 (Done) */
+.task-status-done {
+    background-color: rgba(52, 211, 153, 0.12); 
+    color: #047857; 
+}
+
+/* 보류 (Hold) */
+.task-status-hold {
+    background-color: rgba(148, 163, 184, 0.12); 
+    color: #475569; 
+}
+
+/* 지연 (Delayed) */
+.task-status-delayed {
+    background-color: rgba(239, 68, 68, 0.12); 
+    color: #B91C1C; 
+}
+
+/* =========================================================
+   [9] 댓글 관련 (Comments)
+   ========================================================= */
+.tudio-comment-wrapper {
+    margin-top: 20px;
+    background: #fff;
+    border: 1px solid var(--border-blue);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0, 64, 127, 0.05);
+}
+
+.comment-header-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--dark-navy);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 댓글 입력 폼 */
+.comment-write-box {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+}
+
+.comment-profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.comment-input-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.comment-input-area textarea {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.95rem;
+    resize: none;
+    outline: none;
+    transition: all 0.2s;
+    height: 80px;
+}
+
+.comment-input-area textarea:focus {
+    border-color: var(--main-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.comment-btn-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.messenger-input-row {
+    display: flex;
+    align-items: center; /* 수직 중앙 정렬 */
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px; /* 둥근 알약 모양 */
+    padding: 5px 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.messenger-input-row:focus-within {
+    border-color: var(--main-blue);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 텍스트 에어리어 (투명하게, 한 줄 처럼) */
+.messenger-input-row textarea {
+    flex-grow: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 5px;
+    font-size: 0.95rem;
+    resize: none;
+    outline: none;
+    height: 44px; /* 한 줄 높이 */
+    line-height: 24px;
+}
+
+/* 버튼 그룹 (첨부파일, 등록) */
+.messenger-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 10px;
+}
+
+/* 파일 첨부 아이콘 버튼 */
+.btn-file-icon {
+    font-size: 1.3rem;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+.btn-file-icon:hover {
+    color: var(--dark-navy);
+}
+
+/* 등록 버튼 (작고 심플하게) */
+.btn-send-simple {
+    background-color: var(--main-blue); /* 기존 파란색 */
+    color: white;
+    border: none;
+    border-radius: 50%; /* 동그라미 버튼 */
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.btn-send-simple:hover {
+    transform: scale(1.1);
+    background-color: #2563eb;
+}
+
+/* 파일 선택시 위에 뜨는 이름표 */
+.selected-file-badge {
+    align-self: flex-start; /* 왼쪽 정렬 */
+    font-size: 0.8rem;
+    color: var(--main-blue);
+    background-color: #eff6ff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid #bfdbfe;
+    display: none; /* 평소엔 숨김 */
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+    margin-left: 10px;
+}
+
+/* 댓글 리스트 */
+.comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.comment-item {
+    display: flex;
+    gap: 15px;
+    padding: 20px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+/* 대댓글(답글) 스타일 - 들여쓰기 */
+.comment-item.reply {
+    padding-left: 60px;
+    background-color: #fcfdfe; /* 아주 연한 배경 */
+    position: relative;
+}
+
+.comment-item.reply::before {
+    content: "└";
+    position: absolute;
+    left: 30px;
+    top: 20px;
+    color: #cbd5e1;
+    font-weight: bold;
+}
+
+.comment-content-box {
+    flex-grow: 1;
+}
+
+.comment-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.comment-writer {
+    font-weight: 700;
+    color: var(--dark-navy);
+    font-size: 0.95rem;
+}
+
+.comment-date {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-left: 8px;
+}
+
+.comment-text {
+    font-size: 0.95rem;
+    color: var(--text-main);
+    line-height: 1.5;
+    white-space: pre-wrap; /* 줄바꿈 적용 */
+}
+
+/* 댓글 액션 버튼 (답글, 수정, 삭제) */
+.comment-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn-cmt-action {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+    cursor: pointer;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.btn-cmt-action:hover {
+    color: var(--main-blue);
+    text-decoration: underline;
+}
+
+.btn-cmt-action.delete:hover {
+    color: #ef4444;
+}
+
+/* 숨겨진 대댓글 입력 폼 */
+.reply-form-container {
+    margin-top: 10px;
+    padding-left: 60px;
+    display: none; /* 기본 숨김 */
+}
+
+/* 댓글에서 파일 등록하기 */
+
+/* [4] 파일 첨부 관련 스타일 추가 */
+.comment-attach-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* 실제 파일 input은 숨김 (못생겨서) */
+.file-upload-hidden {
+    display: none;
+}
+
+/* 클립 아이콘 버튼 꾸미기 */
+.btn-file-upload {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 1.2rem;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.btn-file-upload:hover {
+    background-color: #e2e8f0;
+    color: var(--main-blue);
+}
+
+/* 선택된 파일명 표시 */
+.selected-file-name {
+    font-size: 0.85rem;
+    color: var(--main-blue);
+    background-color: #eff6ff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    display: none; /* 파일 선택 전에는 숨김 */
+    align-items: center;
+    gap: 5px;
+}
+
+/* 파일 삭제 X 버튼 */
+.btn-file-remove {
+    cursor: pointer;
+    color: #ef4444;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+/* 개별 파일 배지 스타일 */
+.file-badge-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #eff6ff; /* 연한 파랑 */
+    color: var(--main-blue);
+    border: 1px solid #bfdbfe;
+    padding: 4px 8px;
+    border-radius: 6px; /* 살짝 둥글게 */
+    font-size: 0.8rem;
+    margin-right: 5px; /* 배지 간 간격 */
+    margin-bottom: 2px;
+}
+
+/* 파일 목록을 감싸는 영역 */
+#fileNameArea {
+    display: none; /* 기본 숨김 */
+    flex-wrap: wrap; /* 파일이 많으면 다음 줄로 넘김 */
+    gap: 5px;
+    align-items: center;
+    margin-left: 10px;
+}
+
+  /* ====== Grid Layout (사진처럼 카드 바둑판) ====== */
+  .project-grid{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)); /* 4칸 */
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 1400px){
+    .project-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 1100px){
+    .project-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 700px){
+    .project-grid{ grid-template-columns: repeat(1, minmax(0, 1fr)); }
+  }
+
+  /* ====== Toss/iOS Card ====== */
+  .project-card{
+    height: 260px;
+    border-radius: 18px;
+    border: 1px solid #e5e8eb;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+    background: #fff;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    overflow: hidden;
+  }
+  .project-card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+    border-color: #d6dbe1;
+  }
+
+  /* 상단: 상태 + D-day + 별 */
+  .badge-ios{
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .bg-blue-soft  { background:#E8F3FF; color:#3182F6; }
+  .bg-gray-soft  { background:#F2F4F6; color:#4E5968; }
+  .bg-orange-soft{ background:#FFF8E1; color:#FF9F0A; }
+  .bg-red-soft   { background:#FEE2E2; color:#EF4444; }
+
+  .dday-badge{
+    margin-left: 8px;
+    padding: 3px 7px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    background: #F9FAFB;
+    color: #8B95A1;
+    border: 1px solid #E5E8EB;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* 제목/텍스트 */
+  .proj-title{
+    font-size: 18px;
+    font-weight: 800;
+    color: #191F28;
+    letter-spacing: -0.4px;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+  }
+
+  /* 진행률 원 */
+  .progress-circle{
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex: 0 0 auto;
+  }
+  .progress-circle::after{
+    content:"";
+    position:absolute;
+    width: 44px;
+    height: 44px;
+    background:#fff;
+    border-radius: 50%;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+  }
+  .progress-value{
+    z-index: 2;
+    font-size: 14px;
+    font-weight: 900;
+    color: #191F28;
+  }
+
+  /* 하단 날짜 */
+  .proj-date{
+    font-size: 12px;
+    color: #868E96;
+    font-weight: 500;
+  }
+
+  /* 북마크 버튼 */
+  .bookmark-btn i{
+    font-size: 20px;
+  }
+  

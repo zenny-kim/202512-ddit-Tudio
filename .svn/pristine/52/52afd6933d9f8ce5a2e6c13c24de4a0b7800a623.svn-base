@@ -1,0 +1,272 @@
+@charset "UTF-8";
+/* 메인 색상 코드 : #EBF5FF, #C7E3FF, #8FC8FF, #56ACFF, #1E90FF, #0074E5, #0056AA, #00407F, #002B55, #00152A */
+
+/* [1] 공통 변수 및 기본 설정 */
+:root {
+    --primary-color: #00407F;
+    --hover-color: #002B55;
+    --bg-light: #F0F4F8;
+    --border-color: #C7E3FF;
+    --focus-ring: rgba(30, 144, 255, 0.15);
+    --text-dark: #00152A;
+}
+
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Pretendard', sans-serif;
+    color: var(--text-dark);
+    padding-top: 60px;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    display: flex;
+    flex-direction: column;   /* 세로 방향으로 쌓기 (헤더 -> 컨텐츠) */
+    align-items: center;      /* 가로(좌우) 중앙 정렬 */
+    justify-content: center;  /* 세로(상하) 중앙 정렬 */
+    min-height: 100vh;
+}
+
+.footer {
+    margin-left: 0 !important;
+    width: 100%;
+}
+
+.main-content {
+    flex: 1;            /* 헤더와 푸터 사이의 남는 공간을 다 차지함 */
+    display: flex;
+    align-items: center;     /* 수직(위아래) 중앙 정렬 */
+    justify-content: center;  /* 수평(좌우) 중앙 정렬 */
+    background-color: #F0F4F8; /* 기존 member.css의 배경색 유지 */
+    padding: 20px 0;
+}
+
+/* 로그인 컨테이너 크기 조절 */
+.login-container {
+    max-width: 450px;    
+    width: 100%;         /* 반응형을 위해 추가 */
+    padding: 40px 50px;
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.login-wrapper {
+    flex: 1;           /* 남는 공간을 모두 차지함 */
+    display: flex;
+    align-items: center;    /* 수직(위아래) 중앙 정렬 */
+    justify-content: center; /* 수평(좌우) 중앙 정렬 */
+    padding: 50px 0;        /* 화면이 작아졌을 때 최소한의 위아래 여백 보장 */
+}
+
+.signup-container {
+    max-width: 850px; /* 마이페이지 가로 길이를 시원하게 확장 */
+    margin: 40px auto 80px !important;
+    padding: 50px 80px; /* 양옆 공백을 주어 파란 상자가 정갈해짐 */
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 21, 42, 0.05) !important;
+}
+
+#imagePreview {
+	width: 120px;
+	height: 120px;
+	border-radius: 50%;
+	object-fit: cover;
+	display: none; /* 이미지가 없을 땐 숨김 */
+	margin: 10px auto;
+	border: 2px solid #ddd;
+}
+
+.required-dot::after { 
+	content: " *"; 
+	color: red; 
+}
+	
+.info-section {
+	background: #f8f9fa;
+	padding: 20px;
+	border-radius: 10px;
+	margin-bottom: 20px;
+}
+
+.section-title {
+	font-size: 1.1rem;
+	border-left: 4px solid #0d6efd;
+	padding-left: 10px;
+	margin-bottom: 15px;
+}
+
+.form-control {
+    border-radius: 8px;
+    height: 45px; /* 모든 입력창 높이 통일 */
+}
+
+/* [3] 마이페이지 프로필 섹션 (카메라 버튼 위치 핵심) */
+.profile-section {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.profile-thumb-wrapper {
+    position: relative; /* 자식인 카메라 버튼의 기준점 */
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    background-color: #f8f9fa;
+}
+.thumb-round-box {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    background-color: #f8f9fa;
+    overflow: hidden; /* 이미지만 여기서 잘립니다 */
+}
+
+.profile-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 카메라 아이콘: 이미지 오른쪽 밖으로 살짝 걸치게 */
+.profile-edit-label {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    z-index: 10;
+    transform: translate(15%, 15%);
+    background: var(--primary-color);
+    color: white !important;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    
+    /* --- 중앙 정렬 핵심 코드 --- */
+    display: none;          /* 자바스크립트에서 flex로 바꿀 테니 여기선 기본 none */
+    align-items: center;    /* 상하 중앙 정렬 */
+    justify-content: center; /* 좌우 중앙 정렬 */
+    font-size: 22px;        /* 이모지 크기를 박스에 맞게 조절 (중요!) */
+    cursor: pointer;
+    border: 3px solid #fff;
+    z-index: 10;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+
+table.info-table.noti-table th {
+    width: 45% !important; /* !important를 붙여서 강제로 적용 */
+}
+
+/* [4] 마이페이지 테이블 & 정보창 */
+.info-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 15px;
+}
+
+.info-table th {
+    width: 20%;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.display-text {
+    width: 100%;
+    padding: 10px 20px;
+    background-color: var(--bg-light);
+    border-radius: 8px;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+}
+
+/* [5] 수정 모드 입력 그룹 & 버튼 조율 */
+.edit-input-group {
+    display: none; /* 기본 숨김 */
+    width: 100%;
+    gap: 10px;
+}
+
+/* 마이페이지 내의 모든 버튼들 크기 & 높이 통일 */
+.signup-container .btn {
+    min-width: 100px;
+    height: 45px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+/* 하단 버튼 영역 */
+.mypage-btn-area {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 40px;
+}
+
+.btn-cancel-custom {
+    background-color: #e2e8f0;
+    color: #475569;
+    border: none;
+}
+
+/* 유틸리티 */
+.hidden { display: none !important; }
+.error-msg { color: #d93025; font-size: 0.85rem; }
+
+
+.register-container {
+    width: 100%;
+    max-width: 650px;
+    padding: 20px;
+    margin: auto;
+}
+
+/* 카드 선택 효과 스타일 (type-card) */
+
+.card-text {
+    /* 1. 단어 단위로 예쁘게 줄바꿈 */
+    word-break: keep-all; 
+    
+    /* 2. 줄 간격을 줘서 가독성 높이기 */
+    line-height: 1.5; 
+    
+    /* 3. 위아래 여백으로 버튼과 간격 벌리기 */
+    margin-bottom: 20px; 
+    
+    /* 4. 글자가 박스 밖으로 나가지 않게 설정 */
+    overflow-wrap: break-word; 
+}
+
+.type-card {
+    transition: all 0.3s ease;     /* 0.3초 동안 부드럽게 변환 */
+    border: 2px solid transparent; /* 테두리 공간 미리 확보 (화면 떨림 방지) */
+    cursor: pointer;               /* 마우스 올리면 손가락 모양 */
+    height: 100%;
+    background: white;
+    border-radius: 10px;
+}
+
+/* 마우스를 올렸을 때 (Hover 상태) */
+.type-card:hover {
+    border-color: #0d6efd; /* 테두리를 파란색으로 변경 */
+    transform: translateY(-10px); /* 카드가 살짝 위로 뜸 */
+    box-shadow: 0 1rem 3rem rgba(13, 110, 253, 0.15) !important; /* 파란색 그림자 효과 */
+}
+
+/* 마우스를 올렸을 때 제목 글자색 변경 */
+.type-card:hover .card-title {
+    color: #0d6efd !important;
+    font-weight: bold;
+}

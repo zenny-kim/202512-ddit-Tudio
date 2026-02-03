@@ -1,0 +1,77 @@
+package kr.or.ddit.admin.meetingRoom.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import kr.or.ddit.meetingRoom.service.IMeetingRoomService;
+import kr.or.ddit.vo.meetingRoom.MeetingBranchVO;
+import kr.or.ddit.vo.meetingRoom.MeetingReservationVO;
+import kr.or.ddit.vo.meetingRoom.MeetingRoomVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RestController
+@RequestMapping("/admin/meetingRoom")
+public class AdminMeetingRoomController {
+	
+	@Autowired
+    private IMeetingRoomService meetingRoomService;
+	
+	//전체 지점 목록 조회
+	@GetMapping("/branchList")
+    public ResponseEntity<List<MeetingBranchVO>> BranchList() {
+        // 기존 Service 메서드 재활용
+        List<MeetingBranchVO> branchList = meetingRoomService.selectBranchList();
+        return new ResponseEntity<>(branchList, HttpStatus.OK);
+    }
+	
+	//전체 회의실 목록 조회
+	@GetMapping("/meetingRoomList")
+    public ResponseEntity<List<MeetingRoomVO>> MeetingRoomList(@RequestParam("branchId") int branchId) {
+        // 기존 Service 메서드 재활용
+        List<MeetingRoomVO> list = meetingRoomService.selectMeetingRoomList(branchId);
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+	
+	// 주간 회의실 예약 조회
+	@GetMapping("/weekSchedule")
+    public ResponseEntity<List<Map<String, Object>>> weekSchedule(@RequestParam Map<String, Object> params) {
+        log.info("[Admin] 주간 스케줄 조회: {}", params);
+        // Service의 selectWeekBookedMeetingRoomList 메서드 활용
+        List<Map<String, Object>> list = meetingRoomService.selectWeekBookedMeetingRoomList(params);
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+	
+	
+	// 회의실 예약 추가 ( 관리자가 회의실을 관리해야 할 경우 )
+	@PostMapping("/block")
+    public ResponseEntity<String> blockMeetingRoom(@RequestBody MeetingReservationVO meetingReservationVO) {
+        log.info("[Admin] 회의실 예약 막기 요청: {}", meetingReservationVO);
+        
+        try {
+            // 1. 기존 예약이 있는지 확인 (겹치는 시간)
+            // (간단하게 구현하기 위해 바로 insert 시도하고, DB단에서 막거나 여기서 체크 가능)
+            // 만약 기존 예약이 있다면 -> 해당 예약들은 '반려(703)' 처리하고 알림 전송 로직 필요
+            
+            // 2. 관리자 예약 등록 (프로젝트ID=0, 상태=701(예약불가표시용), 내용=사유)
+            // VO에는 roomId, memberNo(관리자), start/end date, resContent(사유)가 들어옴
+            meetingRoomService.insertAdminReservation(meetingReservationVO); 
+            
+            return new ResponseEntity<>("BLOCKED", HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("예약 막기 실패", e);
+            return new ResponseEntity<>("FAIL", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+	
+}

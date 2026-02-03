@@ -1,0 +1,340 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Tudio</title>
+	<jsp:include page="/WEB-INF/views/include/common.jsp" />
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/project_common.css">
+</head>
+<style>
+@charset "UTF-8";
+
+/* =========================================================
+   회의실 예약 시스템 전용 스타일
+   (Project Common CSS 의존)
+   ========================================================= */
+
+/* 1. 상단 현황판 (요약 카드 확장) */
+.room-status-summary {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+.status-dot.available { background-color: #fff; border: 2px solid #e2e8f0; }
+.status-dot.booked { background-color: #e2e8f0; }
+.status-dot.my-booking { background-color: var(--main-blue); }
+
+
+/* 2. 타임라인 그리드 컨테이너 */
+.timeline-container {
+    overflow-x: auto; /* 시간표가 길어지면 가로 스크롤 */
+    padding-bottom: 10px;
+}
+
+/* 타임라인 헤더 (시간 표시 09:00 ~ 18:00) */
+.timeline-header {
+    display: flex;
+    padding-left: 200px; /* 방 정보 영역만큼 띄움 */
+    border-bottom: 1px solid var(--border-blue);
+    background-color: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.time-label {
+    flex: 1; /* 동일 너비 */
+    min-width: 80px; /* 최소 너비 확보 */
+    text-align: center;
+    padding: 10px 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    border-right: 1px dashed #e2e8f0;
+}
+
+/* 3. 회의실 행 (Row) */
+.room-row {
+    display: flex;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.2s;
+}
+.room-row:hover {
+    background-color: #fcfdfe;
+}
+
+/* 좌측: 회의실 정보 카드 */
+.room-info-box {
+    width: 200px; /* 고정 너비 */
+    flex-shrink: 0;
+    padding: 20px;
+    border-right: 1px solid var(--border-blue);
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: sticky;
+    left: 0;
+    z-index: 5; /* 스크롤 시 위로 올라오도록 */
+}
+.room-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+.room-capacity {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 우측: 시간 슬롯 영역 */
+.room-timeline-track {
+    flex-grow: 1;
+    display: flex;
+    position: relative; /* 예약 바 배치를 위해 */
+}
+
+/* 개별 시간 칸 (빈 칸) */
+.time-slot {
+    flex: 1;
+    min-width: 80px; /* 헤더와 동일하게 */
+    height: 90px;
+    border-right: 1px dashed #e2e8f0;
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+}
+.time-slot:hover {
+    background-color: rgba(59, 130, 246, 0.05); /* 마우스 올렸을 때 연한 파랑 */
+}
+.time-slot:hover::after {
+    content: "+";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--main-blue);
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* 4. 예약된 블록 (Bar) */
+/* 실제 구현 시 style="left: 00%; width: 00%;" 로 위치 잡음 */
+.booking-bar {
+    position: absolute;
+    top: 15px;
+    bottom: 15px;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    color: #fff;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 2;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.booking-bar:hover {
+    transform: scale(1.02);
+    z-index: 3;
+}
+
+/* 남이 예약한 것 */
+.booking-bar.occupied {
+    background-color: #e2e8f0;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+}
+
+/* 내가 예약한 것 */
+.booking-bar.mine {
+    background-color: var(--main-blue); /* #3B82F6 */
+    color: #fff;
+    border: 1px solid #2563eb;
+}
+
+/* 5. 모달 내부 시설 아이콘 */
+.facility-icons {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+.f-icon {
+    font-size: 1.2rem;
+    color: #64748b;
+}
+</style>
+
+<body>
+
+    <div class="main-content-wrap">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4 px-4 pt-4">
+            <h2 class="fw-bold text-dark">회의실 예약</h2>
+            <div class="d-flex align-items-center bg-white border rounded-pill px-3 py-2 shadow-sm">
+                <button class="btn btn-sm text-muted"><i class="bi bi-chevron-left"></i></button>
+                <span class="mx-3 fw-bold fs-5">2026. 01. 16 (금)</span>
+                <button class="btn btn-sm text-muted"><i class="bi bi-chevron-right"></i></button>
+            </div>
+            <button class="tudio-btn tudio-btn-primary" data-bs-toggle="modal" data-bs-target="#reservationModal">
+                <i class="bi bi-plus-lg"></i> 빠른 예약
+            </button>
+        </div>
+
+        <div class="px-4">
+            <ul class="nav custom-index-tabs mb-0">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">
+                        <i class="bi bi-calendar-check"></i> 일별 현황
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-list-ul"></i> 내 예약 관리
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content-card tudio-card">
+                
+                <div class="tudio-toolbar">
+                    <div class="tudio-search">
+                        <i class="bi bi-search text-muted ms-2"></i>
+                        <input type="text" placeholder="회의실 이름 검색">
+                    </div>
+                    
+                    <div class="room-status-summary ms-auto">
+                        <div class="status-item"><div class="status-dot available"></div> 예약 가능</div>
+                        <div class="status-item"><div class="status-dot booked"></div> 예약됨</div>
+                        <div class="status-item"><div class="status-dot my-booking"></div> 내 예약</div>
+                    </div>
+                </div>
+
+                <div class="timeline-container mt-3">
+                    
+                    <div class="timeline-header">
+                        <% for(int i=9; i<=18; i++) { %>
+                            <div class="time-label"><%= i %>:00</div>
+                        <% } %>
+                    </div>
+
+                    <div class="room-row">
+                        <div class="room-info-box">
+                            <div class="room-name">대회의실 A</div>
+                            <div class="room-capacity">
+                                <i class="bi bi-people-fill"></i> 10~12인용
+                            </div>
+                            <div class="mt-2 text-muted small">
+                                <i class="bi bi-projector"></i> 빔프로젝터
+                            </div>
+                        </div>
+                        
+                        <div class="room-timeline-track">
+                            <% for(int i=9; i<=18; i++) { %>
+                                <div class="time-slot" onclick="openReservationModal('대회의실 A', '<%= i %>:00')"></div>
+                            <% } %>
+
+                            <div class="booking-bar occupied" style="left: 10%; width: 20%;" title="주간 업무 보고">
+                                <span>[경영지원팀] 주간 회의</span>
+                            </div>
+
+                            <div class="booking-bar mine" style="left: 50%; width: 10%;">
+                                <span>프로젝트 킥오프</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="room-row">
+                        <div class="room-info-box">
+                            <div class="room-name">소회의실 B</div>
+                            <div class="room-capacity"><i class="bi bi-people-fill"></i> 4~6인용</div>
+                        </div>
+                        <div class="room-timeline-track">
+                            <% for(int i=9; i<=18; i++) { %>
+                                <div class="time-slot" onclick="openReservationModal('소회의실 B', '<%= i %>:00')"></div>
+                            <% } %>
+                            </div>
+                    </div>
+
+                </div> </div> </div>
+    </div>
+
+
+    <div class="modal fade" id="reservationModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tudio-modal">
+                <div class="modal-header tudio-modal-header">
+                    <h5 class="modal-title tudio-modal-title fw-bold">회의실 예약</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="bookingForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">회의실</label>
+                            <input type="text" class="form-control" id="modalRoomName" value="대회의실 A" readonly>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label fw-bold">날짜</label>
+                                <input type="date" class="form-control" value="2026-01-16">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label fw-bold">시작 시간</label>
+                                <select class="form-select">
+                                    <option>09:00</option>
+                                    <option>10:00</option>
+                                    </select>
+                            </div>
+                            <div class="col">
+                                <label class="form-label fw-bold">종료 시간</label>
+                                <select class="form-select">
+                                    <option>10:00</option>
+                                    <option>11:00</option>
+                                    </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">회의 목적</label>
+                            <input type="text" class="form-control" placeholder="예: 주간 업무 보고">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer tudio-modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="tudio-btn tudio-btn-primary">예약하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+    <script>
+        // 간단한 모달 제어 스크립트 예시
+        function openReservationModal(roomName, time) {
+            // 실제로는 여기에 값을 세팅하는 로직이 들어갑니다.
+            document.getElementById('modalRoomName').value = roomName;
+            
+            // Bootstrap Modal 인스턴스 띄우기
+            var myModal = new bootstrap.Modal(document.getElementById('reservationModal'));
+            myModal.show();
+        }
+    </script>
+</html>

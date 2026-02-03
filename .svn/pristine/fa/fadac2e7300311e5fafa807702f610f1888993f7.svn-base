@@ -1,0 +1,33 @@
+package kr.or.ddit.drive.service;
+
+import java.util.Map;
+
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.vo.DriveFolderVO;
+
+public interface IDriveService {
+
+	/**
+	 * 드라이브 목록 조회
+	 * @param projectNo 프로젝트 번호
+     * @param folderId 클라이언트가 요청한 폴더 ID (0이면 최상위)
+	 * @return
+	 */
+	public Map<String, Object> getDriveList(int projectNo, int folderId);
+	
+	/**
+	 * 사용자의 폴더 생성 로직
+	 * @param driveFolderVO
+	 * @return
+	 */
+	public ServiceResult insertFolder(DriveFolderVO driveFolderVO);
+
+	/**
+	 * 프로젝트 생성시, 프로젝트 루트 폴더 생성
+	 * @param projectNo
+	 * @param projectName
+	 * @param memberNo
+	 */
+	public void createProjectRootFolder(int projectNo, String projectName, int memberNo);
+	
+}

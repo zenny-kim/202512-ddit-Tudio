@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.file.mapper.IFileMapper">
+	
+	<update id="updateMemberProfileImg" parameterType="kr.or.ddit.vo.MemberVO">
+	    UPDATE MEMBER
+	       SET MEMBER_PROFILEIMG = #{memberProfileimg}
+	     WHERE MEMBER_NO = #{memberNo}
+	</update>
+	
+	<select id="selectFileDetailList" parameterType="int" resultType="kr.or.ddit.vo.FileDetailVO">
+	    SELECT FILE_NO
+	         , FILE_GROUP_NO
+	         , FILE_ORIGINAL_NAME
+	         , FILE_REGDATE
+	         , FILE_SAVE_NAME
+	         , FILE_PATH
+	         , FILE_SIZE
+	         , FILE_FANCYSIZE
+	         , FILE_EXTENSION
+	         , FILE_MIME
+	         , FILE_DOWNLOAD_CNT
+	         , FILE_DELETE
+	         , FILE_DELDATE
+	      FROM FILE_DETAIL
+	     WHERE FILE_GROUP_NO = #{fileGroupNo}
+	       AND FILE_DELETE = 'N'
+	     ORDER BY FILE_NO ASC
+	</select>	
+	
+	<insert id="insertFileGroup" parameterType="kr.or.ddit.vo.FileGroupVO">
+        <selectKey keyProperty="fileGroupNo" resultType="int" order="BEFORE">
+            SELECT SEQ_FILE_GROUP.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO FILE_GROUP (
+	        FILE_GROUP_NO
+	        , FILE_GROUP_TYPE
+	        , MEMBER_NO
+	        , FILE_GROUP_REGDATE
+	        , FILE_URL
+        ) VALUES (
+	        #{fileGroupNo}
+	        , #{fileGroupType}
+	        , #{memberNo}
+	        , CURRENT_TIMESTAMP
+	        , #{fileUrl}
+        )
+    </insert>
+
+	<insert id="insertFileDetail" parameterType="kr.or.ddit.vo.FileDetailVO">
+        INSERT INTO FILE_DETAIL (
+            FILE_NO
+            , FILE_GROUP_NO
+            , FILE_ORIGINAL_NAME
+            , FILE_SAVE_NAME
+            , FILE_PATH
+            , FILE_SIZE
+            , FILE_EXTENSION
+            , FILE_MIME
+            , FILE_DOWNLOAD_CNT
+            , FILE_REGDATE
+            , FILE_DELETE
+        ) VALUES (
+            SEQ_FILE.NEXTVAL
+            , #{fileGroupNo}
+            , #{fileOriginalName}
+            , #{fileSaveName}
+            , #{filePath}
+            , #{fileSize}
+            , #{fileExtension}
+            , #{fileMime}
+            , 0
+            , CURRENT_TIMESTAMP
+            , 'N'
+        )
+    </insert>
+    
+    <update id="updateFileDelete" parameterType="int">
+	    UPDATE FILE_DETAIL
+	       SET FILE_DELETE = 'Y'
+	         , FILE_DELDATE = CURRENT_TIMESTAMP
+	     WHERE FILE_NO = #{fileNo}
+	</update>
+	
+	<update id="updateFileGroupDelete" parameterType="int">
+	    UPDATE FILE_DETAIL
+	       SET FILE_DELETE = 'Y'
+	         , FILE_DELDATE = CURRENT_TIMESTAMP
+	     WHERE FILE_GROUP_NO = #{fileGroupNo}
+	</update>
+	
+	<delete id="deleteProfileFile" parameterType="int">
+	    DELETE FROM FILE_DETAIL
+	     WHERE FILE_GROUP_NO = (
+	           SELECT FILE_GROUP_NO 
+	             FROM FILE_GROUP 
+	            WHERE MEMBER_NO = #{memberNo} 
+	              AND FILE_GROUP_TYPE = 408
+	     )
+	</delete>
+	
+	<delete id="deleteProfileGroup" parameterType="int">
+	    DELETE FROM FILE_GROUP
+	     WHERE MEMBER_NO = #{memberNo} 
+	       AND FILE_GROUP_TYPE = 408
+	</delete>
+	
+	<select id="selectProfileFileDetail" parameterType="int" resultType="kr.or.ddit.vo.FileDetailVO">
+	    SELECT FILE_NO
+	         , FILE_GROUP_NO
+	         , FILE_SAVE_NAME
+	         , FILE_PATH
+	         , FILE_EXTENSION
+	      FROM FILE_DETAIL
+	     WHERE FILE_GROUP_NO = (
+	           SELECT FILE_GROUP_NO 
+	             FROM FILE_GROUP 
+	            WHERE MEMBER_NO = #{memberNo} 
+	              AND FILE_GROUP_TYPE = 408
+	     )
+	       AND FILE_DELETE = 'N' 
+	</select>
+	
+	<select id="selectFileDetail" parameterType="int" resultType="kr.or.ddit.vo.FileDetailVO">
+	    SELECT FILE_NO
+	         , FILE_GROUP_NO
+	         , FILE_ORIGINAL_NAME
+	         , FILE_SAVE_NAME
+	         , FILE_PATH
+	         , FILE_SIZE
+	         , FILE_FANCYSIZE
+	         , FILE_MIME
+	      FROM FILE_DETAIL
+	     WHERE FILE_NO = #{fileNo}
+	       AND FILE_DELETE = 'N'
+	</select>
+	
+</mapper>

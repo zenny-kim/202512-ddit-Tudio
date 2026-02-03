@@ -1,0 +1,41 @@
+package kr.or.ddit.common.code;
+
+public enum TaskStatus {
+	
+	REQUEST(201, "요청", "status-request"),
+	PROGRESS(202, "진행", "status-progress"),
+	DONE(203, "완료", "status-done"),
+	HOLD(204, "보류", "status-hold"),
+	DELAYED(205, "지연", "status-delayed");
+	
+	private final int code;
+	private final String label;
+	private final String cssClass;
+	
+	TaskStatus(int code, String label, String cssClass){
+		this.code = code;
+		this.label = label;
+		this.cssClass = cssClass;
+	}
+	
+	public int getCode() {
+		return code;
+	}
+
+	public String getLabel() {
+		return label;
+	}
+	
+	public String getCssClass() {
+		return cssClass;
+	}
+	
+	public static TaskStatus from(int code) {
+		for(TaskStatus status : values()) {
+			if(status.code == code) {
+				return status;
+			}
+		}
+		throw new IllegalArgumentException("잘못된 코드: " + code);
+	}
+}

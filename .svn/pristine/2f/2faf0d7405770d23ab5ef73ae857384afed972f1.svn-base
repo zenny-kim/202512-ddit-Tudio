@@ -1,0 +1,328 @@
+@charset "UTF-8";
+
+/* CS 메인 레이아웃 */
+.cs-main-wrapper {
+	margin-left: var(--sidebar-width);
+	width: calc(100% - var(--sidebar-width));
+	min-height: calc(100vh - var(--header-height));
+	background-color: var(--bg-body);
+	padding: 40px 20px;
+	display: flex;
+	flex-direction: column; /* 세로 정렬 */
+	align-items: center;
+}
+
+/* 경로 및 제목 섹션 (통일된 가이드) */
+.cs-header-section {
+	width: 100%;
+	max-width: 1000px; /* FAQ 리스트 너비에 맞춤 */
+	margin-bottom: 30px;
+}
+
+/* Breadcrumb (고객센터 > 메뉴) */
+.cs-breadcrumb {
+	display: flex;
+	gap: 8px;
+	font-size: 14px;
+	color: var(--text-muted);
+	margin-bottom: 12px;
+}
+
+.cs-breadcrumb .active {
+	color: var(--main-blue);
+	font-weight: 700;
+}
+
+/* 공통 대제목 */
+.cs-page-title {
+	font-size: 26px;
+	font-weight: 800;
+	color: var(--dark-navy);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+/* CS용 공통 카드 스타일 (설문/FAQ/공지 공통) */
+.cs-card {
+	background: #ffffff;
+	border: 1px solid var(--border-blue) !important;
+	border-radius: 16px !important;
+	box-shadow: 0 4px 12px rgba(0, 64, 127, 0.05) !important;
+	width: 100%;
+	max-width: 1000px;
+	padding: 40px;
+}
+
+/* --- FAQ 전용 아코디언 스타일 --- */
+.faq-accordion .accordion-item {
+	border: none;
+	border-bottom: 1px solid var(--tudio-border-subtle);
+}
+
+.faq-accordion .accordion-button {
+	padding: 20px 10px;
+	font-weight: 600;
+	color: var(--text-main);
+	background: transparent !important;
+	box-shadow: none !important;
+}
+
+.faq-accordion .accordion-button:not(.collapsed) {
+	color: var(--main-blue);
+}
+
+.faq-accordion .q-icon {
+	background: var(--header-blue);
+	color: var(--main-blue);
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: 12px;
+	font-weight: 800;
+	font-size: 12px;
+}
+
+.faq-accordion .accordion-body {
+	background-color: var(--bg-body);
+	border-radius: 12px;
+	padding: 20px 25px;
+	margin: 10px 0 20px 45px;
+	color: var(--text-muted);
+	line-height: 1.7;
+}
+
+/* 설문조사 전용 스타일 */
+.survey-header {
+	text-align: center;
+	margin-bottom: 40px;
+	border-bottom: 2px dashed var(--header-blue);
+	padding-bottom: 30px;
+}
+
+.survey-title {
+	font-size: 24px;
+	font-weight: 800;
+	color: var(--dark-navy);
+	margin-bottom: 15px;
+}
+
+.question-box {
+	margin-bottom: 30px;
+	padding: 20px;
+	border-radius: 12px;
+	border: 1px solid transparent;
+	transition: all 0.2s ease;
+}
+
+.question-box:hover {
+	background-color: var(--bg-body);
+	border-color: var(--border-blue);
+}
+
+.question-text {
+	font-size: 17px;
+	font-weight: 700;
+	color: var(--text-main);
+	margin-bottom: 18px;
+	display: flex;
+	align-items: center;
+}
+
+.q-num {
+	background: var(--main-blue);
+	color: white;
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 13px;
+	margin-right: 12px;
+	flex-shrink: 0;
+}
+
+/* 라디오 버튼 커스텀 */
+.option-label {
+	display: flex;
+	align-items: center;
+	padding: 14px 18px;
+	background: #fff;
+	border: 1px solid var(--tudio-border-soft);
+	border-radius: 10px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	font-size: 15px;
+	margin-bottom: 10px;
+}
+
+.option-label:hover {
+	border-color: var(--main-blue);
+	background-color: var(--header-blue);
+}
+
+.option-label:has(input:checked) {
+	border-color: var(--main-blue);
+	background-color: var(--header-blue);
+	color: var(--main-blue);
+	font-weight: 600;
+}
+
+.option-label input[type="radio"] {
+	margin-right: 12px;
+	width: 18px;
+	height: 18px;
+	accent-color: var(--main-blue);
+}
+
+/* =================================================  */
+/* 						문의사항 CSS					  */
+/* =================================================  */
+
+/* 리스트 전용 미세 조정 스타일 */
+.inquiry-title {
+	text-decoration: none;
+	color: var(--text-main);
+	font-weight: 600;
+	transition: 0.2s;
+}
+
+.inquiry-title:hover {
+	color: var(--main-blue);
+}
+
+.badge-wait {
+	background-color: #fff4e6;
+	color: #fd7e14;
+	border: 1px solid #ffe8cc;
+	padding: 4px 10px;
+	border-radius: 6px;
+	font-size: 0.8rem;
+}
+
+.badge-complete {
+	background-color: #e7f5ff;
+	color: #228be6;
+	border: 1px solid #d0ebff;
+	padding: 4px 10px;
+	border-radius: 6px;
+	font-size: 0.8rem;
+}
+/* 테이블 헤더 배경색 및 폰트 설정 (common.css와 조화) */
+.cs-card .table thead th {
+	background-color: var(--bg-body) !important;
+	border-bottom: 2px solid var(--tudio-border-subtle);
+	font-size: 14px;
+}
+
+.form-label {
+	font-weight: 700;
+	color: var(--dark-navy);
+	margin-bottom: 10px;
+	font-size: 15px;
+}
+
+.required {
+	color: #ef4444;
+	margin-left: 3px;
+}
+
+.form-control, .form-select {
+	border: 1px solid var(--tudio-border-soft);
+	border-radius: 10px;
+	padding: 12px 15px;
+	font-size: 14px;
+	transition: all 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+	border-color: var(--main-blue);
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+textarea.form-control {
+	resize: none;
+}
+
+.form-info-box {
+	background-color: var(--bg-body);
+	border-radius: 12px;
+	padding: 15px;
+	border: 1px solid var(--tudio-border-subtle);
+}
+
+.detail-meta {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+	font-size: 14px;
+	color: var(--text-muted);
+	margin-top: 12px;
+}
+
+.detail-content {
+	min-height: 250px;
+	line-height: 1.8;
+	color: var(--text-main);
+	font-size: 16px;
+	white-space: pre-wrap;
+	padding: 30px 0;
+}
+/* 답변 영역 디자인 */
+.reply-wrapper {
+	background-color: #f8fbff;
+	border: 1px solid var(--header-blue);
+	border-radius: 12px;
+	padding: 24px;
+}
+
+.reply-content-box {
+	background: #ffffff;
+	border: 1px solid var(--tudio-border-subtle);
+	border-radius: 10px;
+	padding: 20px;
+	line-height: 1.6;
+	color: var(--text-main);
+}
+
+
+/* =================================================  */
+/* 						공지사항 CSS					  */
+/* =================================================  */
+
+
+.notice-title-link {
+	text-decoration: none;
+	color: var(--text-main);
+	font-weight: 600;
+	transition: 0.2s;
+}
+
+.notice-title-link:hover {
+	color: var(--main-blue);
+}
+/* 중요 공지(Pin) 행 배경색 */
+.notice-pinned {
+	background-color: var(--tudio-surface-soft) !important;
+}
+/* New 배지 스타일 커스텀 */
+.badge-new {
+	background-color: #FF9F0A;
+	color: #fff;
+	font-size: 10px;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-weight: 800;
+	margin-left: 5px;
+}
+/* 테이블 헤더 통일 */
+.cs-card .table thead th {
+	background-color: var(--bg-body) !important;
+	border-bottom: 2px solid var(--tudio-border-subtle);
+	font-size: 14px;
+	color: var(--text-muted);
+}

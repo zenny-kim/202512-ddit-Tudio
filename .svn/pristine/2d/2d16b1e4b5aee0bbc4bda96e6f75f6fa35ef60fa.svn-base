@@ -1,0 +1,583 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tudio</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/header.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/footer.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/sidebar.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/projectSchedule.css">
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
+</head>
+<body>
+<!-- header -->
+<jsp:include page="/WEB-INF/views/include/header_user.jsp"/>
+<jsp:include page="/WEB-INF/views/include/sidebar_user.jsp"/>
+	
+<main class="main-content">
+    <div class="container-fluid">
+        <div class="mb-4">
+            <h3 style="color: #00407F; font-weight: 600; margin: 0;">프로젝트 일정</h3>
+        </div>
+
+        <div class="row">
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center fw-bold shadow-sm mb-3" 
+                        id="addScheduleBtn" style="padding: 12px 0; border-radius: 12px; font-size: 0.95rem;">
+                    <i class="bi bi-plus-lg me-2"></i> 새 일정 생성
+                </button>
+				<div>
+				
+				  <!-- 프로젝트 선택 -->
+				<div class="filter-wrapper shadow-sm p-3 bg-white mb-3"
+				     style="border-radius: 12px; border: 1px solid #C7E3FF;">
+				  <h6 class="fw-bold mb-3" style="color:#00407F;">
+				    <i class="bi bi-collection-fill me-2"></i> 프로젝트 선택
+				  </h6>
+				
+				  <div id="projectFilterList" style="max-height: 180px; overflow-y: auto;"></div>
+				</div>
+				
+				<!--일정 종류 -->
+				<div class="filter-wrapper shadow-sm p-3 bg-white" style="border-radius: 12px; border: 1px solid #C7E3FF;">
+				  <h6 class="fw-bold mb-3" style="color:#00407F;">
+				    <i class="bi bi-layers-fill me-2"></i> 일정 종류
+				  </h6>
+				
+				  <div class="type-filter-list">
+				    <div class="type-filter-item">
+				      <div class="form-check m-0">
+				        <input class="form-check-input filter-check" type="checkbox" value="SCHEDULE" id="typeSchedule" checked>
+				        <label class="form-check-label small ms-1" for="typeSchedule">개인 일정</label>
+				      </div>
+				      <span class="type-color-dot" style="background-color:#0056AA;"></span>
+				    </div>
+				
+				    <div class="type-filter-item task-sub-item">
+				      <div class="form-check m-0">
+				        <input class="form-check-input filter-check" type="checkbox" value="TASK" id="typeTask" checked>
+				        <label class="form-check-label small ms-1" for="typeTask">상위 업무</label>
+				      </div>
+				      <span class="type-color-dot" style="background-color:#1E90FF;"></span>
+				    </div>
+				
+				    <div class="type-filter-item task-sub-item" > 
+				      <div class="form-check m-0">
+				        <input class="form-check-input filter-check" type="checkbox" value="SUB" id="typeSub" checked>
+				        <label class="form-check-label small ms-1" for="typeSub">하위 업무</label>
+				      </div>
+				      <span class="type-color-dot" style="background-color:#8FC8FF;"></span>
+				    </div>
+				  </div>
+				</div>
+
+				</div>	
+            </div>
+
+            <div class="col-md-10">
+                <div class="calendar-wrapper shadow-sm bg-white" style="border-radius: 12px; border: 1px solid #C7E3FF; padding: 20px;">
+                    <div id='calendar'></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</main>
+
+<!-- 새일정등록 모달 -->
+<div class="modal fade" id="addScheduleModal" tabindex="-1" aria-labelledby="addScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg"> <div class="modal-content" style="border-radius: 15px; border: none;">
+            <div class="modal-header" style="background-color: #f8fbff; border-bottom: 1px solid #C7E3FF;">
+                <h5 class="modal-title fw-bold" id="addScheduleModalLabel" style="color: #00407F;">
+                    <i class="bi bi-calendar-plus me-2"></i>새 일정 등록
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+            
+				<form id="scheduleForm">
+				    <input type="hidden" id="scheduleId" name="scheduleId">
+				
+				    <div class="mb-3">
+				        <label class="form-label fw-bold">일정 제목</label>
+				        <input type="text" class="form-control" id="scheduleTitle" name="scheduleTitle" placeholder="제목을 입력하세요" required>
+				    </div>
+				
+				    <div class="row">
+				        <div class="col-md-6 mb-3">
+						    <label class="form-label fw-bold">참여 중인 프로젝트</label>
+						    <select class="form-select" id="projectNo" name="projectNo" required>
+						        <option value="">프로젝트를 선택하세요</option>
+						        </select>
+						</div>
+				        <div class="col-md-6 mb-3">
+				            <label class="form-label fw-bold">일정 상태</label>
+				            <select class="form-select" id="scheduleStatus" name="scheduleStatus">
+				                <option value="0">예정</option>
+				                <option value="1">진행</option>
+				                <option value="2">완료</option>
+				            </select>
+				        </div>
+				    </div>
+				
+				    <div class="row">
+				        <div class="col-md-5 mb-3">
+				            <label class="form-label fw-bold">시작 일시</label>
+				            <input type="datetime-local" class="form-control" id="scheduleStartdate" name="scheduleStartdate" step="3600">
+				        </div>
+				        <div class="col-md-5 mb-3">
+				            <label class="form-label fw-bold">종료 일시</label>
+				            <input type="datetime-local" class="form-control" id="scheduleEnddate" name="scheduleEnddate" step="3600">
+				        </div>
+				        <div class="col-md-2 mb-3 d-flex align-items-end pb-2">
+				            <div class="form-check">
+				                <input class="form-check-input" type="checkbox" id="scheduleAllday" name="scheduleAllday" value="Y">
+				                <label class="form-check-label small" for="scheduleAllday">종일</label>
+				            </div>
+				        </div>
+				    </div>
+				
+				    <div class="row">
+				        <div class="col-md-6 mb-3">
+				            <label class="form-label fw-bold">일정 색상</label>
+				            <input type="color" class="form-control form-control-color w-100" id="scheduleColor" name="scheduleColor" value="#1E90FF">
+				        </div>
+				    </div>
+				
+				    <div class="mb-3">
+				        <label class="form-label fw-bold">일정 내용</label>
+				        <textarea class="form-control" id="scheduleDescription" name="scheduleDescription" rows="3" placeholder="내용을 입력하세요"></textarea>
+				    </div>
+				</form>  
+
+            </div>
+            <div class="modal-footer" style="background-color: #f8fbff; border-top: 1px solid #C7E3FF;">
+                <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary fw-bold" id="saveSchedule">저장하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 새일정등록 모달 -->
+
+<!-- 일정 상세확인 모달 -->
+<div class="modal fade" id="detailScheduleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; border: none; overflow: hidden;">
+            <div id="modalHeaderColor" style="height: 10px; width: 100%;"></div>
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" style="color: #00407F;">
+                    <i class="bi bi-info-circle-fill me-2"></i>일정 상세 정보
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 pb-4">
+                <div class="detail-item mb-3">
+				    <div class="small text-muted mb-1">일정 제목 (업무/프로젝트는 클릭 시 이동)</div>
+				    <a id="detailTitleLink" href="#" class="fw-bold fs-5 text-decoration-none" style="color: #00407F; transition: 0.2s;">
+				        <span id="detailTitle"></span>
+				    </a>
+				</div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="small text-muted mb-1">시작일</div>
+                        <div id="detailStart" class="fw-semibold"></div>
+                    </div>
+                    <div class="col-6">
+                        <div class="small text-muted mb-1">종료일</div>
+                        <div id="detailEnd" class="fw-semibold"></div>
+                    </div>
+                </div>
+                <div class="detail-item mb-3">
+                    <div class="small text-muted mb-1">일정 구분</div>
+                    <span id="detailType" class="badge rounded-pill px-3 py-2"></span>
+                </div>
+                <div class="detail-item bg-light p-3 rounded-3">
+                    <div class="small text-muted mb-2">상세 내용</div>
+                    <div id="detailDescription" style="white-space: pre-wrap; color: #444;"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4">
+                <button type="button" class="btn btn-outline-danger fw-bold" id="deleteScheduleBtn" style="display: none;">삭제</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" data-bs-dismiss="modal">확인</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 일정 상세확인 모달 -->
+
+<!-- footer -->
+<jsp:include page="/WEB-INF/views/include/footer.jsp"/>
+<script src="${pageContext.request.contextPath}/js/footer.js"></script>  
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+<script>
+$(function() {
+	
+	//프로젝트 목록 불러오기
+	function loadProjectFilters() {
+	    $.ajax({
+	        url: '${pageContext.request.contextPath}/tudio/getMyProjects',
+	        type: 'GET',
+	        success: function(list) {
+	        	console.log(list)
+	            let $container = $('#projectFilterList');
+	            $container.empty();
+	            if (list && list.length > 0) {
+	                list.forEach(p => {
+	                	var html = '';
+	                    html += '<div class="form-check mb-1">';
+	                    html += '  <input class="form-check-input filter-project" type="checkbox" value="' + p.projectNo + '" id="pFilter' + p.projectNo + '" checked>';
+	                    html += '  <label class="form-check-label small text-truncate" for="pFilter' + p.projectNo + '" style="max-width: 120px; cursor: pointer;">';
+	                    html +=      p.projectName;
+	                    html += '  </label>';
+	                    html += '</div>';
+	                    $container.append(html);
+	                });
+	                syncTypeFiltersByProjectSelection();
+	                
+	                //달력의 이벤트를 다시 요청
+	                if(calendar) {
+	                    calendar.refetchEvents();
+	                }
+	            }
+	        }
+	    });
+	}
+	
+    loadProjectFilters();
+	
+    //프로젝트 미선택 시 상위,하위업무 숨김
+    function syncTypeFiltersByProjectSelection() {
+	  const checkedProjects = $('.filter-project:checked').map((i, el) => $(el).val()).get();
+	  const hasProject = checkedProjects.length > 0;
+		
+	  if (!hasProject) {
+	        $('#typeTask, #typeSub').prop('checked', false).prop('disabled', true);
+	        $('.task-sub-item').fadeOut(200); 
+	        $('#typeSchedule').prop('checked', true);
+	    } else {
+	        $('#typeTask, #typeSub').prop('disabled', false);
+	        $('.task-sub-item').fadeIn(200);
+	    }
+	  
+	}
+    
+    $(document).on('change', '.filter-project', function() {
+    	  syncTypeFiltersByProjectSelection();
+    	  if (calendar) calendar.refetchEvents();
+    	});
+
+	$(document).on('change', '.filter-check', function() {
+    	  if (calendar) calendar.refetchEvents();
+    	});
+    
+    
+	//모달창 프로젝트 목록 가져오기
+	function loadMyProjects() {
+        $.ajax({
+            url: '${pageContext.request.contextPath}/tudio/getMyProjects',
+            type: 'GET',
+            success: function(list) {
+            	console.log("서버에서 넘어온 프로젝트 리스트:", list);
+            	let $select = $('#projectNo');
+                $select.empty().append('<option value="">프로젝트를 선택하세요</option>');
+
+                if (list && list.length > 0) {
+                    list.forEach(projectVO => {
+                    	const pNo = projectVO.projectNo;
+                        const pName = projectVO.projectName;
+                        let option = $('<option>').val(pNo).text(pName);
+                        $select.append(option);
+                    });
+                } else {
+                    $select.html('<option value="">참여 중인 프로젝트가 없습니다</option>');
+                }
+            },
+            error: function() {
+                console.error("프로젝트 목록을 불러오는 중 오류 발생");
+            }
+        });
+    }
+	
+    // 1. 달력 설정
+    const calendarEl = $('#calendar')[0];
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ko',
+        displayEventTime: false,
+        eventDisplay: 'block',
+        buttonText: {
+            today: 'TODAY', month: 'MONTH', week: 'WEEK', list: 'LIST'
+        },
+        dayCellContent: function(info) { return info.date.getDate(); },
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listMonth'
+        },
+        //상세 모달창
+        eventClick: function(info) {
+            openDetailModal(info.event);
+        },
+        eventContent: function(arg) {
+            let titleEl = document.createElement('div');
+            titleEl.classList.add('fc-event-title');
+
+            titleEl.innerHTML = arg.event.title;
+
+            let arrayOfDomNodes = [ titleEl ];
+            return { domNodes: arrayOfDomNodes };
+        },
+        //전체일정추가
+        events: function(info, successCallback, failureCallback) {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/tudio/getScheduleList', // 쿼리 실행 컨트롤러 주소
+                type: 'GET',
+                success: function(list) {
+                	console.log("달력에 뿌릴 데이터:", list);
+                	
+                	const checkedTypes = $('.filter-check:checked').map((i, el) => $(el).val()).get();
+                    const checkedProjects = $('.filter-project:checked').map((i, el) => $(el).val()).get();
+                    
+                    const filteredList = list.filter(item => {
+                    	const filterType = item.scheduleType || item.SCHEDULETYPE;
+                        const filterProjectNo = String(item.projectNo || item.PROJECTNO || 0);
+                        const checkedTypes = $('.filter-check:checked').map((i, el) => $(el).val()).get();
+                        const checkedProjects = $('.filter-project:checked').map((i, el) => $(el).val()).get();
+                        const isTypeChecked = checkedTypes.includes(filterType);
+                        if (filterType === 'PROJECT') {
+                            return checkedProjects.includes(filterProjectNo);
+                        }
+                        if (filterType === 'SCHEDULE') {
+                            return isTypeChecked;
+                        } else if (filterType === 'PROJECT' || filterType === 'TASK' || filterType === 'SUB') {
+                            return isTypeChecked && checkedProjects.includes(filterProjectNo);
+                        }
+                        
+                        return false;
+                    });
+                    const events = filteredList.map(item => {
+                        return {
+                            id: item.scheduleId || item.SCHEDULEID,
+                            title: item.scheduleTitle || item.SCHEDULETITLE,
+                            start: item.scheduleStartdate || item.SCHEDULESTARTDATE,
+                            end: item.scheduleEnddate || item.SCHEDULEENDDATE,
+                            backgroundColor: item.scheduleColor || item.SCHEDULECOLOR,
+                            borderColor: item.scheduleColor || item.SCHEDULECOLOR,
+                            textColor: '#000000',
+                            allDay: (item.scheduleAllday|| item.SCHEDULEALLDAY) === 'Y',
+                            extendedProps: {
+                                type: item.scheduleType || item.SCHEDULETYPE, // SCHEDULE, TASK, SUB 등 구분값
+                                description: item.scheduleDescription,
+                                status: item.scheduleStatus
+                            }
+                        };
+                    });
+                    successCallback(events);
+                },
+                error: function() {
+                    console.error("일정 목록 로드 실패");
+                }
+            });
+        }  
+        
+        
+    });
+    calendar.render();
+    
+    $('#scheduleStartdate, #scheduleEnddate').on('change', function() {
+        let val = $(this).val();
+        if (val && val.includes('T')) {
+            let datePart = val.split('T')[0];
+            let timePart = val.split('T')[1];
+            let hour = timePart.split(':')[0];
+            // 분을 강제로 00으로 설정
+            $(this).val(datePart + 'T' + hour + ':00');
+        }
+    });
+    
+    $(document).on('change', '.filter-check, .filter-project', function() {
+        console.log("필터 변경됨!");
+        if(calendar) {
+            calendar.refetchEvents();
+        }
+    });
+    
+    // 2. 모달 열기
+    $('#addScheduleBtn').on('click', function() {
+        $('#scheduleForm')[0].reset();
+        loadMyProjects();
+        $('#addScheduleModal').modal('show');
+    });
+
+    // 3.저장 버튼 클릭 시 AJAX 전송
+    $('#saveSchedule').on('click', function() {
+    	const form = $('#scheduleForm')[0];
+        const formData = new FormData(form);
+        const scheduleTitle = $('#scheduleTitle').val();
+        
+        if (!$('#scheduleId').val()) {
+            formData.delete('scheduleId'); 
+        }
+        
+        if (!scheduleTitle) {
+            Swal.fire('경고', '일정 제목을 입력해주세요.', 'warning');
+            return;
+        }
+        //종일여부
+        const isAllDayChecked = $('#scheduleAllday').prop('checked');
+        formData.set('scheduleAllday', isAllDayChecked ? 'Y' : 'N');
+        //날짜
+        let startVal = $('#scheduleStartdate').val();
+        let endVal = $('#scheduleEnddate').val();
+        if (isAllDayChecked) {
+            if (startVal) startVal = startVal.split('T')[0];
+            if (endVal) endVal = endVal.split('T')[0];
+            formData.set('scheduleStartdate', startVal);
+            formData.set('scheduleEnddate', endVal);
+        }
+
+
+        $.ajax({
+            url: '${pageContext.request.contextPath}/tudio/schedule',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if (res > 0) {
+                    Swal.fire({
+                        title: '저장 완료',
+                        text: '일정이 성공적으로 등록되었습니다.',
+                        icon: 'success'
+                    }).then(() => {
+                        $('#addScheduleModal').modal('hide');
+                        calendar.refetchEvents();
+                    });
+                } else {
+                    Swal.fire('실패', '저장에 실패했습니다.', 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+            	console.log("----- 에러 발생 상세 로그 -----");
+                console.log("상태 코드 (Status): " + xhr.status);
+                console.log("에러 내용 (Error): " + error);
+                console.log("서버 응답 메시지: ", xhr.responseText);
+                console.log("----------------------------");
+                Swal.fire('에러', '서버 통신 중 문제가 발생했습니다.', 'error');
+            }
+        });
+    });
+    
+    //삭제버튼 클릭 이벤트
+    $('#deleteScheduleBtn').on('click', function() {
+        const scheduleId = $(this).data('id'); // openDetailModal에서 넣어둔 ID
+
+        Swal.fire({
+            title: '일정을 삭제하시겠습니까?',
+            text: "삭제 후에는 복구할 수 없습니다.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '삭제',
+            cancelButtonText: '취소'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '${pageContext.request.contextPath}/tudio/deleteSchedule', // 서버의 삭제 경로
+                    type: 'POST',
+                    data: { scheduleId: scheduleId },
+                    success: function(res) {
+                        if (res > 0) {
+                            Swal.fire('삭제 완료', '일정이 삭제되었습니다.', 'success');
+                            $('#detailScheduleModal').modal('hide');
+                            calendar.refetchEvents(); // 달력 새로고침
+                        } else {
+                            Swal.fire('실패', '삭제 처리에 실패했습니다.', 'error');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('에러', '서버 통신 중 오류가 발생했습니다.', 'error');
+                    }
+                });
+            }
+        });
+    });
+    
+	
+    //일정 상세 모달
+    function openDetailModal(event) {
+        const props = event.extendedProps;
+        // 대소문자 모두 대응 (props.type 또는 props.TYPE)
+        const scheduleType = props.type || props.TYPE;
+        const id = event.id;
+
+        // 1. 이동할 주소(URL) 설정
+        let moveUrl = "#";
+        if (scheduleType === 'PROJECT') {
+            moveUrl = "${pageContext.request.contextPath}/project/main?projectNo=" + id;
+        } else if (scheduleType === 'TASK') {
+            moveUrl = "${pageContext.request.contextPath}/project/task/detail?taskId=" + id;
+        } else if (scheduleType === 'SUB') {
+            moveUrl = "${pageContext.request.contextPath}/project/task/subDetail?subId=" + id;
+        }
+
+        // 2. 제목 세팅 및 링크 연결
+        $('#detailTitle').text(event.title);
+        $('#detailTitleLink').attr('href', moveUrl);
+
+        // 3. 타입에 따른 버튼 및 링크 스타일 제어
+        if (scheduleType === 'SCHEDULE') {
+            $('#deleteScheduleBtn').show().data('id', id); // 개인 일정만 삭제 가능
+            $('#detailTitleLink').css({'cursor': 'default', 'pointer-events': 'none', 'color': 'black'}); 
+        } else {
+            $('#deleteScheduleBtn').hide();
+            $('#detailTitleLink').css({'cursor': 'pointer', 'pointer-events': 'auto', 'color': '#00407F'});
+        }
+
+        // 4. 시간 포맷 처리
+        const formatToHour = (dateStr) => {
+            if (!dateStr) return '-';
+            let dateTime = dateStr.replace('T', ' '); 
+            return dateTime.includes(':') ? dateTime.split(':')[0] + '시' : dateTime;
+        };
+        
+        const isAllDay = event.allDay;
+        const startStr = isAllDay ? event.startStr : formatToHour(event.startStr);
+        const endStr = event.endStr ? (isAllDay ? event.endStr : formatToHour(event.endStr)) : '-';
+        
+        // 5. 화면 데이터 출력
+        $('#detailStart').text(startStr);
+        $('#detailEnd').text(endStr);
+        $('#detailDescription').text(props.description || props.DESCRIPTION || '상세 내용이 없습니다.');
+        
+        $('#detailType').text(
+            scheduleType === 'SCHEDULE' ? '개인 일정' : 
+            scheduleType === 'PROJECT' ? '프로젝트 전체' : 
+            scheduleType === 'TASK' ? '상위 업무' : '하위 업무'
+        ).css('background-color', event.backgroundColor);
+        
+        $('#modalHeaderColor').css('background-color', event.backgroundColor);
+
+        // 6. 모달 표시
+        $('#detailScheduleModal').modal('show');
+    }
+    
+    
+});
+</script>
+
+</html>

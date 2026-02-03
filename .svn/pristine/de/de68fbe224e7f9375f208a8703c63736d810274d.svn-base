@@ -1,0 +1,128 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tudio</title>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/dhtmlxgantt.css">
+<script src="${pageContext.request.contextPath}/js/dhtmlxgantt.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<style>
+/* 오늘 기준선 스타일 */
+#gantt_here .gantt_marker.today_line {
+    background-color: #ff4d4d !important;
+    width: 1px !important;
+    z-index: 1000 !important;
+    pointer-events: all !important; /* 마우스 인식을 허용함 */
+    cursor: pointer; /* 마우스 올리면 손가락 모양으로 변경 */
+}
+
+/* 빨간 선에 마우스 올렸을 때만 Today 표시 */
+#gantt_here .gantt_marker.today_line:hover::after {
+    content: "Today";
+    position: absolute;
+    top: 20px;
+    left: 8px;
+    background: rgba(255, 77, 77, 0.9);
+    color: white;
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+/* 마우스 올린 막대기 강조 효과 */
+#gantt_here .gantt_task_line:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+#gantt_here .gantt_tooltip {
+    white-space: nowrap !important;
+    line-height: 20px !important;
+}
+</style>    
+</head>
+<body>
+
+<div style="margin-bottom:8px;">
+    <button id="btnWeek" class="zoom-btn">Week</button>
+    <button id="btnDay"  class="zoom-btn">Day</button>
+</div>
+
+<div id="gantt_here" style="width: 100%; height: 500px; background: #f4f4f4;"></div>
+
+<script>
+$(function () {
+
+    gantt.plugins({
+        marker: true,
+        tooltip: true
+    });
+    
+    // 서버 변수 확인용 로깅
+    const pNo = "${projectNo}";
+    const cPath = "${pageContext.request.contextPath}";
+    
+    console.log("체크1: pNo =", pNo);
+    console.log("체크2: cPath =", cPath);
+
+    // 간트 초기 설정 
+    gantt.config.xml_date = "%Y-%m-%d";
+    gantt.config.open_tree_initially = true;
+    gantt.config.work_time = true;
+    gantt.setWorkTime({ days: [1,2,3,4,5] });
+
+    gantt.config.columns = [
+        { name:"text", label:"업무명", tree:true, width:200 },
+        { name:"start_date", label:"시작일", align:"center" },
+        { name:"duration", label:"기간", align:"center" },
+        { name:"progress", label:"진척도", align:"center" }
+    ];
+    
+    // 줌 설정
+    const zoomConfig = {
+        levels: [
+            { name: "week", scales: [{ unit: "month", format: "%Y-%m" }, { unit: "week", format: "W%W" }], min_column_width: 50 },
+            { name: "day", scales: [{ unit: "month", format: "%Y-%m" }, { unit: "day", format: "%d" }], min_column_width: 30 }
+        ]
+    };
+    gantt.ext.zoom.init(zoomConfig);
+    gantt.ext.zoom.setLevel("week");
+    
+    gantt.templates.tooltip_text = function(start, end, task) {
+        return "<span style='display:inline-block; white-space:nowrap;'>" +
+		        "<b>기간 :</b> " + gantt.templates.tooltip_date_format(start) + " ~ " + gantt.templates.tooltip_date_format(end) + 
+		        "</span>" +
+		        "<span style='display:inline-block; white-space:nowrap;'>" +
+		        "<b>진척도 :</b> " + Math.round((task.progress || 0) * 100) + "%" +
+		        "</span>";
+    };
+    
+    //칸트차트틀
+    gantt.init("gantt_here");
+        
+    //데이터 요청 (pNo가 있을 때만)
+    if (pNo && pNo !== "" && pNo !== "0") {
+        const finalUrl = cPath + "/tudio/project/gantt/data?projectNo=" + pNo;
+        console.log("체크3: 요청 URL =", finalUrl);
+
+        fetch(finalUrl)
+           .then(res => res.json())
+           .then(result => {
+               console.log("체크4: 서버 데이터 수신 =", result);
+               gantt.clearAll();
+               gantt.parse(result);
+           
+               gantt.addMarker({
+                   start_date: new Date(),
+                   css: "today_line"
+               });
+           })
+           .catch(err => console.error("데이터 로딩 에러:", err));
+    
+    }
+    
+    $("#btnWeek").on("click", function () { gantt.ext.zoom.setLevel("week"); });
+    $("#btnDay").on("click", function () { gantt.ext.zoom.setLevel("day"); });
+});
+</script>
+</body>
+</html>

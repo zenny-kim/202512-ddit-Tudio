@@ -1,0 +1,155 @@
+@charset "UTF-8";
+
+/* ... 1. 검색 영역 ... */
+.search-area {
+    padding: 15px 20px; 
+    background-color: #ffffff;
+    flex-shrink: 0; z-index: 5; 
+}
+.search-input-wrapper { 
+    width: 100%; height: 46px; 
+    background-color: #f2f2f7; 
+    border-radius: 12px; 
+    display: flex; align-items: center; 
+    padding: 0 12px; 
+}
+.search-icon { color: #8e8e93; margin-right: 8px; }
+.search-input { border: none; background: transparent; width: 100%; height: 100%; font-size: 15px; outline: none; }
+
+
+/* ... 2. 선택된 사용자 영역 ... */
+.selected-users-area {
+    background-color: #ffffff; width: 100%; flex-shrink: 0; border-bottom: 1px solid #f2f2f7; 
+}
+.selected-users-container {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start;
+    padding: 0 20px 15px 20px; 
+    max-height: 100px; 
+    overflow-y: auto; 
+}
+/* 상단 스크롤바 */
+.selected-users-container::-webkit-scrollbar { width: 14px; }
+.selected-users-container::-webkit-scrollbar-thumb {
+    background-color: #d1d1d6; border-radius: 10px;
+    background-clip: padding-box; border: 4px solid transparent; 
+}
+.selected-users-container::-webkit-scrollbar-track { background-color: transparent; }
+
+.selected-user-tag {
+    display: inline-flex; align-items: center;
+    background-color: #f2f4f6; border-radius: 20px;
+    padding: 4px 10px 4px 4px; border: 1px solid transparent;
+}
+/* ... 기존 코드 ... */
+
+/* 태그 내 프로필 이미지/아바타 공통 스타일 */
+.tag-profile-img, .tag-default-avatar { 
+    width: 24px !important; height: 24px !important; 
+    border-radius: 50%; object-fit: cover; margin-right: 6px; flex-shrink: 0;
+}
+
+/* [핵심 수정] 아바타 태그의 회색 배경(#ccc) 제거 */
+.tag-default-avatar { 
+    display: flex; align-items: center; justify-content: center; 
+    /* background-color: #ccc;  <-- 범인은 이 녀석이었습니다. 삭제! */
+    color: #ffffff; 
+}
+
+.tag-user-name { font-size: 13px; color: #333; font-weight: 500; margin-right: 4px; }
+
+.tag-remove-btn { width: 18px; height: 18px; background-color: #b0b8c1; border-radius: 50%; border: none; padding: 0; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+
+/* =========================================
+   [문제 2번 해결 유지] 유저 리스트 영역
+   ========================================= */
+.user-list-area { 
+    flex-grow: 1; 
+    overflow-y: auto; 
+    background-color: #ffffff;
+    
+    /* 버튼 높이만큼 마진 확보 */
+    margin-bottom: 92px; 
+    padding-bottom: 0;
+}
+
+/* 스크롤바 디자인 */
+.user-list-area::-webkit-scrollbar {
+    width: 14px;
+}
+.user-list-area::-webkit-scrollbar-thumb {
+    background-color: #d1d1d6; 
+    border-radius: 10px;
+    background-clip: padding-box;
+    border: 4px solid transparent; 
+}
+.user-list-area::-webkit-scrollbar-track {
+    background-color: transparent;
+    margin-top: 10px; margin-bottom: 10px;
+}
+
+
+/* =========================================
+   [문제 3번 해결] 프로필 이미지/아바타 스타일
+   ========================================= */
+.section-title { font-size: 12px; color: #8e8e93; font-weight: 600; padding: 10px 20px; background-color: #fff; }
+.user-list { list-style: none; padding: 0; margin: 0; }
+.user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; cursor: pointer; transition: background 0.2s; }
+.user-item:hover { background-color: #f5f5f5; }
+
+.user-info-wrapper { display: flex; align-items: center; }
+
+/* 1. 공통 모양 설정 */
+.user-item .profile-img, 
+.user-item .default-avatar {
+    width: 38px !important; 
+    height: 38px !important;
+    min-width: 38px !important; 
+    border-radius: 50%;
+    flex-shrink: 0; 
+    margin: 0 !important; 
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* 2. 실제 이미지(img)는 깨짐 대비 회색 배경 유지 */
+.user-item .profile-img {
+    object-fit: cover;
+    background-color: #f2f2f7; 
+}
+
+/* 3. [핵심 수정] 기본 아바타(div)의 배경색 설정을 삭제함 */
+/* 여기서 background-color를 지정하지 않아야 common.css의 avatar-color-X가 먹힘 */
+.user-item .default-avatar {
+    /* background-color: transparent;  <-- 이 줄을 삭제했습니다! */
+    color: #ffffff; 
+}
+
+/* 아이콘 크기 */
+.user-item .default-avatar i { width: 18px; height: 18px; }
+
+
+/* 텍스트 및 기타 버튼 유지 */
+.user-text { margin-left: 12px; display: flex; flex-direction: column; }
+.user-name { font-size: 15px; font-weight: 600; color: #000; margin-bottom: 2px; }
+.user-status { font-size: 12px; color: #8e8e93; }
+
+.checkbox-wrapper { width: 22px; height: 22px; position: relative; }
+.user-checkbox { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; }
+.checkmark { width: 100%; height: 100%; border: 2px solid #c7c7cc; border-radius: 50%; display: block; box-sizing: border-box; transition: all 0.2s; }
+.user-checkbox:checked + .checkmark { background-color: var(--primary-color); border-color: var(--primary-color); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E"); background-size: 14px; background-repeat: no-repeat; background-position: center; }
+
+.bottom-action-area { 
+    position: absolute; bottom: 0; left: 0; width: 100%; 
+    padding: 20px; 
+    background: linear-gradient(to top, #ffffff 90%, rgba(255,255,255,0));
+    z-index: 10;
+}
+.start-chat-btn { 
+    width: 100%; height: 52px; border: none; border-radius: 14px; font-size: 16px; font-weight: 600; 
+    background-color: #f2f4f6; color: #b0b8c1; cursor: not-allowed; transition: all 0.2s;
+}
+.start-chat-btn.active { 
+    background-color: var(--primary-color); color: white; cursor: pointer; 
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3); 
+}
+.start-chat-btn:active { transform: scale(0.98); }

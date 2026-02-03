@@ -1,0 +1,34 @@
+<header>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top tudio-header border-bottom">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand tudio-brand" href="#">
+                <span class="text-primary">Tudio</span>
+            </a>
+
+            <div class="d-flex align-items-center ms-auto">
+                <div class="dropdown me-2">
+                    <button class="header-icon-btn text-secondary" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-bell"></i>
+                        <span class="notification-badge"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                        <li><h6 class="dropdown-header">알림</h6></li>
+                        <li><a class="dropdown-item small" href="#">새 프로젝트가 할당되었습니다.</a></li>
+                    </ul>
+                </div>
+
+                <div class="dropdown">
+                    <a class="header-profile dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="profile-img">K</div>
+                        <span class="fw-bold small d-none d-sm-block">김사용 님</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                        <li><a class="dropdown-item" href="#">마이페이지</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#">로그아웃</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>

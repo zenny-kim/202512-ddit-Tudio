@@ -1,0 +1,127 @@
+package kr.or.ddit.tab.service.impl;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.transaction.Transactional;
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.file.service.IFileService;
+import kr.or.ddit.tab.mapper.ITabBoardMapper;
+import kr.or.ddit.tab.service.ITabBoardService;
+import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.PaginationInfoVO;
+import kr.or.ddit.vo.project.BoardCategoryVO;
+import kr.or.ddit.vo.project.MeetingMemberVO;
+import kr.or.ddit.vo.project.ProjectBoardMinutesVO;
+import kr.or.ddit.vo.project.ProjectBoardVO;
+
+@Service
+public class TabBoardServiceImpl implements ITabBoardService {
+
+	@Autowired
+	private ITabBoardMapper boardMapper;
+	
+	@Autowired
+    private IFileService fileService; 
+	
+	/**
+     * 프로젝트 생성 시 기본 카테고리(NOTICE, FREE, MINUTES) 생성
+     * - ProjectService에서 호출
+     */
+    @Override
+    public void createDefaultCategory(int projectNo) {
+        String[] defaultCategories = {"NOTICE", "FREE", "MINUTES"};
+
+        for (String name : defaultCategories) {
+            BoardCategoryVO categoryVO = new BoardCategoryVO();
+            categoryVO.setProjectNo(projectNo);
+            categoryVO.setCategoryName(name);
+            
+            boardMapper.insertCategory(categoryVO);
+        }
+    }
+    
+	@Override
+	public List<ProjectBoardVO> selectBoardList(Map<String, Object> paramMap) {
+		return boardMapper.selectBoardList(paramMap);
+	}
+
+	@Transactional
+	@Override
+	public ServiceResult insertBoard(ProjectBoardVO boardVO) {
+		ServiceResult result = ServiceResult.FAILED;
+		// 게시글 내용 저장
+		int status = boardMapper.insertBoard(boardVO);
+		
+		if(status>0) {
+			// 회의록이라면 회의록 내용 추가 저장
+			ProjectBoardMinutesVO minutesVO = boardVO.getBoardMinutesVO();
+			if(minutesVO != null) {
+				minutesVO.setBoNo(boardVO.getBoNo());
+				boardMapper.insertBoardMinutes(minutesVO);
+			}
+			// 회의 참석자 저장
+			List<MeetingMemberVO> memberList = boardVO.getMeetingMemberList();
+			if (memberList != null && !memberList.isEmpty()) {
+	            for (MeetingMemberVO meetingMember : memberList) {
+	            	meetingMember.setBoNo(boardVO.getBoNo());
+	                boardMapper.insertMeetingMember(meetingMember);
+	            }
+	        }
+			//파일 저장
+			List<MultipartFile> fileList = boardVO.getBoFileList();
+			if(fileList != null && !fileList.isEmpty() && !fileList.get(0).isEmpty()) {
+				
+	            int fileGroupNo = fileService.uploadFiles(fileList, boardVO.getMemberNo(), 405);
+	            if(fileGroupNo > 0) {
+	                boardVO.setFileGroupNo(fileGroupNo);
+	                boardMapper.updateBoardFileGroupNo(boardVO);
+	            }
+	        }
+		}
+		return ServiceResult.OK;
+	}
+	
+	// 프로젝트 참여 멤버
+	@Override
+	public List<MemberVO> getProjectMemberList(int projectNo) {
+		return boardMapper.getProjectMemberList(projectNo);
+	}
+
+	// 조회수 증가
+	@Override
+	public int boardIncrementHit(int boNo) {
+		return boardMapper.boardIncrementHit(boNo);
+	}
+	
+	// 게시글 상세 화면
+	@Override
+	public ProjectBoardVO detailBoard(int boNo) {
+		return boardMapper.detailBoard(boNo);
+	}
+	
+	//총 게시물 수
+	@Override
+	public int selectBoardCount(Map<String, Object> paramMap) {
+		return boardMapper.selectBoardCount(paramMap);
+	}
+
+	// 게시글 수정
+	@Override
+	public ServiceResult updateBoard(ProjectBoardVO boardVO) {
+		return boardMapper.updateBoard(boardVO);
+	}
+
+	//게시글 삭제
+	@Override
+	public ServiceResult deleteBoard(int boNo) {
+		return boardMapper.deleteBoard(boNo);
+	}
+
+	
+
+}

@@ -1,0 +1,10 @@
+@charset "UTF-8";
+
+/* 자료실 전용 스타일 */
+#library .table th {
+    font-weight: 600;
+    color: #495057;
+}
+#library .table td {
+    vertical-align: middle;
+}

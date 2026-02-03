@@ -1,0 +1,43 @@
+package kr.or.ddit.dashboard.service.impl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.dashboard.mapper.ITodoMapper;
+import kr.or.ddit.dashboard.service.ITodoService;
+import kr.or.ddit.vo.TodoVO;
+
+@Service
+public class TodoServiceImpl implements ITodoService {
+
+	@Autowired
+	private ITodoMapper todoMapper;
+	
+	@Override
+	public List<TodoVO> selectTodoList(int memberNo) {
+		return todoMapper.selectTodoList(memberNo);
+	}
+
+	@Override
+	public int insertTodo(TodoVO todoVO) {
+		return todoMapper.insertTodo(todoVO);
+	}
+
+	@Override
+	public int updateTodoStatus(TodoVO todoVO) {
+		return todoMapper.updateTodoStatus(todoVO);
+	}
+	
+	@Override
+    public int updateTodoContent(TodoVO todoVO) {
+        return todoMapper.updateTodoContent(todoVO);
+    }
+
+	@Override
+	public int deleteTodo(TodoVO todoVO) {
+		return todoMapper.deleteTodo(todoVO);
+	}
+	
+}

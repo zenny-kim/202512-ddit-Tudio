@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.siteAdminMember.mapper.IAdminMemberMapper">
+	
+	<select id="selectAdminMember" parameterType="String" resultType="kr.or.ddit.dto.AdminUserDTO">
+        SELECT 
+            MEMBER_NO          AS memNo
+            , MEMBER_ID          AS memId
+            ,MEMBER_NAME        AS memName       
+            , MEMBER_PROFILEIMG  AS memProfile     
+        FROM MEMBER
+        WHERE MEMBER_ID = #{memId}
+    </select>
+    
+</mapper>

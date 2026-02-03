@@ -1,0 +1,644 @@
+(function () {
+	let contextPath;
+	let projectNo;
+	let $content;
+	
+	$(document).on('tab:loaded', function (e, tabName) {
+		if (tabName !== 'task') return;
+		
+		initTaskTab();
+	});
+	
+	function initTaskTab(){
+		contextPath = $('body').data('contextPath');
+		projectNo = $('body').data('projectNo');
+		$content = $('#projectTabContent');
+		
+		showFlashError();
+		
+		bindAccordion();		// 리스트 아코디언 방식
+		bindViewToggle();		// 리스트 <-> 칸반 전환
+		bindCreateModal();		// 상위업무 생성
+		bindSubCreateModal();	// 하위업무 생성	
+		bindDetailModal();		// 업무 상세조회
+	}
+	
+	function showFlashError() {
+		const $msg = $content.find('#taskErrorMsg');
+		if ($msg.length === 0) return;
+
+		const text = String($msg.data('errorMsg') || '').trim();
+		if (!text) return;
+
+		// 같은 메시지 중복 방지(탭 다시 눌러도 계속 뜨는 거 방지)
+		const key = `task:error:${projectNo}`;
+		if (sessionStorage.getItem(key) === text) return;
+		sessionStorage.setItem(key, text);
+
+		if (window.Swal) {
+			Swal.fire({
+				icon: 'error',
+				title: '등록 실패',
+				text: text,
+				confirmButtonText: '확인'
+			});
+		} else {
+			alert(text); // Swal 없으면 보험
+		}
+
+		// DOM에서 제거해서 같은 탭 컨텐츠 내 재호출 방지
+		$msg.remove();
+	}
+	
+	function bindAccordion(){
+		$content
+				.off('click.taskAccordion')
+				.on('click.taskAccordion', '.task-row', function(){
+					const $taskRow = $(this);
+					const taskId = $taskRow.data('taskId');
+					
+					const $subs = $content.find(
+						`.sub-row[data-parent-task-id="${taskId}"], .sub-add-row[data-parent-task-id="${taskId}"]`
+					);
+					
+					const $icon = $taskRow.find('.toggle-icon');
+					const isOpen = $subs.first().is(':visible');
+					
+					$subs.css('display', isOpen ? 'none' : 'table-row');
+					
+					$icon
+						.toggleClass('bi-caret-right-fill', isOpen)
+						.toggleClass('bi-caret-down-fill', !isOpen);
+				});
+	}
+	
+	// 전환 이벤트만 따로 함수로 빼기
+    function bindViewToggle() {
+		// 중복 방지를 위해 기존 이벤트 제거
+        $(document).off('click.toggleView', '#toggleViewButton');
+        $(document).off('click.listView', '#btnListView');
+
+        // 1) 리스트 -> 칸반보드
+        $(document).on('click.toggleView', '#toggleViewButton', function() {
+            const url = `${contextPath}/tudio/project/task/kanban?projectNo=${projectNo}`;
+            console.log("[뷰 전환] 칸반보드로 로드:", url);
+            
+            $content.load(url, function(res, status, xhr) {
+                if (status === "error") {
+                    Swal.fire('오류', '칸반보드 로딩 실패', 'error');
+                }
+            });
+        });
+
+        // 2) 칸반 -> 리스트로 돌아오기
+        $(document).on('click.listView', '#btnListView', function() {
+            console.log("[뷰 전환] 리스트형 보기 클릭");
+			const url = `${contextPath}/tudio/project/task/list?projectNo=${projectNo}`;
+			
+			$content.load(url, function(res, status, xhr) {
+	        	if (status === "error") {
+	        		Swal.fire('오류', '리스트 로딩 실패', 'error');
+	        	}
+	        });
+        });
+    }
+	
+	/**
+	 * <p>공용 모달 로드 함수</p>
+	 * @param {Strin} url : 불러올 JSP 경로
+	 * @param {String} size : 모달 사이즈 클래스명
+	 * @param {Function} callback : 로드 완료 후 실행할 함수  
+	 */
+	function loadModal(url, size, callback){
+		const $modal = $('#projectCommonModal');
+		const $dialog = $('#projectCommonModalDialog');
+		const $content = $('#projectCommonModalContent');
+		
+		// 사이즈 초기화 및 설정
+		$dialog.removeClass('modal-lg modal-xl modal-sm')
+				.addClass(size || ''); 
+		
+		// 로딩 표시
+		$content.html('<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>');
+
+		// 모달 띄우기
+		const modalInstance = new bootstrap.Modal(document.getElementById('projectCommonModal'));
+		modalInstance.show();
+
+		// AJAX 내용 로드
+		$content.load(url, function(response, status, xhr) {
+			if (status === "error") {
+				$content.html('<div class="p-4 text-center text-danger">컨텐츠를 불러오지 못했습니다.</div>');
+				return;
+			}
+			// 함수 실행
+			if (callback) callback();
+		});
+	}
+	
+	/**
+	 * 업무 생성 모달
+	 */
+	function bindCreateModal(){
+		$content.off('click.taskCreate')
+				.on('click.taskCreate', '#createTaskBtn', function(){
+					
+					const url = `${contextPath}/tudio/project/task/create?projectNo=${projectNo}`;
+					
+					loadModal(url, 'modal-lg', function(){
+						if(typeof initTaskCreateUI === 'function'){
+							initTaskCreateUI($('#projectCommonModalContent'));	
+						}
+					});
+		});
+	}
+	
+	/**
+	 * 업무 상세 모달
+	 */
+	function bindDetailModal(){
+		$content.off('click.openDetail')
+				.on('click.openDetail', '.task-title, .sub-title', function(e) {
+					e.stopPropagation();
+					const $row = $(this).closest('tr');
+					const isTask = $row.hasClass('task-row');
+					const id = isTask ? $row.data('taskId') : $row.data('subId');
+					const type = isTask ? 'T' : 'S';
+					
+					console.log(`[Debug] ID: ${id}, Type: ${type}`);
+		
+					const viewUrl = `${contextPath}/tudio/project/task/view/detail`;
+		
+					// 상세조회는 modal-lg 사이즈 사용
+					loadModal(viewUrl, 'modal-lg', function() {
+						// HTML 구조가 로드된 후 -> 실제 데이터(JSON) 가져와서 채우기
+						fetchAndFillDetail(id, type);
+					});
+		});
+	}
+	
+	/**
+	 * 하위 업무 추가 모달
+	 */
+	function bindSubCreateModal() {
+		$content.off('click.addSub')
+				.on('click.addSub', '.add-sub-btn', function(e) {
+			e.stopPropagation();
+			const parentTaskId = $(this).data('taskId');
+			const viewUrl = `${contextPath}/tudio/project/task/view/sub/create?projectNo=${projectNo}`;
+
+			loadModal(viewUrl, 'modal-lg', function() {
+				$('#targetParentTaskId').val(parentTaskId); // 상위ID 주입
+
+				// 등록 버튼 이벤트 바인딩
+				$('#btnSubmitSubTask').on('click', submitSubTask);
+			});
+		});
+	}
+	
+	/**
+	 * 하위 업무 등록 처리 함수
+	 */
+	function submitSubTask(){
+		const form = $('#createSubTaskForm')[0];
+		const formData = new FormData(form);
+		
+		// 유효성 검사
+		if (!formData.get('subTitle')) {
+			alert('업무 제목을 입력해주세요.');
+			$('#createSubTaskForm input[name=subTitle]').focus();
+			return;
+		}
+		
+		$.ajax({
+			url: `${contextPath}/tudio/project/task/sub/create`,
+			type: 'POST',
+			data: formData,
+			contentType: false,
+			processData: false,
+			success: function(res) {
+				if (res === 'SUCCESS') {
+					if (window.Swal) {
+						Swal.fire('성공', '하위업무가 등록되었습니다.', 'success').then(() => {
+							const modalEl = document.getElementById('projectCommonModal');
+							const modal = bootstrap.Modal.getInstance(modalEl);
+							modal.hide();
+							// 목록 새로고침 (loadTab이 projectMain.js에 전역으로 있다고 가정)
+							if (typeof loadTab === 'function') loadTab('task');
+						});
+					} else {
+						alert("등록 완료");
+						const modalEl = document.getElementById('projectCommonModal');
+						const modal = bootstrap.Modal.getInstance(modalEl);
+						modal.hide();
+						if (typeof loadTab === 'function') loadTab('task');
+					}
+				} else {
+					alert("등록 실패: " + res);
+				}
+			},
+			error: function(xhr) {
+				console.error(xhr);
+				alert("서버 통신 중 오류가 발생했습니다.");
+			}
+		});
+	}
+	
+	/**
+	 * 업무 상세 데이터 바인딩
+	 */
+	function fetchAndFillDetail(id, type){
+		// 요청 URL 결정 (상위 / 하위)
+		let dataUrl = type === 'T'
+			? `${contextPath}/tudio/project/task/detail/${id}`
+			: `${contextPath}/tudio/project/task/sub/detail/${id}`;
+			
+		$.ajax({
+			url: dataUrl,
+			type: 'GET',
+			dataType: 'json',
+			success: function(data) {
+				// 2. 데이터 매핑 (상위/하위 필드명 차이를 하나의 객체로 통일)
+				// VO에서 어떤 값이 오는지에 따라 null 체크 필요
+				const info = {
+					title: type === 'T' ? data.taskTitle : data.subTitle,
+					content: type === 'T' ? data.taskContent : data.subContent,
+					start: type === 'T' ? data.taskStartdate : data.subStartdate,
+					end: type === 'T' ? data.taskEnddate : data.subEnddate,
+					rate: type === 'T' ? data.taskRate : data.subRate,
+					writer: data.writerName, // VO에 writerName이 있다고 가정
+					regdate: data.taskRegdate || data.subRegdate,
+					status: type === 'T' ? data.taskStatus : data.subStatus,
+					priority: type === 'T' ? data.taskPriority : data.subPriority
+				};
+
+				// 3. UI 텍스트 채우기
+				$('#detailTitle').text(info.title);
+				$('#detailContent').text(info.content || '내용이 없습니다.');
+				$('#detailWriter').text(info.writer || '작성자 미상');
+
+				// 날짜 포맷팅 (YYYY.MM.DD)
+				const regStr = info.regdate ? new Date(info.regdate).toLocaleDateString() : '-';
+				$('#detailRegDate').text(regStr);
+				$('#detailPeriod').text(`${info.start || ''} ~ ${info.end || ''}`);
+
+				// 상태 
+				$('#detailTaskStatusBadge').text(info.statusLabel);
+				$('#detailTaskStatusBadge').attr('class', 'badge' + (info.statusCs || 'bg-secondary'));
+				
+				// 중요도
+				$('#detailTaskPriority').text(info.priorityLabel);
+
+				// 진척도
+				$('#detailProgress').css('width', info.rate + '%');
+				$('#detailRateText').text(info.rate + '%');
+
+				// 4. 첨부파일 목록 렌더링
+				const $fList = $('#detailFileList').empty();
+				if (data.fileList && data.fileList.length > 0) {
+					data.fileList.forEach(f => {
+						// 다운로드 URL (Controller 경로 확인 필요)
+						let downUrl = `${contextPath}/tudio/file/download?fileNo=${f.fileNo}`;
+						$fList.append(`
+			                            <li class="list-group-item d-flex justify-content-between align-items-center">
+			                                <a href="${downUrl}" class="text-decoration-none text-dark text-truncate">
+			                                    <i class="bi bi-file-earmark"></i> ${f.fileOriginalName}
+			                                </a>
+			                                <span class="text-muted small">${f.fileFancySize}</span>
+			                            </li>
+			                        `);
+					});
+				} else {
+					$fList.html('<li class="list-group-item text-muted small text-center">첨부파일이 없습니다.</li>');
+				}
+
+				// 5. 상위/하위 전용 UI 전환
+				if (type === 'T') {
+					// 상위업무 -> 하위목록 보여주기
+					$('#parentLinkArea').hide();
+					$('#subTaskListArea').show();
+
+					const $subGroup = $('#detailSubListGroup').empty();
+					if (data.subTasks && data.subTasks.length > 0) {
+						data.subTasks.forEach(sub => {
+							// 클릭 시 해당 하위업무 상세로 이동하도록 구현 가능
+							
+							let sLabel = sub.statusLabel || sub.subStatus;
+							
+							$subGroup.append(`
+			                                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+			                                    <span>└ ${sub.subTitle}</span>
+			                                    <span class="badge bg-light text-dark border">${sLabel}</span>
+			                                </div>
+			                             `);
+						});
+					} else {
+						$subGroup.html('<div class="text-muted small p-3 text-center">등록된 하위업무가 없습니다.</div>');
+					}
+				} else {
+					// 하위업무 -> 상위업무 링크 보여주기
+					$('#subTaskListArea').hide();
+					$('#parentLinkArea').show();
+					$('#detailParentTitle').text(data.parentTitle || '상위 업무로 이동');
+
+					// 상위 업무 이동
+					$('#btnGoParent').off('click').on('click', function(e) {
+						e.preventDefault();
+						if (data.taskId) fetchAndFillDetail(data.taskId, 'T'); 
+					});
+				}
+			},
+			error: function(xhr, status, err) {
+				console.error("상세 조회 실패:", err);
+				// 모달 내용에 에러 표시
+				$('.modal-body').html('<div class="text-center text-danger py-5">정보를 불러오지 못했습니다.</div>');
+			}
+		});
+	}
+	
+	/**
+	 * create UI 초기화 
+	 */
+	function initTaskCreateUI($root) {
+		const $wrap = $root.find('.task-create-wrap');
+		const $form = $root.find('#createTaskForm');
+
+		// 1) 프로젝트 마감일 동기화
+		$root.find('#syncProjectEndBtn').off('click.sync').on('click.sync', function() {
+			const endYmd = $wrap.attr('data-project-end');
+			if (!endYmd) return;
+			$root.find('#taskEnddate').val(endYmd);
+		});
+
+		// 2) 진척도 슬라이더
+		const $range = $root.find('#taskRateRange');
+		const $rateVal = $root.find('#taskRateValue');
+		const $rateHidden = $root.find('#taskRateHidden');
+
+		function setRate(v) {
+			const val = Number(v || 0);
+			$rateVal.text(val);
+			$rateHidden.val(val);
+		}
+		setRate($range.val());
+
+		$range.off('input.rate').on('input.rate', function() {
+			setRate(this.value);
+		});
+
+		// 3) 상위 담당자(assignee) - hidden inputs 만들기: name="taskManagerNos"
+		const $search = $root.find('#assigneeSearchInput');
+		const $dropdown = $root.find('#assigneeDropdown');
+		const $tags = $root.find('#selectedAssigneeTags');
+		const $hidden = $root.find('#taskManagerNosFields');
+
+		function sortAssigneeItems() {
+			const items = $dropdown.find('.assignee-item').get();
+			items.sort((a, b) => {
+				const $a = $(a), $b = $(b);
+				const ca = $a.find('input[type="checkbox"]').prop('checked');
+				const cb = $b.find('input[type="checkbox"]').prop('checked');
+				if (ca !== cb) return ca ? -1 : 1;
+				const na = String($a.data('memberName') || '');
+				const nb = String($b.data('memberName') || '');
+				return na.localeCompare(nb, 'ko');
+			});
+			$dropdown.empty().append(items);
+		}
+
+		function rebuildTaskManagerHidden() {
+			$hidden.empty();
+			$dropdown.find('.assignee-item').each(function() {
+				const $item = $(this);
+				const checked = $item.find('input[type="checkbox"]').prop('checked');
+				if (!checked) return;
+				const no = $item.data('memberNo');
+				$hidden.append(`<input type="hidden" name="taskManagerNos" value="${no}">`);
+			});
+		}
+
+		function rebuildTaskManagerTags() {
+			$tags.empty();
+			$dropdown.find('.assignee-item').each(function() {
+				const $item = $(this);
+				const checked = $item.find('input[type="checkbox"]').prop('checked');
+				if (!checked) return;
+
+				const no = $item.data('memberNo');
+				const name = $item.data('memberName');
+
+				const $tag = $(`
+	         <span class="assignee-tag" data-member-no="${no}">
+	           <span>${name}</span>
+	           <button type="button" aria-label="remove">✕</button>
+	         </span>
+	       `);
+
+				$tag.find('button').on('click', function() {
+					$item.find('input[type="checkbox"]').prop('checked', false);
+					sortAssigneeItems();
+					rebuildTaskManagerTags();
+					rebuildTaskManagerHidden();
+				});
+
+				$tags.append($tag);
+			});
+		}
+
+		function filterAssignee(keyword) {
+			const k = String(keyword || '').trim();
+			$dropdown.find('.assignee-item').each(function() {
+				const name = String($(this).data('memberName') || '');
+				$(this).toggle(name.includes(k));
+			});
+		}
+
+		$search.off('focus.assignee').on('focus.assignee', function() {
+			$dropdown.addClass('show');
+			sortAssigneeItems();
+		});
+
+		$search.off('input.assignee').on('input.assignee', function() {
+			$dropdown.addClass('show');
+			filterAssignee(this.value);
+		});
+
+		$dropdown.off('click.assigneeItem').on('click.assigneeItem', '.assignee-item', function(e) {
+			if ($(e.target).is('input[type="checkbox"]')) return;
+			const $chk = $(this).find('input[type="checkbox"]');
+			$chk.prop('checked', !$chk.prop('checked'));
+
+			sortAssigneeItems();
+			rebuildTaskManagerTags();
+			rebuildTaskManagerHidden();
+		});
+
+		// 4) 하위업무 추가/삭제 + 일정동기화 + 인덱스 재정렬
+		const $subList = $root.find('#subTaskList');
+		const tpl = $root.find('#subTaskTemplate').html();
+		let subSeq = 0;
+
+		function addSubTask() {
+			const idx = subSeq++;
+			const html = tpl.replaceAll('{{idx}}', idx).replaceAll('{{n}}', idx + 1);
+			$subList.append(html);
+		}
+
+		$root.find('#addSubTaskBtn').off('click.addSub').on('click.addSub', function() {
+			addSubTask();
+		});
+
+		$root.find('#syncSubDatesBtn').off('click.syncSub').on('click.syncSub', function() {
+			const s = $root.find('#taskStartdate').val();
+			const e = $root.find('#taskEnddate').val();
+			$subList.find('[data-role="subStart"]').val(s);
+			$subList.find('[data-role="subEnd"]').val(e);
+		});
+
+		$subList.off('click.removeSub').on('click.removeSub', '[data-action="removeSubTask"]', function() {
+			$(this).closest('.subtask-item').remove();
+			reindexSubTasks(); // ✅ 중요
+		});
+
+		// 하위 담당자 체크 → hidden inputs 생성(name="subTasks[i].subManagerNos")
+		$subList.off('change.subAssignee').on('change.subAssignee', '[data-sub-assignee] input[type="checkbox"]', function() {
+			const $subItem = $(this).closest('.subtask-item');
+			rebuildSubManagerHiddenForItem($subItem);
+		});
+
+		function rebuildSubManagerHiddenForItem($subItem) {
+			const idx = Number($subItem.attr('data-sub-index'));
+			const $fields = $subItem.find('[data-sub-manager-nos-fields]');
+			$fields.empty();
+
+			$subItem.find('[data-sub-assignee] .sub-assignee-item').each(function() {
+				const $label = $(this);
+				const no = $label.data('memberNo');
+				const checked = $label.find('input[type="checkbox"]').prop('checked');
+				if (!checked) return;
+
+				// ✅ name이 인덱스에 의존하므로 reindex 후에도 맞아야 함
+				$fields.append(`<input type="hidden" name="subTasks[${idx}].subManagerNos" value="${no}">`);
+			});
+		}
+
+		// ✅ 삭제 후 index가 끊기면 Spring 바인딩이 꼬일 수 있어서 재정렬
+		function reindexSubTasks() {
+			const $items = $subList.find('.subtask-item');
+
+			$items.each(function(newIdx) {
+				const $item = $(this);
+				$item.attr('data-sub-index', newIdx);
+
+				// name="subTasks[old].xxx" 전부 newIdx로 교체
+				$item.find('[name]').each(function() {
+					const $el = $(this);
+					const name = $el.attr('name');
+					if (!name) return;
+
+					// subTasks[숫자]. 로 시작하는 애들만 교체
+					const replaced = name.replace(/subTasks\[\d+\]\./g, `subTasks[${newIdx}].`);
+					$el.attr('name', replaced);
+				});
+
+				// hidden fields도 다시 생성(안전)
+				rebuildSubManagerHiddenForItem($item);
+			});
+
+			// subSeq는 "새로 추가할 번호"니까 현재 length 기준으로 맞춰줌
+			subSeq = $items.length;
+		}
+
+		// 5) 상위업무 submit 
+		function submitTask() {
+			// 최소 검증: 상위 제목
+			const title = String($form.find('[name="taskTitle"]').val() || '').trim();
+			const startDate = $form.find('#taskStartdate').val();
+			const endDate = $form.find('#taskEnddate').val();
+			
+			// 상위업무 제목 검증
+			if (!title) {
+				alert('업무 제목 입력은 필수입니다.');
+				$form.find('[name="taskTitle"]').focus();
+				return;
+			}
+			
+			// 상위업무 시작일 검증
+			if(!startDate){
+				alert('시작일 입력은 필수입니다.');
+				$form.find('#taskStartdate').focus();
+				return;
+			}
+			
+			// 상위업무 마감일 검증
+			if(!endDate){
+				alert('마감일 입력은 필수입니다.');
+				$form.find('#taskEnddate').focus();
+				return;
+			}
+			
+			if (startDate > endDate) { // yyyy-MM-dd 문자열 비교 가능
+			    alert('마감일은 시작일보다 빠를 수 없습니다.');
+			    $form.find('#taskEnddate').focus();
+			    return;
+			}
+
+			// 하위업무 제목 검증: 입력된 subTask가 있으면 title 필수
+			let invalid = false;
+			$subList.find('.subtask-item').each(function() {
+				const v = String($(this).find('input[name*=".subTitle"]').val() || '').trim();
+				if (!v) {
+					invalid = true;
+					$(this).find('input[name*=".subTitle"]').focus();
+					return false;
+				}
+			});
+			if (invalid) {
+				alert('하위업무 제목은 비워둘 수 없습니다.');
+				return;
+			}
+
+			// 상위 담당자 hidden 최신화
+			rebuildTaskManagerHidden();
+
+			// 하위 담당자 hidden 최신화
+			$subList.find('.subtask-item').each(function() {
+				rebuildSubManagerHiddenForItem($(this));
+			});
+
+			let formData = new FormData($form[0]);
+			
+			$.ajax({
+				url: $form.attr('action'),
+				type: 'POST',
+				data: formData,
+				contentType: false,
+				processData: false,
+				success: function(res){
+					if (res === "SUCCESS") {
+						Swal.fire('성공', '업무가 생성되었습니다.', 'success').then(() => {
+							// 모달 닫기
+							const modalEl = document.getElementById('projectCommonModal');
+							const modal = bootstrap.Modal.getInstance(modalEl);
+							if (modal) modal.hide();
+
+							// 목록 탭 리로드 - projectMain.js에 있는 전역함수 loadTab 호출
+							if (typeof loadTab === 'function') loadTab('task');
+						});
+					} else if (res === "LOGIN_REQUIRED") {
+						alert("로그인이 필요합니다.");
+						location.href = "/tudio/login";
+					} else {
+						alert("업무 생성에 실패했습니다.")
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error("에러 발생:", error);
+					alert("서버 통신 중 오류가 발생했습니다.");
+				}
+			})
+		}
+
+		$root.find('#submitTaskBtn').off('click.submit').on('click.submit', submitTask);
+	}
+})();

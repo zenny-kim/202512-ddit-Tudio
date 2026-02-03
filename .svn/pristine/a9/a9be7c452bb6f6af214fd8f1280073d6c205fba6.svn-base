@@ -1,0 +1,14 @@
+package kr.or.ddit.faq.mapper;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.vo.FaqVO;
+
+@Mapper
+public interface IFaqMapper {
+
+	public List<FaqVO> selectFaqList();
+
+}

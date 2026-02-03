@@ -1,0 +1,56 @@
+package kr.or.ddit.projectTask.service.impl;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.projectTask.mapper.IProjectTaskMapper;
+import kr.or.ddit.projectTask.service.IKanbanService;
+import kr.or.ddit.vo.project.ProjectTaskSubVO;
+
+@Service
+public class KanbanServiceImpl implements IKanbanService {
+	
+	@Autowired
+	private IProjectTaskMapper kanbanMapper;
+	
+	@Override
+	public List<ProjectTaskSubVO> getKanbanTaskList(int projectNo) {
+		return kanbanMapper.getKanbanTaskList(projectNo);
+	}
+
+	@Override
+    public boolean modifyTaskStatus(int taskId, int taskStatus) {
+		Map<String, Object> map = new HashMap<>();
+        map.put("taskId", taskId);
+        map.put("taskStatus", taskStatus);
+        return kanbanMapper.modifyTaskStatus(map) > 0;
+    }
+
+    @Override
+    public int updateTaskRate(int taskId, int taskRate) {
+    	Map<String, Object> map = new HashMap<>();
+        map.put("taskId", taskId);
+        map.put("taskRate", taskRate);
+        return kanbanMapper.updateTaskRate(map);
+    }
+
+	@Override
+	public void updateTaskPin(String taskId, String pinYn, int loginMemberNo) {
+	    Map<String, Object> paramMap = new HashMap<>();
+	    paramMap.put("subId", taskId);
+	    paramMap.put("subPinYn", pinYn);
+	    paramMap.put("subPinMember", loginMemberNo);
+
+	    kanbanMapper.updateTaskPin(paramMap);		
+	}
+
+	@Override
+	public String getProjectRole(int projectNo, int loginMemberNo) {
+		return kanbanMapper.getProjectRole(projectNo, loginMemberNo);
+	}
+	
+}

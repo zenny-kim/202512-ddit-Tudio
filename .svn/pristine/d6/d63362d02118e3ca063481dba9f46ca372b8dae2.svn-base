@@ -1,0 +1,28 @@
+package kr.or.ddit.drive.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import kr.or.ddit.vo.DriveFolderVO;
+
+@Mapper
+public interface IDriveMapper {
+	
+	// 프로젝트 폴더(최상위 루트 폴더) 조회
+	public Integer selectProjectRootFolderNo(int projectNo);
+	
+	// 선택 폴더에 해당되는 모든 폴더&파일 조회
+    public List<Map<String, Object>> selectDriveItems(
+        @Param("projectNo") int projectNo, 
+        @Param("folderId") int folderId
+    );
+    
+    // 폴더 생성
+    public int insertFolder(DriveFolderVO driveFolderVO);
+    
+    // 프로젝트 폴더 생성 (프로젝트 생성시 최초 1회만 실행)
+    public int insertRootFolder(DriveFolderVO driveFolderVO);
+}

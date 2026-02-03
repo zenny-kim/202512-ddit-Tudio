@@ -1,0 +1,717 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.notification.mapper.INotificationMapper">
+
+
+  <!-- 알림 목록 조회 (전체 / 안읽음) -->
+  <select id="notiList"
+          parameterType="map"
+          resultType="kr.or.ddit.vo.NotificationVO">
+
+    SELECT
+         N.NOTI_NO
+       , N.NOTI_TYPE
+       , N.NOTI_URL
+       , N.IS_READ
+       , N.NOTI_REGDATE
+       , N.MEMBER_NO
+       , N.NOTI_MESSAGE
+       , N.NOTI_CATEGORY
+       
+    FROM NOTIFICATION N
+    WHERE N.MEMBER_NO = #{memberNo}
+
+    <if test="unreadOnly == true">
+        AND N.IS_READ = 'N'
+    </if>
+    
+    <if test="readOnly == true">
+    	AND N.IS_READ = 'Y'
+    </if>
+
+    ORDER BY
+        N.NOTI_REGDATE DESC,
+        N.NOTI_NO DESC
+  </select>
+
+
+  <!-- 안읽음 알림 개수 -->
+  <select id="selectUnreadCount"
+          parameterType="int"
+          resultType="int">
+    SELECT COUNT(*)
+    FROM NOTIFICATION
+    WHERE MEMBER_NO = #{memberNo}
+      AND IS_READ = 'N'
+  </select>
+
+
+  <!-- 읽음 처리 -->
+  <update id="updateRead"
+          parameterType="map">
+    UPDATE NOTIFICATION
+       SET IS_READ = 'Y'
+     WHERE MEMBER_NO = #{memberNo}
+       AND NOTI_NO = #{notiNo}
+  </update>
+
+
+  <!-- 알림 물리 삭제 -->
+  <delete id="deleteNoti"
+          parameterType="map">
+    DELETE
+      FROM NOTIFICATION
+     WHERE MEMBER_NO = #{memberNo}
+       AND NOTI_NO = #{notiNo}
+  </delete>
+
+
+  <!-- 알림 저장 -->
+  <insert id="insertNoti"
+          parameterType="kr.or.ddit.vo.NotificationVO">
+    INSERT INTO NOTIFICATION (
+          NOTI_NO
+        , MEMBER_NO
+        , NOTI_TYPE
+        , TARGET_ID
+        , NOTI_URL
+        , IS_READ
+        , NOTI_REGDATE
+        , NOTI_MESSAGE
+        , NOTI_CATEGORY
+    ) VALUES (
+        SEQ_NOTIFICATION.NEXTVAL
+        , #{memberNo}
+        , #{notiType}
+        , #{targetId}
+        , #{notiUrl}
+        , 'N'
+        , CURRENT_TIMESTAMP
+        , #{notiMessage}
+        , #{notiCategory}
+        
+    )
+  </insert> 
+  
+  <!-- 프로젝트 생성/수정시 전송되는 초대 관련 알림 처리 속도 개선 -->
+  <insert id="insertNotificationsBatch" parameterType="java.util.List">
+	INSERT INTO NOTIFICATION (
+        NOTI_NO
+        , MEMBER_NO
+        , NOTI_TYPE
+        , TARGET_ID
+        , NOTI_URL
+        , IS_READ
+        , NOTI_REGDATE
+        , NOTI_MESSAGE
+        , NOTI_CATEGORY
+    )
+    SELECT SEQ_NOTIFICATION.NEXTVAL, A.* FROM (
+        <foreach collection="list" item="noti" separator="UNION ALL">
+            SELECT 
+                #{noti.memberNo}
+                , #{noti.notiType}
+                , #{noti.targetId}
+                , #{noti.notiUrl}
+                , 'N'
+                , CURRENT_TIMESTAMP
+                , #{noti.notiMessage}
+                , #{noti.notiCategory}
+            FROM DUAL
+        </foreach>
+    ) A
+  </insert>
+  
+
+<!--  프로젝트 변경 시 알림 저장. 프로젝트 전 멤버 대상 -->
+<insert id="insertProjectUpdateNoti" parameterType="kr.or.ddit.vo.NotificationVO">
+    INSERT INTO NOTIFICATION (
+          NOTI_NO
+        , MEMBER_NO
+        , NOTI_TYPE
+        , TARGET_ID
+        , NOTI_URL
+        , IS_READ
+        , NOTI_REGDATE
+        , NOTI_MESSAGE
+        , NOTI_CATEGORY
+        
+    )
+    SELECT
+          SEQ_NOTIFICATION.NEXTVAL
+        , PM.MEMBER_NO
+        , #{notiType}
+        , #{targetId}
+        , #{notiUrl}
+        , 'N'
+        , CURRENT_TIMESTAMP
+        , #{notiMessage}
+        , #{notiCategory}
+    FROM PROJECT_MEMBER PM
+    JOIN MEMBER M
+      ON M.MEMBER_NO = PM.MEMBER_NO
+    WHERE PM.PROJECT_NO = #{projectNo}
+      AND M.LEAVE_STATUS = 'N' AND PM.PROJECT_MEM_STATUS = 'Y'
+      
+     <![CDATA[ AND PM.MEMBER_NO <> #{writerNo} ]]>
+</insert>
+
+
+<!-- 프로젝트 변경 푸시 대상 조회. 프로젝트 멤버 전원(on/off 없음) -->
+<select id="selectProjectUpdateNoti" parameterType="map" resultType="int">
+  SELECT PM.MEMBER_NO
+  FROM PROJECT_MEMBER PM
+  JOIN MEMBER M ON M.MEMBER_NO = PM.MEMBER_NO
+  WHERE PM.PROJECT_NO = #{projectNo}
+    AND M.LEAVE_STATUS = 'N' AND PM.PROJECT_MEM_STATUS = 'Y'
+  <![CDATA[ AND PM.MEMBER_NO <> #{writerNo} ]]>
+</select>
+
+
+<!-- -->  
+  
+  
+  
+
+<!--  모든 회원 중 공지사항 알림을 ON으로 한 사람 --> 
+<select id="notiSiteMember" resultType="kr.or.ddit.vo.MemberVO" >
+
+	select 
+	    m.member_no
+	    , m.member_name
+	from member m 
+	inner join notification_setting s  on m.member_no = s.member_no
+	where s.noti_site = 'Y' AND M.LEAVE_STATUS='N'
+	
+</select> 
+  
+  <!--  모든 회원의 알림 설정 확인 -->
+  <select id="notiAllMember" parameterType="int" resultType="kr.or.ddit.vo.NotificationSettingVO">
+SELECT
+    M.MEMBER_NO
+  , NS.NOTI_TASK_COMMENT
+  , NS.NOTI_BO_COMMENT
+  , NS.NOTI_MANAGER
+  , NS.NOTI_CHAT
+  , NS.NOTI_SCHEDULE
+  , NS.NOTI_SITE
+  , NS.NOTI_INQUIRY_COMMENT
+  , NS.NOTI_DRAFT_UPLOAD
+  , NS.NOTI_APPROVAL
+  , NS.NOTI_PROJECT_NOTICE
+FROM
+    NOTIFICATION_SETTING NS
+INNER JOIN MEMBER M
+    ON M.MEMBER_NO = NS.MEMBER_NO
+WHERE
+    M.LEAVE_STATUS = 'N' AND M.MEMBER_NO = #{memberNo}
+
+  </select>
+ 
+ 
+ 
+ 
+ 
+ <!--  내가 쓴 게시글에 달린 댓글 -->
+ <select id="notiCommentNoti" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectBoardVO">
+ 	
+ 	SELECT
+        PB.MEMBER_NO AS writerNo
+	  , CASE
+	        WHEN LENGTH(PB.BO_TITLE) > 10
+	        THEN SUBSTR(PB.BO_TITLE, 1, 10) || '...'
+	        ELSE PB.BO_TITLE
+	    END AS boTitle
+	  , CASE
+	        WHEN BC.CATEGORY_NAME = 'FREE'    THEN '자유'
+	        WHEN BC.CATEGORY_NAME = 'NOTICE'  THEN '공지'
+	        WHEN BC.CATEGORY_NAME = 'MINUTES' THEN '회의'
+	        ELSE '기타'
+	    END AS categoryName
+	  , BC.PROJECT_NO
+	  , BC.CATEGORY_NO
+	  , P.PROJECT_NAME
+	  
+	FROM PROJECT_BOARD PB
+	JOIN BOARD_CATEGORY BC
+	  ON BC.CATEGORY_NO = PB.CATEGORY_NO
+	JOIN PROJECT P ON P.PROJECT_NO = BC.PROJECT_NO
+	WHERE PB.BO_NO = #{boNo}
+		
+ 
+ </select>
+ 
+ 
+  
+
+  
+  
+  <!--  공지사항 알림 db등록 -->
+  <insert id="insertSiteNoticeNoti" parameterType="map">
+	  INSERT INTO NOTIFICATION (
+	    NOTI_NO, MEMBER_NO, NOTI_TYPE, TARGET_ID, NOTI_URL, IS_READ, NOTI_REGDATE, NOTI_MESSAGE,NOTI_CATEGORY
+	  )
+	  SELECT
+	    SEQ_NOTIFICATION.NEXTVAL
+	    , S.MEMBER_NO
+	    , 'NOTI_SYSTEM'
+	    , #{targetId}
+	    , #{notiUrl}
+	    , 'N'
+	    , CURRENT_TIMESTAMP
+	    , #{notiMessage}
+	    , #{notiCategory}
+	  FROM NOTIFICATION_SETTING S
+	  WHERE S.NOTI_SITE = 'Y'
+</insert>
+
+
+<!-- 부모 댓글 조회 -->
+<!-- ROOTC.MEMBER_NO AS "memberNo"         첫 댓글 작성자 (답글 수신자)
+		PB.MEMBER_NO    AS "boardWriter"      게시글 작성자 -->
+<select id="selectNotiReply" resultType="map" parameterType="map">
+
+	SELECT 
+          PB.MEMBER_NO        AS "boardWriter"
+        , ROOTC.MEMBER_NO     AS "memberNo"
+        , CASE 
+            WHEN LENGTH(ROOTC.CMT_CONTENT) > 10 
+            THEN SUBSTR(ROOTC.CMT_CONTENT, 1, 10) || '...'
+            ELSE ROOTC.CMT_CONTENT 
+          END                 AS "cmtContent"
+        , BC.PROJECT_NO       AS "projectNo"
+        , P.PROJECT_NAME      AS "projectName"     
+        , BC.CATEGORY_NAME    AS "categoryName"    
+        , ROOTC.TARGET_TYPE   AS "targetType"
+        , PB.BO_TITLE         AS "boTitle"
+        , PB.BO_NO            AS "boNo"
+        , PB.CATEGORY_NO      AS "categoryNo"
+    FROM PROJECT_BOARD PB 
+    JOIN BOARD_CATEGORY BC 
+      ON PB.CATEGORY_NO = BC.CATEGORY_NO
+    JOIN PROJECT P
+      ON P.PROJECT_NO = BC.PROJECT_NO
+    JOIN TB_COMMENT ROOTC
+      ON ROOTC.CMT_GROUP = (
+            SELECT CMT_GROUP 
+            FROM TB_COMMENT 
+            WHERE CMT_NO = #{parentCmtNo}
+         )
+     AND ROOTC.CMT_DEPTH = 0 
+     AND ROOTC.CMT_STATUS = 'Y' 
+     AND ROOTC.TARGET_ID = PB.BO_NO
+    WHERE PB.BO_NO = #{boNo}
+
+</select>
+
+
+
+<!-- PM, 기업관리자, 팀원인지 확인. 로그인한 세션의 memberNo로 판별하면 될듯?-->
+<select id="selectAuthNoti" parameterType="int" resultType="string">
+	
+SELECT
+     AM.AUTH
+FROM MEMBER M
+INNER JOIN MEMBER_AUTH AM
+    ON M.MEMBER_NO = AM.MEMBER_NO
+WHERE M.MEMBER_NO = #{memberNo} AND M.LEAVE_STATUS='N'
+
+</select>
+
+
+<!-- 프로젝트 멤버에게 공지사항 알림 일괄 INSERT - 게시판 -->
+<insert id="insertProjectNoticeNoti" parameterType="map">
+      INSERT INTO NOTIFICATION (
+          NOTI_NO, MEMBER_NO, NOTI_TYPE, TARGET_ID, NOTI_URL,
+          IS_READ, NOTI_REGDATE, NOTI_MESSAGE, NOTI_CATEGORY
+    )
+    SELECT
+          SEQ_NOTIFICATION.NEXTVAL
+        , PM.MEMBER_NO
+        , #{notiType}
+        , #{targetId}
+        , #{notiUrl}
+        , 'N'
+        , CURRENT_TIMESTAMP
+        , #{notiMessage}
+        , (SELECT P.PROJECT_NAME FROM PROJECT P WHERE P.PROJECT_NO = PM.PROJECT_NO)
+    FROM PROJECT_MEMBER PM
+    JOIN MEMBER M ON M.MEMBER_NO = PM.MEMBER_NO
+    JOIN NOTIFICATION_SETTING NS ON NS.MEMBER_NO = PM.MEMBER_NO
+    WHERE PM.PROJECT_NO = #{projectNo}
+      AND PM.PROJECT_MEM_STATUS = 'Y'
+      AND M.LEAVE_STATUS = 'N'
+      AND NS.NOTI_PROJECT_NOTICE = 'Y'
+      <![CDATA[ AND PM.MEMBER_NO <> #{writerNo} ]]>
+      AND NOT EXISTS (
+          SELECT 1
+          FROM MEMBER_AUTH AM
+          WHERE AM.MEMBER_NO = PM.MEMBER_NO
+            AND UPPER(TRIM(AM.AUTH)) IN ('ROLE_CLIENT','ROLE_ADMIN')
+      )
+
+</insert>
+
+
+
+
+<!--  프로젝트 멤버 공지사항 푸시 대상 조회-->
+<select id="selectProjectNoticeNoti" resultType="int">
+	    
+SELECT pm.MEMBER_NO
+FROM PROJECT_MEMBER pm
+JOIN MEMBER m ON m.MEMBER_NO = pm.MEMBER_NO
+JOIN NOTIFICATION_SETTING ns ON ns.MEMBER_NO = pm.MEMBER_NO
+WHERE pm.PROJECT_NO = #{projectNo}
+  AND m.LEAVE_STATUS = 'N'
+  AND ns.NOTI_PROJECT_NOTICE = 'Y'
+  AND pm.PROJECT_MEM_STATUS = 'Y'
+
+   <![CDATA[ 
+		AND pm.MEMBER_NO <> #{writerNo}
+	]]>
+	
+  AND NOT EXISTS(
+  	SELECT 1
+  	FROM MEMBER_AUTH am
+  	WHERE am.MEMBER_NO = pm.MEMBER_NO
+  		AND UPPER(TRIM(am.AUTH)) IN ('ROLE_CLIENT','ROLE_ADMIN')
+  )
+  
+  
+</select>
+
+
+<!-- 대시보드 알림 위젯 상태 변경 -->
+<update id="toggleNotificationRead" parameterType="map">
+    UPDATE NOTIFICATION
+    SET IS_READ = CASE 
+                    WHEN IS_READ = 'Y' THEN 'N' 
+                    ELSE 'Y' 
+                  END
+    WHERE NOTI_NO = #{notiNo}
+      AND MEMBER_NO = #{memberNo}
+</update>
+
+
+<!-- 상/하위, 개인일정 dday 계산. 배치 쿼리-->
+<select id="selectScheduleNoti"  resultType="kr.or.ddit.vo.NotificationVO">
+
+	  SELECT DISTINCT
+        X.ITEM_TYPE    AS SCHEDULETYPE
+      , X.MEMBER_NO    AS MEMBERNO
+      , X.PROJECT_NO   AS PROJECTNO
+      , P.PROJECT_NAME AS PROJECTNAME
+      , X.ITEM_ID      AS SCHEDULEID
+      , X.TITLE        AS SCHEDULETITLE
+      , X.DDAY         AS SCHEDULEDDAY
+  FROM (
+      SELECT 'TASK' ITEM_TYPE, PM.MEMBER_NO, T.PROJECT_NO,
+             T.TASK_ID ITEM_ID, T.TASK_TITLE TITLE,
+             TRUNC(T.TASK_ENDDATE) - TRUNC(SYSDATE) DDAY
+      FROM PROJECT_TASK_MANAGER PM
+      JOIN PROJECT_TASK T
+        ON T.TASK_ID = PM.WORK_ID
+       AND PM.WORK_TYPE = 'T'
+      WHERE T.TASK_STATUS = 2
+        AND TRUNC(T.TASK_ENDDATE) BETWEEN TRUNC(SYSDATE) AND TRUNC(SYSDATE) + 1
+
+      UNION ALL
+
+      SELECT 'SUB', PM.MEMBER_NO, T.PROJECT_NO,
+             S.SUB_ID, S.SUB_TITLE,
+             TRUNC(S.SUB_ENDDATE) - TRUNC(SYSDATE)
+      FROM PROJECT_TASK_MANAGER PM
+      JOIN PROJECT_TASK_SUB S
+        ON S.SUB_ID = PM.WORK_ID
+       AND PM.WORK_TYPE = 'S'
+      JOIN PROJECT_TASK T
+        ON T.TASK_ID = S.TASK_ID
+      WHERE S.SUB_STATUS = 2
+        AND TRUNC(S.SUB_ENDDATE) BETWEEN TRUNC(SYSDATE) AND TRUNC(SYSDATE) + 1
+
+      UNION ALL
+
+      SELECT 'SCHEDULE', S.MEMBER_NO, S.PROJECT_NO,
+             S.SCHEDULE_ID, S.SCHEDULE_TITLE,
+             TRUNC(S.SCHEDULE_ENDDATE) - TRUNC(SYSDATE)
+      FROM PROJECT_SCHEDULE S
+      WHERE TRUNC(S.SCHEDULE_ENDDATE) BETWEEN TRUNC(SYSDATE) AND TRUNC(SYSDATE) + 1
+  ) X
+  JOIN PROJECT P
+    ON P.PROJECT_NO = X.PROJECT_NO
+  JOIN NOTIFICATION_SETTING NS
+    ON NS.MEMBER_NO = X.MEMBER_NO
+  WHERE NS.NOTI_SCHEDULE = 'Y'
+
+
+    AND NOT EXISTS (
+      SELECT 1
+      FROM NOTIFICATION N
+      WHERE N.MEMBER_NO = X.MEMBER_NO
+        AND N.NOTI_TYPE = 'NOTI_SCHEDULE'
+        AND N.TARGET_ID = X.ITEM_ID
+        AND TRUNC(N.NOTI_REGDATE) = TRUNC(SYSDATE)
+    )
+
+  ORDER BY X.DDAY, X.PROJECT_NO, X.MEMBER_NO
+
+</select>
+
+<!-- 30일마다 자동삭제 -->
+<delete id="deleteOldNoti">
+	DELETE FROM NOTIFICATION
+	
+	<![CDATA[ WHERE NOTI_REGDATE < TRUNC(SYSDATE) - 30 ]]>
+</delete>
+
+
+<!-- 회의실 알림 발송 대상 -->
+<select id="selectMeetingRoomNoti" parameterType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO" resultType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+	SELECT
+      MRM.MEMBER_NO        	AS reciverMember		 -- 회의 참여자
+    , MR.PROJECT_NO
+    , MR.RES_MEETING_TITLE
+    , MR.MEMBER_NO 				     				 -- 예약자
+    , P.PROJECT_NAME
+    , MR.RESERVATION_ID
+    , MR.RES_STARTDATE
+
+	FROM MEETING_ROOM_MEMBER MRM
+	INNER JOIN MEETING_RESERVATION MR
+	        ON MR.RESERVATION_ID = MRM.RESERVATION_ID
+	INNER JOIN PROJECT P
+	        ON P.PROJECT_NO = MR.PROJECT_NO
+	
+	<![CDATA[WHERE MRM.MEMBER_NO <> #{memberNo}]]>	
+	  AND MR.RESERVATION_ID = #{reservationId}
+
+</select>
+
+<!--  회의실 예약 취소 -->
+<select id="selectCancelMeetingRoomNoti" parameterType="int" resultType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+SELECT
+      MRM.MEMBER_NO AS RECIVERMEMBER
+    , MR.MEMBER_NO
+    , MR.PROJECT_NO
+    , P.PROJECT_NAME
+    , MR.RES_STARTDATE
+FROM MEETING_ROOM_MEMBER MRM
+INNER JOIN MEETING_RESERVATION MR
+    ON MR.RESERVATION_ID = MRM.RESERVATION_ID
+INNER JOIN PROJECT P
+    ON P.PROJECT_NO = MR.PROJECT_NO
+WHERE MRM.RESERVATION_ID = #{reservationId}
+  AND MR.RES_STATUS = 703
+  <![CDATA[AND MRM.MEMBER_NO <> MR.MEMBER_NO]]>	
+
+</select>
+
+
+<!--  기안서 알림 발송 대상 조회 (첫번째) -->
+<select id="selectDocumentNoti" parameterType="map" resultType="DraftApprovalVO">
+	
+SELECT
+      A.APPROVER_NO
+    , A.DOCUMENT_NO
+    , A.APPROVAL_STATUS
+    , A.MEMBER_NO
+    , A.APPROVAL_DATE
+    , A.REJECTION_REASON
+    , A.APPROVAL_STEP
+    , M.MEMBER_NAME
+    , M.MEMBER_POSITION
+    , DD.DOCUMENT_TITLE
+    , P.PROJECT_NO
+    , P.PROJECT_NAME
+FROM DRAFT_APPROVAL A
+JOIN MEMBER M
+    ON A.MEMBER_NO = M.MEMBER_NO
+INNER JOIN DRAFT_DOCUMENT DD
+    ON DD.DOCUMENT_NO = A.DOCUMENT_NO
+INNER JOIN PROJECT P
+    ON P.PROJECT_NO = DD.PROJECT_NO
+WHERE A.DOCUMENT_NO = #{documentNo}
+  AND DD.DOCUMENT_STATUS = 611 AND A.APPROVAL_STEP=#{approvalStep}
+ORDER BY A.APPROVAL_STEP ASC
+
+</select>
+
+<!-- 다음 결재자 정보 -->
+<select id="selectDocumentNextNoti" parameterType="map" resultType="DraftApprovalVO">
+ SELECT 
+       A.APPROVER_NO,
+       A.DOCUMENT_NO,
+       A.APPROVAL_STATUS,
+       A.MEMBER_NO,
+       A.APPROVAL_STEP,
+       M.MEMBER_NAME,
+       M.MEMBER_POSITION,
+       DD.DOCUMENT_TITLE,
+       P.PROJECT_NO,
+       P.PROJECT_NAME
+ FROM DRAFT_APPROVAL A
+ JOIN MEMBER M ON A.MEMBER_NO = M.MEMBER_NO
+ JOIN DRAFT_DOCUMENT DD ON DD.DOCUMENT_NO = A.DOCUMENT_NO
+ JOIN PROJECT P ON P.PROJECT_NO = DD.PROJECT_NO
+ WHERE A.DOCUMENT_NO = #{documentNo}
+   AND A.APPROVAL_STATUS IN (607,608)
+   AND A.APPROVAL_STEP = #{approvalStep}
+ ORDER BY A.APPROVAL_STEP ASC
+</select>
+
+<!-- 다음 결재자  -->
+<select id="selectNextApprovalStep" resultType="java.lang.Integer">
+  SELECT MIN(APPROVAL_STEP)
+  FROM DRAFT_APPROVAL
+  WHERE DOCUMENT_NO = #{documentNo}
+    AND APPROVAL_STATUS IN (607, 608)
+    AND APPROVAL_STEP > #{currentStep}
+</select>
+
+<!-- 내가 몇 차 결재자인지 조회 -->
+<select id="selectMyApprovalStep" resultType="int">
+  SELECT APPROVAL_STEP
+  FROM DRAFT_APPROVAL
+  WHERE DOCUMENT_NO = #{documentNo}
+    AND MEMBER_NO   = #{memberNo}
+</select>
+
+
+<!-- 기안서 작성자 조회 -->
+<select id="selectApprovalWriterNoti" parameterType="int" resultType="DraftApprovalVO">
+	SELECT
+	      DD.MEMBER_NO AS approvalWriter
+	    , DD.PROJECT_NO
+	    , P.PROJECT_NAME
+	    , DD.DOCUMENT_NO
+	    , DD.DOCUMENT_TITLE
+	FROM DRAFT_DOCUMENT DD
+	INNER JOIN PROJECT P
+	    ON DD.PROJECT_NO = P.PROJECT_NO
+	WHERE DD.DOCUMENT_NO = #{documentNo}
+</select>
+
+<!--  문의사항 글쓴이에게 답변 알림  -->
+<select id="selectInquiryNoti" parameterType="int" resultType="kr.or.ddit.vo.InquiryVO">
+	SELECT
+    INQUIRY_NO,
+    USER_NO,
+    INQUIRY_TITLE,
+    INQUIRY_CONTENT,
+    INQUIRY_TYPE,
+    INQUIRY_REGDATE,
+    INQUIRY_UPDDATE,
+    INQUIRY_HIT,
+    REPLY_NO,
+    ADMIN_NO,
+    REPLY_CONTENT,
+    REPLY_DATE,
+    REPLY_STATUS,
+    FILE_GROUP_NO,
+    REPLY_FILE_GROUP_NO
+FROM
+    INQUIRY
+WHERE INQUIRY_NO = #{inquiryNo}
+</select>
+
+
+<!-- 화상 채팅 알림 발송 대상  #{videochatNo}, #{videochatCreaterNo}, inviteMemberList-->
+<select id="selectVideoInviteNotiTargets" parameterType="kr.or.ddit.vo.VideoChatVO" resultType="kr.or.ddit.vo.VideoChatVO">
+  SELECT
+      vr.VIDEOCHAT_NO
+    , vr.VIDEOCHAT_TITLE
+    , inv.MEMBER_NO
+    , vr.PROJECT_NO
+    , p.PROJECT_NAME      
+    , vr.VIDEOCHAT_URL  
+    , vr.VIDEOCHAT_ID
+  FROM VIDEOCHAT_ROOM vr
+  JOIN PROJECT p
+    ON p.PROJECT_NO = vr.PROJECT_NO   
+  JOIN (
+    <foreach collection="inviteMemberList" item="memNo" open="(" separator=" UNION ALL " close=")">
+      SELECT #{memNo} AS MEMBER_NO FROM DUAL
+    </foreach>
+  ) inv
+    ON 1=1
+  WHERE vr.VIDEOCHAT_NO = #{videochatNo}
+    AND inv.MEMBER_NO != #{videochatCreaterNo}
+ 
+</select>
+
+
+<insert id="insertTaskManagerNoti" parameterType="map">
+   INSERT INTO NOTIFICATION (
+      NOTI_NO, MEMBER_NO, NOTI_TYPE, TARGET_ID, NOTI_URL,
+      IS_READ, NOTI_REGDATE, NOTI_MESSAGE, NOTI_CATEGORY
+  )
+  SELECT
+      SEQ_NOTIFICATION.NEXTVAL,
+      NS.MEMBER_NO,
+      #{notiType},
+      #{targetId},
+      #{notiUrl},
+      'N',
+      CURRENT_TIMESTAMP,
+      #{notiMessage},
+      (SELECT P.PROJECT_NAME FROM PROJECT P WHERE P.PROJECT_NO = #{projectNo})
+  FROM NOTIFICATION_SETTING NS
+  JOIN MEMBER M ON M.MEMBER_NO = NS.MEMBER_NO
+  WHERE NS.NOTI_MANAGER = 'Y'
+    AND M.LEAVE_STATUS = 'N'
+<choose>
+  <when test="memberNos != null and memberNos.size() > 0">
+    AND NS.MEMBER_NO IN
+    <foreach collection="memberNos" item="no" open="(" separator="," close=")">
+      #{no}
+    </foreach>
+  </when>
+  <otherwise>
+    AND 1=0
+  </otherwise>
+</choose>
+</insert>
+
+<select id="selectTaskWriter" parameterType="int" resultType="int">
+  SELECT TASK_WRITER
+  FROM PROJECT_TASK
+  WHERE TASK_ID = #{taskId}
+</select>
+
+<select id="selectProjectName" parameterType="int" resultType="string">
+  SELECT PROJECT_NO
+  FROM PROJECT_TASK
+  WHERE TASK_ID = #{taskId}
+</select>
+
+<select id="selectProjectNoByTaskId" parameterType="int" resultType="int">
+  SELECT PROJECT_NO
+  FROM PROJECT_TASK
+  WHERE TASK_ID = #{taskId}
+</select>
+
+<select id="selectSubManagerPmNoti" parameterType="int" resultType="int">
+  SELECT DISTINCT member_no
+  FROM (
+
+    SELECT ptm.member_no
+      FROM project_task_manager ptm
+     WHERE ptm.work_type = 'S'
+       AND ptm.work_id IN (
+           SELECT s.sub_id
+             FROM project_task_sub s
+            WHERE s.task_id = #{taskId}
+       )
+
+    UNION ALL
+
+    SELECT pm.member_no
+      FROM project_member pm
+     WHERE pm.project_no = (SELECT t.project_no FROM project_task t WHERE t.task_id = #{taskId})
+       AND pm.project_role = 'MANAGER'
+       AND pm.project_mem_status = 'Y'
+  )
+</select>
+
+</mapper>

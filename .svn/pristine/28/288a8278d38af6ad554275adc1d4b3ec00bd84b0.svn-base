@@ -1,0 +1,22 @@
+package kr.or.ddit.approval.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.vo.ApprovalPaginationInfoVO;
+import kr.or.ddit.vo.DraftDocumentVO;
+
+@Mapper
+public interface IApprovalMapper {
+
+	String getProjectRole(int projectNo, int userNo);
+
+	Map<String, Object> getApprovalStats(int projectNo, int userNo, String projectRole);
+
+	int getApprovalCount(ApprovalPaginationInfoVO<DraftDocumentVO> pagingVO);
+
+	List<DraftDocumentVO> getApprovalList(ApprovalPaginationInfoVO<DraftDocumentVO> pagingVO);
+
+}

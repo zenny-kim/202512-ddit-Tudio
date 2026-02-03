@@ -1,0 +1,315 @@
+package kr.or.ddit.project.controller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import jakarta.servlet.http.HttpSession;
+import kr.or.ddit.project.service.IProjectService;
+import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.project.ProjectVO;
+import lombok.extern.slf4j.Slf4j;
+
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : ProjectController
+ * DESC : 프로젝트 생성, 수정, 삭제 컨트롤러
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 YHB
+ * @version 1.0, 2025.12.26
+ * 
+ */
+@Slf4j
+@Controller
+@RequestMapping("/tudio/project")
+public class ProjectController {
+	
+	@Autowired
+	private IProjectService projectService;
+	
+	
+	/**
+	 * 프로젝트 생성폼
+	 * @return views/project/createForm
+	 */
+	@GetMapping("/create")
+	public String projectCreateForm(Model model) {
+		log.info("projectCreateForm() 메소드 실행...!");
+		
+		List<Map<String, Object>> tabList = projectService.getProjectTabList(null);
+
+        model.addAttribute("tabList", tabList);
+        model.addAttribute("status", "c");
+		
+		return "project/form";
+	}
+	
+
+	/**
+	 * 프로젝트 생성
+	 * @param projectVO
+	 * @param loginMember
+	 * @return
+	 */
+	@PostMapping("/create")
+	@ResponseBody
+	public ResponseEntity<Map<String, Object>> projectCreate(
+			@RequestBody ProjectVO projectVO, 
+			@SessionAttribute("loginUser") MemberVO loginMember) {
+		Map<String, Object> response = new HashMap<>();
+		
+		try {
+			log.info("projectCreate() 메소드 실행...!");
+			
+			projectVO.setMemberNo(loginMember.getMemberNo());
+			
+			// 생성 후 실패한 이메일 목록
+			List<String> failedEmail = projectService.createProject(projectVO);
+			
+			response.put("status", "SUCCESS");
+			response.put("failedEmail", failedEmail);
+			response.put("projectNo", projectVO.getProjectNo());
+			
+			return new ResponseEntity<>(response, HttpStatus.OK);			// 200 OK
+		} catch(Exception e) {			
+			e.printStackTrace();		
+			response.put("status", "FAILED");
+			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+		}
+	}
+	
+	
+	/**
+	 * 이메일 검증
+	 * @param emailList
+	 * @return
+	 */
+	@PostMapping("/check-emails")
+	@ResponseBody
+	public ResponseEntity<Map<String, Object>> checkEmails(@RequestBody List<String> emailList) {
+		log.info("checkEmails() 메소드 실행...!");
+	    
+	    // 1. 빈 값 체크
+	    if (emailList == null || emailList.isEmpty()) {
+	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	    }
+
+	    // 2. 서비스 호출
+	    Map<String, Object> result = projectService.checkEmailList(emailList);
+	    
+	    // 3. 응답 반환
+	    return new ResponseEntity<>(result, HttpStatus.OK);			// 200 OK
+	}
+	
+	
+	/**
+	 * 프로젝트 상세
+	 * @param projectNo
+	 * @param model
+	 * @param loginMember 로그인 사용자 정보
+	 * @param ra 
+	 * @return view/project/main
+	 */
+	@GetMapping("/detail")
+	public String projectDetail(@RequestParam("projectNo") int projectNo, Model model, 
+			@SessionAttribute("loginUser") MemberVO loginMember, 
+			RedirectAttributes ra) {
+		log.info("projectDetail() 실행...!");
+		
+		// 1. 로그인한 사용자 정보
+        int memberNo = loginMember.getMemberNo();
+		
+        // 2. 접근 권한 체크
+        boolean hasAccess = projectService.checkProjectAccess(projectNo, memberNo);
+        
+        if (!hasAccess) {
+            // (권한 X) 목록으로 리다이렉트 및 경고 메시지 출력
+            ra.addFlashAttribute("message", "해당 프로젝트에 접근 권한이 없습니다.");
+            return "redirect:/tudio/project/list";
+        }
+        
+        // 3. 프로젝트 북마크 설정 정보
+        String bookmark = projectService.selectBookmark(projectNo, memberNo);
+
+        // 4. (권한 O) 프로젝트 정보 조회
+        ProjectVO project = projectService.getProjectDetail(projectNo);
+        model.addAttribute("project", project);
+        model.addAttribute("loginMember", memberNo);
+        model.addAttribute("bookmark", bookmark);
+        
+        return "project/projectMain";
+	}
+	
+	
+	/**
+	 * 프로젝트 북마크 상태 변경
+	 * @param params
+	 * @param loginMember
+	 * @return
+	 */
+	@PostMapping("/bookmark")
+	@ResponseBody
+	public ResponseEntity<Map<String, String>> toggleBookmark(@RequestBody Map<String, Object> params,
+			@SessionAttribute("loginUser") MemberVO loginMember) {
+		log.info("toggleBookmark() 실행...!");
+		
+		Map<String, String> resp = new HashMap<>();
+		
+	    int memberNo = loginMember.getMemberNo();
+	    int projectNo = Integer.parseInt(String.valueOf(params.get("projectNo")));
+	    	    
+	    try {
+	    	String status = projectService.toggleBookmark(projectNo, memberNo);
+	    	resp.put("status", "SUCCESS");
+	    	resp.put("bookmark", status);
+	        return new ResponseEntity<>(resp, HttpStatus.OK);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        resp.put("status", "FAILED");
+	        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+	    }
+	}
+	
+	
+	/**
+	 * 프로젝트 목록
+	 * @return
+	 */
+	@GetMapping("/list")
+	public String projectList(Model model) {
+		log.info("projectList() 실행...!");
+		
+		List<ProjectVO> projectList = projectService.list();
+		model.addAttribute("projectList", projectList);
+		
+		return "project/list";
+	}
+	
+	
+	/**
+	 * 프로젝트 수정폼
+	 * @return view/project/form
+	 */
+	@GetMapping("/update")
+	public String projectModifyForm(int projectNo, Model model) {
+		log.info("projectModifyForm() 실행...!");
+		
+		ProjectVO project = projectService.getProjectDetail(projectNo);
+		List<Map<String, Object>> tabList = projectService.getProjectTabList(project);
+		
+		model.addAttribute("project", project);
+		model.addAttribute("tabList", tabList);
+		model.addAttribute("status", "u");
+		
+		return "project/form";
+	}
+	
+	
+	/**
+	 * 프로젝트 수정
+	 * @param projectVO
+	 * @param loginMember
+	 * @return
+	 */
+	@PostMapping("/update")
+	@ResponseBody
+	public ResponseEntity<Map<String, Object>> projectModify(
+			@RequestBody ProjectVO projectVO,
+			@SessionAttribute("loginUser") MemberVO loginMember) {
+        Map<String, Object> resp = new HashMap<>();
+
+		try {
+			projectVO.setMemberNo(loginMember.getMemberNo());
+			
+            log.info("projectModify() 실행... projectNo: {}", projectVO.getProjectNo());
+            
+            List<String> failedEmail = projectService.updateProject(projectVO);
+            
+            resp.put("status", "SUCCESS");
+            resp.put("failedEmail", failedEmail);
+            resp.put("projectNo", projectVO.getProjectNo());
+            
+            return new ResponseEntity<>(resp, HttpStatus.OK);		 // 200 OK
+        } catch (RuntimeException ex) {
+			log.warn("프로젝트 수정 권한 오류: {}", ex.getMessage());
+			resp.put("status", "ACCESS_DENIED");
+			resp.put("message", ex.getMessage());
+            return new ResponseEntity<>(resp, HttpStatus.FORBIDDEN); // 403 Forbidden
+		} catch(Exception e) {          
+            e.printStackTrace();        
+            resp.put("status", "FAILED");
+            return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+        }
+	}
+	
+	
+	/**
+	 * 프로젝트 삭제 (논리 삭제로 상태값을 변경)
+	 * @return
+	 */
+	@PostMapping("/delete")
+	public String projectDelete(ProjectVO projectVO, @SessionAttribute("loginUser") MemberVO loginMember) {
+		log.info("projectDelete() 실행...!");
+		
+		projectVO.setMemberNo(loginMember.getMemberNo());
+		
+		int result = projectService.deleteProjectLogically(projectVO);
+		
+		String goPage = "";
+		if(result > 0) {
+			goPage = "";
+		} else {
+			goPage = "";
+		}
+
+		return goPage;
+	}
+	
+	
+	// 프로젝트 상태 변경 (완료/재진행)
+    @PostMapping("/status")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> changeProjectStatus(@RequestBody Map<String, Object> params) {
+    	log.info("changeProjectStatus() 실행...!");
+    	
+    	int projectNo = Integer.parseInt(String.valueOf(params.get("projectNo")));
+    	int projectStatus = Integer.parseInt(String.valueOf(params.get("status")));
+        Map<String, Object> resp = new HashMap<>();
+        
+        try {
+            int result = projectService.changeProjectStatus(projectNo, projectStatus);
+            
+            if (result == 0) {
+            	resp.put("status", "SUCCESS");
+            } else {
+            	resp.put("status", "UNFINISHED_TASKS");
+            	resp.put("count", result); // 미완료 업무 개수
+            }
+            
+            return new ResponseEntity<>(resp, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.put("status", "ERROR");
+            resp.put("message", e.getMessage());
+            return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+        }
+    }
+}

@@ -1,0 +1,78 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. 메인 컨텐츠 영역 레이아웃
+   ========================================= */
+.main-content-wrap {
+    padding: 35px; /* 본문 여백 */
+    background-color: #f8fafc; /* 배경색 (Bootstrap 기본값과 유사하나 명시) */
+}
+
+/* 카드 박스 (기안서 폼 컨테이너) */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05) !important; /* 부드러운 그림자 */
+    background-color: #fff;
+}
+
+/* =========================================
+   2. 결재 라인 (Drag & Drop) 스타일
+   ========================================= */
+
+/* 드래그 핸들 (:: 아이콘) */
+.drag-handle { 
+    cursor: grab; 
+    margin-right: 10px; 
+    color: #adb5bd; /* 회색 톤 */
+    font-size: 1.2rem;
+    transition: color 0.2s;
+}
+
+.drag-handle:hover {
+    color: #495057; /* 호버 시 진한 회색 */
+}
+
+/* 드래그 중인 상태 (마우스 클릭 시) */
+.drag-handle:active { 
+    cursor: grabbing; 
+}
+
+/* [중요] 스크립트(JS)와 연동되는 시각 효과 
+   아래 클래스들은 HTML에는 없지만 script에서 classList.add()로 사용됩니다.
+*/
+
+/* 1) 드래그 중인 아이템 (이동 중인 원본) */
+.list-group-item.dragging {
+    opacity: 0.5;
+    background-color: #e9ecef;
+    border: 2px dashed #ced4da;
+}
+
+/* 2) 드래그 오버 (놓을 위치 표시) */
+.list-group-item.over {
+    border-top: 2px solid #0d6efd; /* 파란색 줄로 위치 표시 */
+    background-color: rgba(13, 110, 253, 0.05); /* 아주 연한 파란 배경 */
+    transition: all 0.2s;
+}
+
+/* =========================================
+   3. 폼 요소 스타일 보정
+   ========================================= */
+/* 입력 필드 포커스 시 효과 (Bootstrap 기본값보다 부드럽게) */
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    border-color: #86b7fe;
+}
+
+/* 읽기 전용 필드 (작성자 등) 배경색 조정 */
+.form-control[readonly] {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+/* 텍스트 에디터(Textarea) 높이 및 리사이즈 설정 */
+textarea.form-control {
+    resize: vertical; /* 세로 크기 조절만 허용 */
+    min-height: 300px;
+}

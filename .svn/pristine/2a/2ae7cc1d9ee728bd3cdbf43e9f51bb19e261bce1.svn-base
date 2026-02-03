@@ -1,0 +1,28 @@
+package kr.or.ddit.meetingRoom.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import jakarta.servlet.http.HttpSession;
+import kr.or.ddit.vo.MemberVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Controller
+@RequestMapping("tudio/project/meetingRoom")
+public class MeetingRoomController {
+
+	@GetMapping
+	public String MeetingRoomPage( HttpSession session, Model model)	{
+		log.info("MeetingRoomPage() 실행");
+		MemberVO loginUser = (MemberVO) session.getAttribute("loginUser");
+	    if(loginUser == null) {
+	        return "redirect:/tudio/login";
+	    }
+		return "project/tabs/meetingRoom/meetingRoom";
+		
+	}
+	
+}

@@ -1,0 +1,26 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. 메인 레이아웃 (껍데기 & 공통 설정)
+   ========================================= */
+body {
+    padding-top: 60px; 
+    background-color: #f4f7f6;
+}
+
+.main-content-wrap {
+    margin-left: 90px; 
+    padding: 20px;
+    min-height: calc(100vh - 60px - 200px); /* 화면 꽉 차게 높이 계산 */
+    transition: margin-left 0.3s ease;
+}
+
+/* =========================================
+   2. 대시보드 페이지 전용 스타일
+   ========================================= */
+.grid-stack-item-content {
+    background: #ffffff;
+    border-radius: 0.5rem;
+	padding: 20px;
+	border: 1px solid #0d6efd;
+}

@@ -1,0 +1,9 @@
+package kr.or.ddit.siteAdminMember.service;
+
+import kr.or.ddit.dto.AdminUserDTO;
+
+public interface IAdminMemberService {
+	
+	// 관리자 정보 조회용
+	public AdminUserDTO getAdminInfo(String memId);
+}

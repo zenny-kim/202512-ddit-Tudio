@@ -1,0 +1,241 @@
+/**
+ * drive.js
+ * 프로젝트 내 드라이브 탭 페이지 관련 로직 
+ */
+
+$(function () {
+    let contextPath;
+    let projectNo;
+    let currentFolderId = 0; // 0: Root(최상위)
+    let isTrashMode = false; // 휴지통 모드 여부
+
+    // 탭 로드 시 초기화
+    $(document).on('tab:loaded', function (e, tabName) {
+        if (tabName !== 'drive') return;
+        initDriveTab();
+    });
+
+    function initDriveTab() {
+        contextPath = $('body').data('contextPath');
+        projectNo = $('body').data('projectNo');
+        
+        // 1. 초기 목록 로드
+        loadDriveList(0);
+        
+        // 2. 이벤트 바인딩
+        bindDriveEvents();
+    }
+
+    // 파일/폴더 목록 불러오기 (AJAX)
+    function loadDriveList(folderId) {
+        currentFolderId = folderId;
+        
+        // TODO: 실제 컨트롤러 URL에 맞게 수정 필요
+        const url = isTrashMode 
+            ? `${contextPath}/tudio/project/drive/trash?projectNo=${projectNo}`
+            : `${contextPath}/tudio/project/drive/api/list`;
+
+		$.ajax({
+			url: url,
+			type: "get",
+			data: {
+				projectNo: projectNo,
+	            folderId: folderId
+			},
+			dataType: "json",
+			success: function(result){
+				renderTable(result.driveList);
+			},
+			error: function(xhr, status, error){
+				if(xhr.status === 401) {
+	                Swal.fire({
+						title: "로그인이 필요한 서비스입니다.",
+						icon: "error"
+					});
+	                location.href = "/tudio/login"; // 로그인 페이지 이동
+	            } else {
+	                console.error("드라이브 로드 실패:", error);
+	                alert("목록을 불러오는데 실패했습니다.");
+	            }
+			}
+		})
+        
+        console.log(`[Drive] Loading... Folder: ${folderId}, TrashMode: ${isTrashMode}`);
+        // renderTable([]); // 데이터 수신 후 호출
+    }
+
+    // 테이블 렌더링 함수
+    function renderTable(list) {
+        const $tbody = $('#driveListBody');
+        $tbody.empty();
+
+        if (!list || list.length === 0) {
+            $('#driveEmptyState').show();
+            return;
+        }
+        $('#driveEmptyState').hide();
+		
+		let html = '';
+        list.forEach(item => {
+			const fileType = item.fileType ? item.fileType.toLowerCase() : 'file';
+	        const fileName = item.fileName || '이름 없음';
+	        const uploader = item.uploaderName || '-';
+	        const regDate = item.regDate || '-';
+	        
+	        // 파일 크기: 폴더면 '-', 파일이면 사이즈 표시
+	        const sizeStr = (item.fileType === 'FOLDER') ? '-' : formatBytes(item.fileSize);
+	        
+	        // ⭐️ Server에서 보내준 iconClass 사용!
+	        const iconClass = item.iconClass || 'fa-solid fa-file text-secondary';
+
+	        // 볼드체 처리 (폴더만)
+	        const nameDisplay = (item.fileType === 'FOLDER') 
+	            ? `<span class="fw-bold text-dark">${fileName}</span>` 
+	            : `<span class="text-dark">${fileName}</span>`;
+
+	        html += `
+	            <tr class="drive-row" data-id="${item.fileId}" data-type="${fileType}">
+	                <td class="text-center drive-icon-td">
+	                    <i class="${iconClass} fa-lg"></i>
+	                </td>
+	                <td class="drive-name-td">
+	                    ${nameDisplay}
+	                </td>
+	                <td>${uploader}</td>
+	                <td class="text-muted">${regDate}</td>
+	                <td class="text-muted text-center small">${sizeStr}</td>
+	                <td class="text-center">
+	                    <button class="btn btn-sm text-muted btn-context-menu" onclick="event.stopPropagation();">
+	                        <i class="fa-solid fa-ellipsis-vertical"></i>
+	                    </button>
+	                </td>
+	            </tr>
+	        `;
+	    });
+
+	    $tbody.html(html);
+    }
+
+    // 이벤트 바인딩
+    function bindDriveEvents() {
+        // 1. 폴더 클릭 (진입)
+        $('#driveListBody').on('click', '.drive-row', function(e) {
+            // 메뉴 버튼 클릭 시에는 이동하지 않음
+            if ($(e.target).closest('.btn-context-menu').length > 0) return;
+
+            const type = $(this).data('type');
+            const id = $(this).data('id');
+
+            if (type === 'folder' && !isTrashMode) {
+                // 폴더 진입 -> Breadcrumb 업데이트 및 목록 로드
+                updateBreadcrumb(id, $(this).find('.drive-name-td').text().trim());
+                loadDriveList(id);
+            } else if (type === 'file') {
+                // 파일 클릭 -> 미리보기 or 다운로드 (기획에 따라)
+                alert("파일 상세/다운로드: " + id);
+            }
+        });
+
+        // 2. 휴지통 모드 전환
+        $('#btnGoTrash').on('click', function() {
+            isTrashMode = true;
+            toggleHeaderMode();
+            loadDriveList(0); 
+        });
+
+        $('#btnGoDrive').on('click', function() {
+            isTrashMode = false;
+            toggleHeaderMode();
+            resetBreadcrumb();
+            loadDriveList(0); 
+        });
+        
+        // 3. 파일 업로드
+        $('#btnUpload').on('click', () => $('#driveFileInput').click());
+        $('#driveFileInput').on('change', function(){
+            if(this.files.length > 0) alert(this.files.length + "개 파일 업로드 시도");
+        });
+
+        // 4. 새 폴더
+        $('#btnNewFolder').on('click', function(){
+            const name = prompt("새 폴더 이름을 입력하세요:");
+            if(name) alert("폴더 생성: " + name);
+        });
+        
+        // 5. Breadcrumb 클릭 (상위 이동)
+        $('#driveBreadcrumb').on('click', '.breadcrumb-item', function() {
+            if(isTrashMode) return;
+            const folderId = $(this).data('folderId');
+            
+            // 클릭한 폴더 이후의 경로는 삭제 (UI 처리)
+            $(this).nextAll().remove();
+            
+            loadDriveList(folderId);
+        });
+    }
+
+	// UI: 헤더(드라이브/휴지통) 모드 전환
+	function toggleHeaderMode() {
+	    if (isTrashMode) {
+	        $('#driveViewTitle').html('<i class="fa-solid fa-trash-can me-2"></i>휴지통');
+	        $('#driveBreadcrumb').hide(); // Breadcrumb는 flex가 아니므로 hide() 써도 무방하나 통일해도 됨
+
+	        // [수정 포인트] 일반 버튼 숨기기 (d-none 추가)
+	        $('#driveActionBtns').addClass('d-none');
+	        
+	        // [수정 포인트] 휴지통 버튼 보이기 (d-none 제거)
+	        $('#trashActionBtns').removeClass('d-none');
+	        
+	    } else {
+	        $('#driveViewTitle').html('<i class="fa-solid fa-hard-drive me-2"></i>프로젝트 드라이브');
+	        $('#driveBreadcrumb').show();
+	        
+	        // [수정 포인트] 일반 버튼 보이기
+	        $('#driveActionBtns').removeClass('d-none');
+	        
+	        // [수정 포인트] 휴지통 버튼 숨기기
+	        $('#trashActionBtns').addClass('d-none');
+	    }
+	}
+    
+    // UI: Breadcrumb 초기화
+    function resetBreadcrumb(){
+        const $ol = $('#driveBreadcrumb');
+        $ol.empty();
+        $ol.append(`<li class="breadcrumb-item active" data-folder-id="0"><i class="fa-solid fa-house me-1"></i>최상위</li>`);
+    }
+    
+    // UI: Breadcrumb 추가
+    function updateBreadcrumb(folderId, folderName){
+        const $ol = $('#driveBreadcrumb');
+        // 기존 active 제거
+        $ol.find('.active').removeClass('active');
+        // 새 경로 추가
+        $ol.append(`<li class="breadcrumb-item active" data-folder-id="${folderId}">${folderName}</li>`);
+    }
+
+    // 헬퍼: 파일 아이콘 HTML 반환
+    function getFileIcon(type, ext) {
+        if (type === 'FOLDER') return '<i class="fa-solid fa-folder text-warning fa-lg"></i>';
+        
+        ext = (ext || '').toLowerCase();
+        if (['jpg','png','gif','jpeg'].includes(ext)) return '<i class="fa-solid fa-file-image text-primary fa-lg"></i>';
+        if (['pdf'].includes(ext)) return '<i class="fa-solid fa-file-pdf text-danger fa-lg"></i>';
+        if (['xls','xlsx','csv'].includes(ext)) return '<i class="fa-solid fa-file-excel text-success fa-lg"></i>';
+        if (['ppt','pptx'].includes(ext)) return '<i class="fa-solid fa-file-powerpoint text-danger fa-lg"></i>';
+        if (['zip','rar'].includes(ext)) return '<i class="fa-solid fa-file-zipper text-info fa-lg"></i>';
+        
+        return '<i class="fa-solid fa-file text-secondary fa-lg"></i>';
+    }
+
+    // 헬퍼: 파일 크기 포맷팅
+    function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+    }
+
+});

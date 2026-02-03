@@ -1,0 +1,235 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tudio - 화상미팅 대기실</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/project_common.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/video_chat.css">
+    <jsp:include page="/WEB-INF/views/include/common.jsp" />
+    
+    <style>
+        .copy-btn-inner { cursor: pointer; transition: 0.2s; }
+        .copy-btn-inner:hover { color: #0d6efd !important; }
+        .pulse-red { animation: pulse-red-animation 2s infinite; }
+        @keyframes pulse-red-animation {
+            0% { box-shadow: 0 0 0 0px rgba(220, 53, 69, 0.4); }
+            100% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        }
+    </style>
+</head>
+<body data-context-path="${pageContext.request.contextPath}" class="d-flex flex-column min-vh-100">
+    
+    <jsp:include page="../include/headerUser.jsp"/>
+    
+    <div class="d-flex flex-grow-1">
+        <jsp:include page="../include/sidebarUser.jsp">
+            <jsp:param name="menu" value="video_chat" />
+        </jsp:include>
+    
+        <main class="main-content-wrap flex-grow-1 px-4 pt-4 pb-5">
+            <div class="container-fluid h-100">
+                <div class="mb-4">
+                    <h3 class="fw-bold text-primary-dark m-0">
+                        <i class="bi bi-hourglass-split me-2"></i> 화상미팅 대기실
+                    </h3>
+                    <p class="text-muted small mt-2">입장 전 회의 정보를 확인하고 기기 상태를 점검하세요.</p>
+                </div>
+                
+                <div class="row g-4 align-items-stretch">
+                    <div class="col-lg-5 d-flex">
+                        <div class="card waiting-card p-4 w-100 h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                                    <span class="badge bg-danger pulse-red me-2">LIVE</span>
+                                    <h4 class="fw-bold m-0 text-truncate">${roomInfo.videochatTitle}</h4>
+                                </div>
+                                
+                                <div class="participant-status-box mb-4 p-3 bg-light rounded-3 text-center">
+                                    <div class="small text-muted mb-1">현재 참여 중인 팀원</div>
+                                    <div class="h2 fw-bold text-primary mb-0">
+                                        <span id="realtimeCount">${memberCount}</span><small class="fs-6 text-muted"> 명</small>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="info-label text-muted small">초대 링크 (Waiting Room URL)</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control bg-white" id="waitingUrlDisplay" 
+                                               value="http://localhost:8060/tudio/videoChat/waitingRoom?roomId=${roomInfo.videochatId}" readonly>
+                                        <button class="btn btn-outline-primary" type="button" onclick="copyToClipboard('waitingUrlDisplay')">
+                                            <i class="bi bi-link-45deg"></i> 복사
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-6">
+                                        <label class="info-label text-muted small">Room ID</label>
+                                        <div class="d-flex align-items-center p-2 bg-light rounded">
+                                            <code class="text-dark flex-grow-1" id="roomIdVal">${roomInfo.videochatId}</code>
+                                            <i class="bi bi-copy ms-2 text-muted copy-btn-inner" onclick="copyValue('roomIdVal')"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="info-label text-muted small">Password</label>
+                                        <div class="d-flex align-items-center p-2 bg-light rounded">
+                                            <code class="text-danger flex-grow-1" id="roomPwVal">${roomInfo.videochatPw}</code>
+                                            <i class="bi bi-copy ms-2 text-muted copy-btn-inner" onclick="copyValue('roomPwVal')"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 mb-3">
+                                    <label class="info-label text-muted small mb-2">
+                                        <i class="bi bi-people-fill me-1"></i> 초대된 멤버 목록 
+                                        <span class="badge bg-primary-subtle text-primary ms-1">${memberCount}명</span>
+                                    </label>
+                                    <div class="rounded border bg-white" style="max-height: 200px; overflow-y: auto;">
+                                        <table class="table table-sm history-table mb-0 text-center" style="font-size: 0.85rem;">
+                                            <thead class="table-light sticky-top">
+                                                <tr>
+                                                    <th style="width: 20%;">순번</th>
+                                                    <th style="width: 45%;">성명</th>
+                                                    <th style="width: 35%;">역할</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <c:choose>
+                                                    <c:when test="${empty memberList}">
+                                                        <tr>
+                                                            <td colspan="3" class="py-3 text-muted">초대 정보 없음</td>
+                                                        </tr>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <c:forEach items="${memberList}" var="member" varStatus="vs">
+                                                            <tr class="${member.memberName eq loginUser.memberName ? 'bg-primary-subtle' : ''}">
+                                                                <td>${vs.count}</td>
+                                                                <td class="fw-bold">
+											                        ${member.memberName}
+											                        <c:if test="${member.memberNo eq loginUser.memberNo}">
+											                            <span class="text-primary small" style="font-size: 0.75rem;">(본인)</span>
+											                        </c:if>
+											                    </td>
+                                                                <td><small class="text-muted">${member.memberRole}</small></td>
+                                                            </tr>
+                                                        </c:forEach>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="alert alert-warning border-0 small mb-0 mt-auto">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    회의실 입장 시 카메라와 마이크 권한이 필요합니다.
+                                </div>                              
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="col-lg-7 d-flex">
+                        <div class="card waiting-card p-5 bg-white text-center w-100 h-100 border-0 shadow-sm">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="fw-bold mb-4">입장 전 상태 점검</h5>
+                                
+                                <div class="camera-preview-box mb-4 shadow-inner" style="background:#000; border-radius:20px; overflow:hidden; position:relative; aspect-ratio: 16/9;">
+                                    <video id="localVideoPreview" autoplay playsinline muted 
+                                           style="width:100%; height:100%; object-fit:cover; transform: scaleX(-1); display:none;"></video>
+                                    
+                                    <div id="cameraPlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100 text-white">
+                                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                                        <p class="mb-0 opacity-75">카메라를 연결하는 중입니다...</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-3 col-md-9 mx-auto mt-auto">
+                                    <a href="${pageContext.request.contextPath}/tudio/videoChat/room/${roomInfo.videochatId}" 
+                                       class="btn btn-primary btn-lg rounded-pill fw-bold py-3 shadow"
+                                       id="btnEnter">
+                                        지금 바로 입장하기 <i class="bi bi-arrow-right-short"></i>
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/tudio/videoChat/list" 
+                                       class="btn btn-link text-muted text-decoration-none">
+                                        대기실 나가기
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>    
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            startCameraPreview();
+            initRealtimeSync();
+        });
+
+        // 1. 실시간 인원 동기화 (Socket.io)
+        function initRealtimeSync() {
+            // 시그널링 서버 주소
+            const SIGNALING_URL = "https://3.34.194.219:3000";
+            const roomId = "${roomInfo.videochatId}";
+            
+            const socket = io(SIGNALING_URL, {
+                rejectUnauthorized: false,
+                transports: ['websocket']
+            });
+
+            socket.on("connect", () => {
+                console.log("✅ 대기실 소켓 연결 성공");
+                // 인원수 업데이트를 받기 위해 방 채널 가입
+                socket.emit("join_room", { roomId: "${roomInfo.videochatId}" });
+            });
+
+            // 서버에서 인원수 변경 알림 수신
+            socket.on("participant_count", (data) => {
+                console.log("👥 인원수 업데이트:", data.count);
+                $('#realtimeCount').fadeOut(200, function() {
+                    $(this).text(data.count).fadeIn(200);
+                });
+            });
+        }
+    
+        // 2. 카메라 미리보기
+        async function startCameraPreview() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const videoElement = document.getElementById('localVideoPreview');
+                const placeholder = document.getElementById('cameraPlaceholder');
+                
+                videoElement.srcObject = stream;
+                placeholder.style.display = 'none';
+                videoElement.style.display = 'block';
+            } catch (err) {
+                console.error("카메라 접근 실패:", err);
+                $('#cameraPlaceholder').html('<i class="bi bi-camera-video-off fs-1 mb-2"></i><p>카메라를 찾을 수 없습니다.</p>');
+            }
+        }
+    
+        // 3. 복사 기능들
+        function copyToClipboard(elementId) {
+            const val = document.getElementById(elementId).value;
+            performCopy(val);
+        }
+
+        function copyValue(elementId) {
+            const val = document.getElementById(elementId).innerText;
+            performCopy(val);
+        }
+
+        function performCopy(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                swal.fire({ toast:true, position:'top', icon:'success', title:'복사되었습니다!', showConfirmButton:false, timer:1000 });
+            });
+        }
+    </script>
+</body>
+</html>

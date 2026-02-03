@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.projectBoard.mapper.ITabBoardMapper">
+	
+	<insert id="insertCategory" parameterType="kr.or.ddit.vo.project.BoardCategoryVO">
+        <selectKey keyProperty="categoryNo" resultType="int" order="BEFORE">
+            SELECT SEQ_BOARD_CATEGORY.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BOARD_CATEGORY (
+            CATEGORY_NO, PROJECT_NO, CATEGORY_NAME
+        ) VALUES (
+            #{categoryNo}, #{projectNo}, #{categoryName}
+        )
+    </insert>
+	
+	
+	<sql id="boardSearch">
+		<if test="pagingVO.searchWord != null and pagingVO.searchType != ''">
+			<choose>
+				<when test = "pagingVO.searchType == 'title'">
+					AND(B.BO_TITLE LIKE '%' || #{pagingVO.searchWord} || '%')				
+				</when>
+				<when test = "pagingVO.searchType == 'writer'">
+					AND(M.MEMBER_NAME LIKE '%' || #{pagingVO.searchWord} || '%')
+				</when>
+				<otherwise>
+					AND (
+						B.BO_TITLE LIKE '%' || #{pagingVO.searchWord} || '%' OR
+						B.BO_CONTENT LIKE '%' || #{pagingVO.searchWord} || '%'
+					)
+				</otherwise>
+			</choose>
+		</if>
+	</sql>
+		
+	<resultMap id="boardMap" type="kr.or.ddit.vo.project.ProjectBoardVO">
+	    <id property="boNo" column="BO_NO"/>
+	    <result property="categoryNo" column="CATEGORY_NO"/>
+	    <result property="categoryName" column="CATEGORY_NAME"/>
+	    <result property="boTitle" column="BO_TITLE"/>
+	    <result property="boRegdate" column="BO_REGDATE"/>
+	    <result property="boHit" column="BO_HIT"/>
+	    <result property="boContent" column="BO_CONTENT"/>
+	    <result property="fileGroupNo" column="FILE_GROUP_NO"/>
+	    <result property="boContent" column="BO_CONTENT"/>
+	    <result property="fileGroupNo" column="FILE_GROUP_NO"/>
+	    <result property="fileCount" column="FILE_COUNT"/>
+	    
+	    <association property="memberVO" javaType="kr.or.ddit.vo.MemberVO">
+	        <id property="memberNo" column="MEMBER_NO"/>
+	        <result property="memberName" column="MEMBER_NAME"/>
+	    </association>
+	
+	    <association property="boardMinutesVO" javaType="kr.or.ddit.vo.project.ProjectBoardMinutesVO">
+	        <result property="meetingDate" column="MEETING_DATE"/>
+	        <result property="meetingGoal" column="MEETING_GOAL"/>
+	        <result property="meetingResult" column="MEETING_RESULT"/>
+	    </association>
+	    
+	    <collection property="meetingMemberList" ofType="kr.or.ddit.vo.project.MeetingMemberVO">
+		    <result property="boNo" column="BO_NO"/>
+		    <result property="memberNo" column="MEETING_MEMBER_NO"/>
+		    <association property="memberVO" javaType="kr.or.ddit.vo.MemberVO">
+		        <id property="memberNo" column="MEETING_MEMBER_NO"/>
+		        <result property="memberName" column="MEETING_MEMBER_NAME"/>
+		    </association>
+		</collection>
+		
+		<collection property="boFileDetailList" ofType="kr.or.ddit.vo.FileDetailVO">
+	        <id property="fileNo" column="FILE_NO"/>
+	        <result property="fileGroupNo" column="FILE_GROUP_NO"/>
+	        <result property="fileOriginalName" column="FILE_ORIGINAL_NAME"/> 
+	        <result property="fileSaveName" column="FILE_SAVE_NAME"/>
+	        <result property="filePath" column="FILE_PATH"/>
+	        <result property="fileSize" column="FILE_SIZE"/>
+	        <result property="fileFancysize" column="FILE_FANCYSIZE"/>
+	        <result property="fileMime" column="FILE_MIME"/>
+	    </collection>
+	</resultMap>
+	
+	
+	<select id="selectProjectBoardList" parameterType="map" resultMap="boardMap">
+	    SELECT 
+	        T.BO_NO
+	        , T.CATEGORY_NO
+	        , T.CATEGORY_NAME
+	        , T.BO_TITLE
+	        , T.MEMBER_NO
+	        , T.MEMBER_NAME
+	        , T.BO_REGDATE
+	        , T.BO_HIT
+	        , T.MEETING_DATE
+	        , T.FILE_COUNT      
+	    FROM (
+	        SELECT 
+	            L.BO_NO
+	            , L.CATEGORY_NO
+	            , L.CATEGORY_NAME
+	            , L.BO_TITLE
+	            , L.MEMBER_NO
+	            , L.MEMBER_NAME
+	            , L.BO_REGDATE
+	            , L.BO_HIT
+	            , L.MEETING_DATE
+	            , L.FILE_COUNT  
+	            , ROW_NUMBER() OVER(ORDER BY L.BO_NO DESC) AS RNUM
+	        FROM (
+	            SELECT 
+	                B.BO_NO
+	                , B.CATEGORY_NO
+	                , C.CATEGORY_NAME
+	                , B.BO_TITLE
+	                , M.MEMBER_NO
+	                , M.MEMBER_NAME
+	                , B.BO_REGDATE
+	                , B.BO_HIT
+	                , MIN.MEETING_DATE
+	                
+	                , (SELECT COUNT(FILE_NO) 
+	                   FROM FILE_DETAIL 
+	                   WHERE FILE_GROUP_NO = B.FILE_GROUP_NO
+	                     AND FILE_DELETE = 'N') AS FILE_COUNT
+	                   
+	            FROM 
+	                PROJECT_BOARD B
+	            JOIN 
+	                MEMBER M ON (B.MEMBER_NO = M.MEMBER_NO)
+	            JOIN 
+	                BOARD_CATEGORY C ON (B.CATEGORY_NO = C.CATEGORY_NO)
+	            LEFT JOIN 
+	                PROJECT_BOARD_MINUTES MIN ON (B.BO_NO = MIN.BO_NO)
+	            WHERE 
+	                C.PROJECT_NO = #{projectNo}
+	            <if test="category != '' and category != null">
+	                AND C.CATEGORY_NAME = #{category}
+	            </if>
+	            <include refid="boardSearch"/>
+	            ORDER BY B.BO_NO DESC
+	        ) L
+	    ) T
+	    <![CDATA[
+	    WHERE T.RNUM >= #{pagingVO.startRow} 
+	      AND T.RNUM <= #{pagingVO.endRow}
+	    ]]>
+	</select>
+		
+	<select id="countProjectBoard">
+		SELECT
+			COUNT(B.BO_NO)
+		FROM
+			PROJECT_BOARD B
+		JOIN
+			MEMBER M ON (B.MEMBER_NO = M.MEMBER_NO)
+		JOIN
+			BOARD_CATEGORY C ON (B.CATEGORY_NO = C.CATEGORY_NO)
+		WHERE
+			C.PROJECT_NO = #{projectNo}
+		<if test="category != '' and category != null">
+			AND C.CATEGORY_NAME = #{category}
+		</if>
+		<include refid="boardSearch"/>
+	</select>
+	
+	
+	<select id="getProjectMemberList" parameterType="int" resultType="kr.or.ddit.vo.MemberVO">
+	    SELECT A.MEMBER_NO
+	         , B.MEMBER_NAME
+	         , B.MEMBER_ID
+	         , A.PROJECT_ROLE
+	         , A.PROJECT_MEM_NO
+	    FROM PROJECT_MEMBER A
+	    INNER JOIN MEMBER B ON (A.MEMBER_NO = B.MEMBER_NO)
+	    WHERE A.PROJECT_NO = #{projectNo}
+	      AND A.PROJECT_MEM_STATUS = 'Y'
+	 	ORDER BY B.MEMBER_NAME ASC
+	</select>
+	
+	<insert id="insertProjectBoard" parameterType="kr.or.ddit.vo.project.ProjectBoardVO" useGeneratedKeys="true">
+		<selectKey keyProperty="boNo" resultType="int" order="BEFORE">
+			SELECT SEQ_PROJECT_BOARD.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO PROJECT_BOARD (
+			BO_NO
+			, CATEGORY_NO
+			, MEMBER_NO
+			, BO_TITLE
+			, BO_CONTENT
+			, BO_REGDATE
+			, BO_HIT
+			, BO_PIN_YN
+		) VALUES (
+			#{boNo}
+			, (SELECT CATEGORY_NO 
+		           FROM BOARD_CATEGORY 
+		           WHERE CATEGORY_NAME = #{categoryName}
+		           AND PROJECT_NO = #{projectNo})
+			, #{memberNo}
+			, #{boTitle}
+			, #{boContent}
+			, CURRENT_TIMESTAMP
+			, 0
+			, 'N'
+		)
+	</insert>
+	
+	<insert id="insertBoardMinutes" parameterType="kr.or.ddit.vo.project.ProjectBoardMinutesVO">
+	    INSERT INTO PROJECT_BOARD_MINUTES (
+	        BO_NO
+	        , MEETING_DATE
+	        , MEETING_GOAL
+	        , MEETING_RESULT
+	    ) VALUES (
+	        #{boNo}
+	        , #{meetingDate}
+	        , #{meetingGoal}
+	        , #{meetingResult}
+	    )
+	</insert>
+	
+	<insert id="insertMeetingMember" parameterType="kr.or.ddit.vo.project.MeetingMemberVO">
+	    INSERT INTO MEETING_MEMBER (
+	        BO_NO
+	        , MEMBER_NO
+	    ) VALUES (
+	        #{boNo}
+	        , #{memberNo}
+	    )
+	</insert>
+	
+	<update id="updateBoardFileGroupNo" parameterType="kr.or.ddit.vo.project.ProjectBoardVO">
+		UPDATE PROJECT_BOARD
+		   SET FILE_GROUP_NO = #{fileGroupNo}
+		 WHERE BO_NO = #{boNo}
+	</update>
+	
+	<select id="detailProjectBoard" parameterType="int" resultMap="boardMap">
+	    SELECT 
+	          B.BO_NO
+	        , B.CATEGORY_NO
+	        , C.CATEGORY_NAME
+	        , B.BO_TITLE
+	        , B.BO_CONTENT
+	        , B.BO_HIT
+	        , TO_CHAR(B.BO_REGDATE, 'YYYY-MM-DD HH24:MI') AS BO_REGDATE
+	        , B.MEMBER_NO
+	        , M.MEMBER_NAME
+	        , MIN.MEETING_DATE
+	        , MIN.MEETING_GOAL
+	        , MIN.MEETING_RESULT
+	        , MM.MEMBER_NO AS MEETING_MEMBER_NO
+	        , M2.MEMBER_NAME AS MEETING_MEMBER_NAME
+	        , FD.FILE_NO
+	        , FD.FILE_ORIGINAL_NAME
+	        , FD.FILE_SAVE_NAME
+	        , FD.FILE_SIZE
+	        , FD.FILE_FANCYSIZE
+	        , FD.FILE_PATH
+	        , FD.FILE_MIME
+	    FROM PROJECT_BOARD B
+	    JOIN BOARD_CATEGORY C ON B.CATEGORY_NO = C.CATEGORY_NO
+	    JOIN MEMBER M ON (B.MEMBER_NO = M.MEMBER_NO)
+	    LEFT OUTER JOIN PROJECT_BOARD_MINUTES MIN ON (B.BO_NO = MIN.BO_NO)
+	    LEFT OUTER JOIN MEETING_MEMBER MM ON (B.BO_NO = MM.BO_NO)
+	    LEFT OUTER JOIN MEMBER M2 ON (MM.MEMBER_NO = M2.MEMBER_NO)
+	    LEFT OUTER JOIN FILE_DETAIL FD ON (B.FILE_GROUP_NO = FD.FILE_GROUP_NO)
+	    WHERE B.BO_NO = #{boNo}
+	</select>
+	
+	<update id="increaseHitProjectBoard" parameterType="int">
+	    UPDATE PROJECT_BOARD
+	       SET BO_HIT = BO_HIT + 1
+	     WHERE BO_NO = #{boNo}
+	</update>
+	
+	<update id="updateProjectBoard" parameterType="kr.or.ddit.vo.project.ProjectBoardVO">
+	    UPDATE PROJECT_BOARD
+	    SET
+	        BO_TITLE = #{boTitle}
+	        , BO_CONTENT = #{boContent}
+	        , BO_UPDDATE = CURRENT_TIMESTAMP
+	        , CATEGORY_NO = (SELECT CATEGORY_NO 
+	                         FROM BOARD_CATEGORY 
+	                         WHERE CATEGORY_NAME = #{categoryName}
+	                         AND PROJECT_NO = #{projectNo})
+	    WHERE BO_NO = #{boNo}
+	</update>
+	
+	<delete id="deleteBoardMinutes" parameterType="int">
+	    DELETE FROM PROJECT_BOARD_MINUTES
+	    WHERE BO_NO = #{boNo}
+	</delete>
+	
+	<delete id="deleteMeetingMember" parameterType="int">
+	    DELETE FROM MEETING_MEMBER
+	    WHERE BO_NO = #{boNo}
+	</delete>
+	
+	<delete id="deleteProjectBoard" parameterType="int">
+	    DELETE FROM PROJECT_BOARD
+	    WHERE BO_NO = #{boNo}
+	</delete>
+	
+	
+</mapper>

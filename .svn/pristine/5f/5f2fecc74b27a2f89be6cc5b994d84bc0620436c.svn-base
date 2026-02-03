@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.survey.mapper.ISurveyMapper">
+
+    <resultMap id="optionMap" type="kr.or.ddit.vo.survey.SurveyAnswerOptionVO">
+	    <id property="answerNo" column="ANSWER_NO" />
+	    <result property="questionNo" column="QUESTION_NO" />
+	    <result property="answerOrder" column="ANSWER_ORDER" />
+	    <result property="answerContent" column="ANSWER_CONTENT" />
+	</resultMap>
+	
+	<resultMap id="questionMap" type="kr.or.ddit.vo.survey.SurveyQuestionVO">
+	    <id property="questionNo" column="QUESTION_NO" />
+	    <result property="surveyNo" column="SURVEY_NO" />
+	    <result property="questionContent" column="QUESTION_CONTENT" />
+	    <result property="questionOrder" column="QUESTION_ORDER" />
+	    
+	    <collection property="optionList" resultMap="optionMap" />
+	</resultMap>
+	
+	<resultMap id="surveyMap" type="kr.or.ddit.vo.survey.SurveyVO">
+	    <id property="surveyNo" column="SURVEY_NO" />
+	    <result property="surveyWriter" column="SURVEY_WRITER" />
+	    <result property="surveyTitle" column="SURVEY_TITLE" />
+	    <result property="surveyDescription" column="SURVEY_DESCRIPTION" />
+	    <result property="surveyRegisterDate" column="SURVEY_REGISTER_DATE" />
+	    <result property="surveyStartDate" column="SURVEY_START_DATE" />
+	    <result property="surveyEndDate" column="SURVEY_END_DATE" />
+	    <result property="surveyCloseStatus" column="SURVEY_CLOSE_STATUS" />
+	    <result property="surveyDeleteStatus" column="SURVEY_DELETE_STATUS" />
+	    
+	    <collection property="questionList" resultMap="questionMap" />
+	</resultMap>
+	
+	<!-- 중복 답변 체크 -->
+	<select id="checkAlreadyParticipated" parameterType="kr.or.ddit.vo.survey.SurveyParticipationVO" resultType="int">
+	    SELECT
+	           COUNT(*)
+	    FROM SURVEY_PARTICIPATION
+	    WHERE SURVEY_NO = #{surveyNo}
+	      AND MEMBER_NO = #{memberNo}
+	</select>
+
+	<!-- 설문 조회 -->
+    <select id="getSurveyDetail" parameterType="int" resultMap="surveyMap">
+	    SELECT
+	           S.SURVEY_NO
+	         , S.SURVEY_WRITER
+	         , S.SURVEY_TITLE
+	         , S.SURVEY_DESCRIPTION
+	         , S.SURVEY_REGISTER_DATE
+	         , S.SURVEY_START_DATE
+	         , S.SURVEY_END_DATE
+	         , S.SURVEY_CLOSE_STATUS
+	         , S.SURVEY_DELETE_STATUS
+	         , Q.QUESTION_NO
+	         , Q.QUESTION_CONTENT
+	         , Q.QUESTION_ORDER
+	         , O.ANSWER_NO
+	         , O.ANSWER_ORDER
+	         , O.ANSWER_CONTENT
+	    FROM SURVEY S
+	         LEFT OUTER JOIN SURVEY_QUESTION Q
+	                      ON Q.SURVEY_NO = S.SURVEY_NO
+	         LEFT OUTER JOIN SURVEY_ANSWER_OPTION O
+	                      ON O.QUESTION_NO = Q.QUESTION_NO
+	    WHERE S.SURVEY_NO = #{surveyNo}
+	    ORDER BY
+	           Q.QUESTION_ORDER ASC
+	         , O.ANSWER_ORDER ASC
+	</select>
+
+
+
+	<!-- 설문 참여 정보저장 -->
+	<insert id="insertParticipation" parameterType="kr.or.ddit.vo.survey.SurveyParticipationVO">
+	    <selectKey keyProperty="surveyParticipationNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_SURVEY_PARTICIPATION.NEXTVAL FROM DUAL
+	    </selectKey>
+	    INSERT INTO SURVEY_PARTICIPATION (
+	          SURVEY_PARTICIPATION_NO
+	        , SURVEY_NO
+	        , MEMBER_NO
+	        , PARTICIPATION_DATE
+	    ) VALUES (
+	          #{surveyParticipationNo}
+	        , #{surveyNo}
+	        , #{memberNo}
+	        , CURRENT_TIMESTAMP
+	    )
+	</insert>
+	
+	
+	<!-- 설문 문항별 답변 저장 -->
+	<insert id="insertAnswers" parameterType="java.util.List">
+	    INSERT INTO SURVEY_ANSWER (
+	          MEMBER_ANSWER_NO
+	        , SURVEY_PARTICIPATION_NO
+	        , QUESTION_NO
+	        , SELECT_ANSWER_NO
+	    )
+	    SELECT SEQ_SURVEY_ANSWER.NEXTVAL, A.* FROM (
+	        <foreach collection="list" item="item" separator="UNION ALL">
+	            SELECT 
+	                   #{item.surveyParticipationNo}
+	                 , #{item.questionNo}
+	                 , #{item.selectAnswerNo} 
+	            FROM DUAL
+	        </foreach>
+	    ) A
+	</insert>
+	
+	
+	<!--===================관리자 페이지용===================-->
+	
+	<select id="selectSurveyList" resultType="map">
+        SELECT SURVEY_NO
+             , SURVEY_TITLE
+             , TO_CHAR(SURVEY_START_DATE, 'YYYY-MM-DD') AS SURVEY_START_DATE
+             , TO_CHAR(SURVEY_END_DATE, 'YYYY-MM-DD') AS SURVEY_END_DATE
+             , SURVEY_CLOSE_STATUS
+             , TO_CHAR(SURVEY_REGISTER_DATE, 'YYYY-MM-DD') AS SURVEY_REGISTER_DATE
+          FROM SURVEY
+         ORDER BY SURVEY_NO DESC
+    </select>
+
+    <insert id="insertSurveyAdmin" parameterType="map">
+        <selectKey keyProperty="surveyNo" resultType="int" order="BEFORE">
+            SELECT SEQ_SURVEY.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO SURVEY (
+               SURVEY_NO
+             , SURVEY_WRITER
+             , SURVEY_TITLE
+             , SURVEY_DESCRIPTION
+             , SURVEY_REGISTER_DATE
+             , SURVEY_START_DATE
+             , SURVEY_END_DATE
+             , SURVEY_CLOSE_STATUS
+             , SURVEY_DELETE_STATUS
+        ) VALUES (
+               #{surveyNo}
+             , #{surveyWriter}
+             , #{surveyTitle}
+             , #{surveyDescription}
+             , CURRENT_TIMESTAMP
+             , #{surveyStartDate}
+             , #{surveyEndDate}
+             , 'N'
+             , 'N'
+        )
+    </insert>
+
+    <update id="updateSurveyAdmin" parameterType="map">
+        UPDATE SURVEY
+           SET SURVEY_TITLE       = #{surveyTitle}
+             , SURVEY_DESCRIPTION = #{surveyDescription}
+             , SURVEY_START_DATE  = #{surveyStartDate}
+             , SURVEY_END_DATE    = #{surveyEndDate}
+             , SURVEY_CLOSE_STATUS = #{surveyCloseStatus}
+         WHERE SURVEY_NO          = #{surveyNo}
+    </update>
+
+   	<insert id="insertSurveyQuestion" parameterType="map">
+        <selectKey keyProperty="questionNo" resultType="int" order="BEFORE">
+            SELECT SEQ_SURVEY_QUESTION.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO SURVEY_QUESTION (
+              QUESTION_NO
+            , SURVEY_NO
+            , QUESTION_CONTENT
+            , QUESTION_ORDER
+        ) VALUES (
+              #{questionNo}
+            , #{surveyNo}
+            , #{questionContent}
+            , #{questionOrder}
+        )
+    </insert>
+
+    <insert id="insertSurveyOption" parameterType="map">
+        INSERT INTO SURVEY_ANSWER_OPTION (
+              ANSWER_NO
+            , QUESTION_NO
+            , ANSWER_CONTENT
+            , ANSWER_ORDER
+        ) VALUES (
+              SEQ_SURVEY_ANSWER_OPTION.NEXTVAL
+            , #{questionNo}
+            , #{answerContent}
+            , #{answerOrder}
+        )
+    </insert>
+
+    <delete id="deleteSurveyQuestions" parameterType="int">
+        DELETE FROM SURVEY_QUESTION
+         WHERE SURVEY_NO = #{surveyNo}
+    </delete>
+
+
+    <select id="selectSurveyInfo" parameterType="int" resultType="map">
+        SELECT A.SURVEY_TITLE
+             , A.SURVEY_DESCRIPTION
+             , TO_CHAR(A.SURVEY_START_DATE, 'YYYY-MM-DD') AS SURVEY_START_DATE
+             , TO_CHAR(A.SURVEY_END_DATE, 'YYYY-MM-DD') AS SURVEY_END_DATE
+             , (SELECT COUNT(*) 
+                  FROM SURVEY_PARTICIPATION B 
+                 WHERE B.SURVEY_NO = A.SURVEY_NO
+               ) AS TOTAL_PARTICIPANTS
+          FROM SURVEY A
+         WHERE A.SURVEY_NO = #{surveyNo}
+    </select>
+
+    <select id="selectSurveyResultRaw" parameterType="int" resultType="map">
+        SELECT Q.QUESTION_NO
+             , Q.QUESTION_CONTENT
+             , O.ANSWER_NO
+             , O.ANSWER_CONTENT
+             , (SELECT COUNT(*)
+                  FROM SURVEY_ANSWER SA
+                 WHERE SA.SELECT_ANSWER_NO = O.ANSWER_NO
+               ) AS VOTE_COUNT
+          FROM SURVEY_QUESTION Q
+          LEFT OUTER JOIN SURVEY_ANSWER_OPTION O 
+            ON Q.QUESTION_NO = O.QUESTION_NO
+         WHERE Q.SURVEY_NO = #{surveyNo}
+         ORDER BY Q.QUESTION_ORDER
+             , O.ANSWER_ORDER
+    </select>
+    
+    <select id="selectSurveyParticipants" parameterType="int" resultType="map">
+        SELECT M.MEMBER_NO
+             , M.MEMBER_NAME
+             , TO_CHAR(SP.PARTICIPATION_DATE, 'YYYY-MM-DD HH24:MI') AS PARTICIPATION_DATE
+          FROM MEMBER M
+         INNER JOIN SURVEY_PARTICIPATION SP 
+            ON M.MEMBER_NO = SP.MEMBER_NO
+         WHERE SP.SURVEY_NO = #{surveyNo}
+           AND SP.PARTICIPATION_DATE IS NOT NULL
+         ORDER BY SP.PARTICIPATION_DATE DESC
+    </select>
+
+    <select id="selectDashboardStats" resultType="map">
+        SELECT 
+            (SELECT COUNT(*) FROM SURVEY_PARTICIPATION) AS TOTAL_PARTICIPATION_COUNT,
+            (SELECT COUNT(*) FROM SURVEY_PARTICIPATION 
+              WHERE TO_CHAR(PARTICIPATION_DATE, 'YYYYMMDD') = TO_CHAR(SYSDATE, 'YYYYMMDD')
+            ) AS TODAY_PARTICIPATION_COUNT,
+            (SELECT COUNT(*) FROM MEMBER WHERE 1=1) AS TOTAL_MEMBER_COUNT
+        FROM DUAL
+    </select>
+
+    <select id="selectWeeklyTrend" resultType="map">
+        SELECT TO_CHAR(PARTICIPATION_DATE, 'IW') || '주차' AS LABEL
+             , COUNT(*) AS COUNT
+          FROM SURVEY_PARTICIPATION
+         WHERE PARTICIPATION_DATE >= SYSDATE - 30
+         GROUP BY TO_CHAR(PARTICIPATION_DATE, 'IW')
+         ORDER BY TO_CHAR(PARTICIPATION_DATE, 'IW') ASC
+    </select>
+	
+	
+
+</mapper>

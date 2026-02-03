@@ -1,0 +1,175 @@
+package kr.or.ddit.file.service.impl;
+
+import java.io.File;
+import java.util.List;
+import java.util.UUID;
+import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.transaction.Transactional;
+import kr.or.ddit.file.mapper.IFileMapper;
+import kr.or.ddit.file.service.IFileService;
+import kr.or.ddit.vo.FileDetailVO;
+import kr.or.ddit.vo.FileGroupVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class FileServiceImpl implements IFileService {
+	
+	@Autowired
+    private IFileMapper fileMapper;
+
+	@Value("${kr.or.ddit.upload.path}") // 기존에 쓰시던 설정값 그대로 사용
+    private String uploadPath;
+	
+	/**
+		
+	 	// 1. public String fileUpload(MultipartFile file, int memberNo, String fileType)
+	 		-> XML <insert id="insertFileGroup"> 호출
+			impl 에서 사용 시 -> fileMapper.insertFileGroup(fileGroupVO); 
+		
+		// 2. 위 쿼리가 성공하면 selectKey에 의해 번호가 VO에 담김
+		int fileGroupNo = fileGroupVO.getFileGroupNo(); 
+		
+		// 3. for문 안에서 이 코드가 실행될 때 -> XML의 <insert id="insertFileDetail"> 반복 호출됨
+		fileMapper.insertFileDetail(fileDetailVO);
+		
+		
+	 * 
+	 * 
+	 * 
+	 */
+	
+	@Override
+	public String fileUpload(MultipartFile file, int memberNo, String fileType) {
+	    if (file == null || file.isEmpty()) {
+	        return "";
+	    }
+
+	    // [변경 포인트] 외부로 뺀 메서드를 호출하여 폴더명을 가져옵니다.
+	    String folderName = getFolderName(fileType);
+	    
+	    String savePath = uploadPath + folderName;
+	    File fileDir = new File(savePath);
+	    if (!fileDir.exists()) {
+	        fileDir.mkdirs();
+	    }
+
+	    try {
+	        String originalName = file.getOriginalFilename();
+	        String saveName = UUID.randomUUID().toString() + "_" + originalName;
+	        File target = new File(savePath, saveName);
+	        file.transferTo(target);
+
+	        String webPath = "/upload/" + folderName + "/" + saveName;
+
+	        FileGroupVO fileGroupVO = new FileGroupVO();
+	        fileGroupVO.setMemberNo(memberNo);
+	        fileGroupVO.setFileGroupType(fileType); 
+	        fileMapper.insertFileGroup(fileGroupVO);
+
+	        FileDetailVO fileDetailVO = new FileDetailVO();
+	        fileDetailVO.setFileGroupNo(fileGroupVO.getFileGroupNo());
+	        fileDetailVO.setFileOriginalName(originalName);
+	        fileDetailVO.setFileSaveName(saveName);
+	        fileDetailVO.setFilePath(webPath);
+	        fileDetailVO.setFileSize((int) file.getSize());
+	        fileDetailVO.setFileExtension(FilenameUtils.getExtension(originalName));
+	        fileDetailVO.setFileMime(file.getContentType());
+
+	        fileMapper.insertFileDetail(fileDetailVO);
+
+	        return webPath;
+
+	    } catch (Exception e) {
+	        log.error("파일 업로드 중 에러 발생: ", e); 
+	        throw new RuntimeException("파일 저장 실패! 원인: " + e.getMessage());
+	    }
+	}
+
+
+	//fileType 로직 분리
+	private String getFolderName(String fileType) {
+	    switch (fileType) {
+	        case "01": return "notice";           // 사이트 공지사항
+	        case "02": return "inquiry";          // 문의사항
+	        case "03": return "projectTask";      // 프로젝트 상위업무
+	        case "04": return "taskSub";          // 프로젝트 하위업무
+	        case "05": return "projectBoard";     // 프로젝트 게시판
+	        case "06": return "comment";          // 댓글
+	        case "07": return "chat";             // 채팅
+	        case "08": return "profile";          // 프로필 이미지
+	        case "09": return "bizFileNo";        // 사업자등록증
+	        case "10": return "draftDocument";    // 기안
+	        case "11": return "faq";              // 자주묻는질문
+	        default:   return "others";           
+	    }
+	}
+	
+	
+	@Override
+	@Transactional // 여러 파일 저장 중 하나라도 실패하면 롤백합니다.
+	public int uploadFiles(List<MultipartFile> fileList, int memberNo, String fileType) {
+	    // 1. 파일 리스트가 비어있는지 체크
+	    if (fileList == null || fileList.isEmpty() || fileList.get(0).isEmpty()) {
+	        return 0;
+	    }
+
+	    try {
+	        // 2. 파일 타입에 따른 폴더 경로 결정
+	        String folderName = getFolderName(fileType); 
+	        String savePath = uploadPath + folderName;
+	        File fileDir = new File(savePath);
+	        if (!fileDir.exists()) {
+	            fileDir.mkdirs();
+	        }
+
+	        // 3. 파일 그룹 객체 생성 및 DB 저장 (selectKey를 통해 번호가 생성됨)
+	        FileGroupVO fileGroupVO = new FileGroupVO();
+	        fileGroupVO.setMemberNo(memberNo);
+	        fileGroupVO.setFileGroupType(fileType);
+	        fileMapper.insertFileGroup(fileGroupVO); 
+	        
+	        int fileGroupNo = fileGroupVO.getFileGroupNo(); // 생성된 시퀀스 번호
+
+	        // 4. 리스트(fileList)를 반복문 돌리며 파일 하나씩 꺼내기
+	        for (MultipartFile file : fileList) {
+	            if (file.isEmpty()) continue;
+
+	            // 실제 파일명과 저장용 랜덤 파일명 생성
+	            String originalName = file.getOriginalFilename();
+	            String saveName = UUID.randomUUID().toString() + "_" + originalName;
+	            
+	            // 서버 물리적 경로에 복사
+	            File target = new File(savePath, saveName);
+	            file.transferTo(target);
+
+	            // 5. 파일 상세 정보(FileDetailVO) 설정 및 DB 저장
+	            FileDetailVO fileDetailVO = new FileDetailVO();
+	            fileDetailVO.setFileGroupNo(fileGroupNo);
+	            fileDetailVO.setFileOriginalName(originalName);
+	            fileDetailVO.setFileSaveName(saveName);
+	            fileDetailVO.setFilePath("/upload/" + folderName + "/" + saveName);
+	            fileDetailVO.setFileSize((int) file.getSize());
+	            fileDetailVO.setFileExtension(FilenameUtils.getExtension(originalName));
+	            fileDetailVO.setFileMime(file.getContentType());
+
+	            fileMapper.insertFileDetail(fileDetailVO);
+	        }
+
+	        // 모든 파일 저장이 성공하면 생성된 그룹 번호 반환
+	        return fileGroupNo;
+
+	    } catch (Exception e) {
+	        log.error("다중 파일 업로드 중 에러 발생: ", e);
+	        // 에러 발생 시 런타임 예외를 던져서 @Transactional이 작동하게 합니다.
+	        throw new RuntimeException("파일 저장 중 오류가 발생했습니다.");
+	    }
+	}
+	
+	
+}

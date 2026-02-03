@@ -1,0 +1,168 @@
+package kr.or.ddit.project.service.impl;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.mail.internet.MimeMessage;
+import kr.or.ddit.project.mapper.IProjectMapper;
+import kr.or.ddit.project.service.IProjectService;
+import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.ProjectMemberVO;
+import kr.or.ddit.vo.ProjectMiniHeaderVO;
+import kr.or.ddit.vo.ProjectVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class ProjectServiceImpl implements IProjectService {
+
+	@Autowired
+	private IProjectMapper projectMapper;
+	
+	@Autowired
+	private JavaMailSender mailSender;
+	
+	// 프로젝트 권한
+	private static final String ROLE_MANAGER = "MANAGER";	// 프로젝트 관리자
+	private static final String ROLE_MEMBER = "MEMBER";		// 프로젝트 참여자
+	private static final String ROLE_CUSTOMER = "CUSTOMER";	// 기업 담당자
+	
+	
+	@Override
+	@Transactional
+	public void createProject(ProjectVO projectVO) {
+		
+		// 1. [프로젝트 기본 정보] 저장
+		projectMapper.insertProject(projectVO);
+				
+		// 2. [프로젝트 구성원 정보] 저장
+		int newProjectNo = projectVO.getProjectNo();	// 새로 생성한 프로젝트 일련번호
+		
+		// 2-1. 프로젝트 관리자
+		ProjectMemberVO manager = new ProjectMemberVO();
+		manager.setProjectNo(newProjectNo);
+		manager.setMemberNo(projectVO.getMemberNo());
+		manager.setProjectRole(ROLE_MANAGER);			// 관리자 권한 등록
+		projectMapper.insertProjectMember(manager);
+		
+		// 2-2. 프로젝트 참여자
+		List<ProjectMemberVO> memberList = projectVO.getMemberList();		
+		processProjectMembers(newProjectNo, memberList, ROLE_MEMBER, projectVO.getProjectName());
+		
+		// 3. [ 기업 담당자 정보 ] 저장
+		List<ProjectMemberVO> clientList = projectVO.getClientList();
+		processProjectMembers(newProjectNo, clientList, ROLE_CUSTOMER, projectVO.getProjectName());
+		
+		// 4. [ 미니헤더 설정 정보 ] 저장
+		// 1.게시판, 2.업무, 3.일정, 4.간트차트, 5.자료실, 6. 구성원
+		if(projectVO.getMiniheader() != null) {
+			ProjectMiniHeaderVO miniHeader = projectVO.getMiniheader();
+			miniHeader.setProjectNo(newProjectNo);
+			
+			List<Integer> order = miniHeader.getTabOrderList();	// 순서 정보
+			if(order != null && !order.isEmpty()) {
+				// 순서 정보 목록을 문자열로 변환
+				String orderToString = order.stream().map(String::valueOf).collect(Collectors.joining(","));
+				miniHeader.setFixTab(orderToString);	// 변환한 문자열 저장
+			} else {
+				miniHeader.setFixTab("1,2,3,4,5,6"); // 기본설정: 전체 노출
+			}
+			projectMapper.insertMiniHeader(miniHeader);
+		}
+	}
+
+	
+	// 프로젝트 구성원 초대 메소드
+	private void processProjectMembers(int projectNo, List<ProjectMemberVO> list, String role, String projectName) {
+		if(list != null && !list.isEmpty()) {
+			for(ProjectMemberVO vo : list) {
+				// 1. 이메일을 이용해 회원 정보(PK)를 조회
+				MemberVO existMember = projectMapper.findMemberByEmail(vo.getMemberEmail());
+					
+				if(existMember != null) {
+					// 2. 회원이 존재하면 번호를 세팅하고 Insert
+					vo.setProjectNo(projectNo);
+					vo.setMemberNo(existMember.getMemberNo());
+					vo.setProjectRole(role);
+					projectMapper.insertProjectMember(vo);
+							
+					// 3. 초대 메일 발송
+					sendInviteEmail(vo, projectName);
+				} else {
+					log.warn("가입되지 않은 이메일입니다: " + vo.getMemberEmail());
+					// 가입되지 않은 사용자는 건너뛰거나, 별도의 '가입 권유' 로직이 필요함
+				}
+			}
+		}
+	}
+		
+	// 프로젝트 구성원 초대 메일 발송
+	private void sendInviteEmail(ProjectMemberVO projectMember, String projectName) {
+		String toEmail = projectMember.getMemberEmail();
+		
+		MimeMessage message = mailSender.createMimeMessage();
+			
+		try {
+			MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+				
+			helper.setFrom("oex2ee@gmail.com", "TUDIO 관리자");
+			helper.setTo(toEmail);
+			helper.setSubject("[TUDIO] '" + projectName + "' 프로젝트에 초대되었습니다.");
+				
+			// 초대 메일 본문 내용 
+			String content = "<h3>TUDIO 프로젝트 초대</h3>"
+				+ "<p>귀하는 <strong>" + projectName + "</strong> 프로젝트에 초대되셨습니다.</p>"
+				+ "<p>사이트에 로그인하여 프로젝트를 확인해보세요.</p>"
+				+ "<a href='http://localhost:8060/tudio/login'>TUDIO 바로가기</a>";
+				
+			helper.setText(content, true);
+				
+			mailSender.send(message);
+			log.info("초대 메일 발송 성공: " + toEmail);			
+		} catch (Exception e) {
+			log.error("메일 발송 실패: " + toEmail, e);
+		}
+	}
+	
+	@Override
+	public Map<String, Object> checkEmailList(List<String> emailList) {
+	    Map<String, Object> resultMap = new HashMap<>();
+	    
+	    // 1. DB 조회
+	    List<MemberVO> validMembers = projectMapper.checkMemberExistence(emailList);
+	    
+	    // 2. 존재하는 이메일 추출
+	    List<String> validEmailStrs = validMembers.stream()
+	            .map(MemberVO::getMemberEmail)
+	            .collect(Collectors.toList());
+	    
+	    // 3. 존재하지 않는 이메일 추출
+	    List<String> invalidEmails = emailList.stream()
+	            .filter(email -> !validEmailStrs.contains(email))
+	            .collect(Collectors.toList());
+	            
+	    // 4. 결과
+	    resultMap.put("validMembers", validMembers);
+	    resultMap.put("invalidEmails", invalidEmails);
+	    
+	    return resultMap;
+	}
+
+
+	// 프로젝트 목록
+	@Override
+	public List<ProjectVO> list() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

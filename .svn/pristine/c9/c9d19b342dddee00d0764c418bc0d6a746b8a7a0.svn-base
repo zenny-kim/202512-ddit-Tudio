@@ -1,0 +1,14 @@
+package kr.or.ddit.notification.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.notification.mapper.INotificationMapper;
+import kr.or.ddit.notification.service.INotificationService;
+
+@Service
+public class NotificationServiceImpl implements INotificationService{
+
+	@Autowired
+	private INotificationMapper mapper;
+}

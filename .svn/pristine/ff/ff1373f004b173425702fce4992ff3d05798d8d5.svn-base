@@ -1,0 +1,323 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- 
+    파일명: approval_detail.jsp
+    설명: 기안서 상세 조회 및 승인/반려, 댓글/활동로그, 채팅 모달 기능 포함
+--%>
+
+<div class="container-fluid">
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="approval_list.jsp" class="text-decoration-none"><i class="bi bi-list-task me-1"></i> 결재 목록</a></li>
+                <li class="breadcrumb-item active" aria-current="page"><i class="bi bi-file-earmark-text me-1"></i> APL-002: 신규 프로젝트 'Alpha' 장비 구매 요청서</li>
+            </ol>
+        </nav>
+    </div>
+
+    <h2 class="fw-bold mb-4">신규 프로젝트 'Alpha' 장비 구매 요청서</h2>
+
+    <div class="row g-4">
+        
+        <div class="col-md-8">
+            <div class="card shadow p-4">
+                
+                <h5 class="fw-bold text-primary mb-3"><i class="bi bi-signpost-split me-2"></i> 결재 라인</h5>
+                <div class="border p-3 rounded mb-4 bg-white overflow-x-auto">
+                    <table class="table table-sm text-center mb-0" style="min-width: 600px;">
+                        <thead>
+                            <tr>
+                                <th>순서</th>
+                                <th>결재자</th>
+                                <th>직책</th>
+                                <th>상태</th>
+                                <th>결재 일시</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="table-success">
+                                <td>1</td>
+                                <td>김사용</td>
+                                <td>PM</td>
+                                <td><span class="badge bg-success">승인</span></td>
+                                <td>2025-12-17 10:00</td>
+                            </tr>
+                            <tr class="table-warning fw-bold">
+                                <td>2</td>
+                                <td>홍길동 (나)</td>
+                                <td>팀장</td>
+                                <td><span class="badge bg-warning text-dark">결재 대기</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>이디자인</td>
+                                <td>이사</td>
+                                <td><span class="badge bg-secondary">대기</span></td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center border p-3 rounded mb-4 bg-light">
+                    <div class="d-flex align-items-center">
+                        <span class="fw-bold text-dark me-2"><i class="bi bi-person-fill me-1"></i> 작성자:</span>
+                        <span class="me-4">박개발</span>
+                        <span class="fw-bold text-dark me-2"><i class="bi bi-calendar me-1"></i> 작성일:</span>
+                        <span>2025-12-16</span>
+                    </div>
+                    <div>
+                        <span class="text-muted small me-2">현재 상태</span>
+                        <span class="badge bg-primary fs-6">결재 중</span>
+                    </div>
+                </div>
+
+                <h5 class="fw-bold text-primary mb-3"><i class="bi bi-card-text me-2"></i> 내용</h5>
+                <div class="border p-3 rounded mb-4 draft-content" style="min-height: 200px;">신규 프로젝트 'Alpha' 진행을 위해 아래와 같은 개발 장비 구매를 요청합니다.
+
+[장비 목록]
+1. 고성능 워크스테이션 2대 (300만원 x 2)
+2. 4K 모니터 4대 (50만원 x 4)
+3. 라이선스 비용 (IDE, 유틸리티 등)
+
+[총 예산]
+총 800만원 (세부 견적서 첨부 파일 참고)
+
+해당 장비는 프로젝트의 핵심 성능 요구 사항을 충족시키기 위해 필수적입니다.
+빠른 결재 요청드립니다.</div>
+
+                <h5 class="fw-bold text-primary mb-3 mt-4"><i class="bi bi-paperclip me-2"></i> 첨부 파일 (2개)</h5>
+                <div class="border p-3 rounded mb-4 bg-light">
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                            <div><i class="bi bi-file-earmark-bar-graph-fill me-2 text-info"></i> Alpha_견적서_20251216.xlsx</div>
+                            <a href="#" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="bi bi-download me-1"></i> 다운로드</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="d-flex justify-content-end border-top pt-4 mt-4">
+                    <button type="button" class="btn btn-danger btn-lg me-2" onclick="processApproval('reject')"><i class="bi bi-x-circle me-1"></i> 반려</button>
+                    <button type="button" class="btn btn-success btn-lg" onclick="processApproval('approve')"><i class="bi bi-check-circle me-1"></i> 승인</button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow p-4">
+                
+                <h5 class="fw-bold text-primary mb-3 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-chat-dots me-1"></i> 댓글 (3건)</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="alert('전체 댓글 보기 모달 연결 필요')">전체 보기</button>
+                </h5>
+                
+                <div class="d-flex mb-4">
+                    <div class="profile-img-wrap flex-shrink-0 me-2" style="width: 38px; height: 38px; line-height: 38px; background-color: #6c757d; color:white; text-align:center; border-radius:50%;">H</div> 
+                    <textarea id="commentInput" class="form-control" rows="2" placeholder="댓글을 입력하세요..."></textarea>
+                    <button class="btn btn-primary ms-2 flex-shrink-0" style="height: 52px;" onclick="addComment()">등록</button>
+                </div>
+                
+                <div id="commentList">
+                    <div class="comment-item mb-3 rounded">
+                        <div class="d-flex justify-content-between small mb-1"><span class="fw-bold">김사용</span><span class="text-muted">1분 전</span></div>
+                        <p class="mb-0 small">장비 구매는 승인합니다. 다만, 라이선스 비용은 다음 분기로 이월하는 것을 검토해 주세요.</p>
+                    </div>
+                </div>
+                
+                <h5 class="fw-bold text-primary mt-4 mb-3 d-flex justify-content-between align-items-center border-top pt-4">
+                    <span><i class="bi bi-clock-history me-1"></i> 활동 기록 (5건)</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="alert('전체 로그 보기 모달 연결 필요')">전체 보기</button>
+                </h5>
+                <div class="activity-log">
+                    <div class="activity-log-item text-muted">**김사용**님이 **승인** 처리했습니다. (1분 전)</div>
+                    <div class="activity-log-item text-muted">**박개발**님이 결재를 **요청**했습니다. (3시간 전)</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<button class="chatbot-icon" id="chatIcon" data-bs-toggle="modal" data-bs-target="#chatModal">
+    <i class="bi bi-chat-dots-fill fs-4"></i>
+</button>
+
+<div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true" data-bs-backdrop="false"> 
+    <div class="modal-dialog modal-md"> 
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white p-3">
+                <h5 class="modal-title" id="chatModalTitle">채팅</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body d-flex flex-column p-0" style="height: 400px;"> <div id="chatListView"> 
+                    <div class="btn-group btn-group-sm p-2 border-bottom w-100" role="group" aria-label="Chat Filter">
+                        <button type="button" class="btn btn-primary active">전체</button>
+                        <button type="button" class="btn btn-outline-primary">1:1 채팅</button>
+                        <button type="button" class="btn btn-outline-primary">그룹 채팅</button>
+                    </div>
+
+                    <div class="chat-list-container flex-grow-1 overflow-auto list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center border-bottom"
+                           onclick="openChatRoom('프로젝트 런치팀', 'chat-room-1'); return false;">
+                            <div class="d-flex align-items-center">
+                                <span class="profile-img-wrap me-3 bg-danger text-white rounded-circle d-flex justify-content-center align-items-center" style="width:40px; height:40px;">PM</span>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">프로젝트 런치팀 <span class="text-muted small">(5명)</span></h6> 
+                                    <p class="text-muted small mb-0">김사용: 다음 회의는 금요일 오전 10시입니다.</p>
+                                </div>
+                            </div>
+                            <span class="badge bg-danger rounded-pill">3</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action py-3 d-flex align-items-center border-bottom"
+                           onclick="openChatRoom('박개발', 'chat-room-2'); return false;">
+                            <span class="profile-img-wrap me-3 bg-info text-white rounded-circle d-flex justify-content-center align-items-center" style="width:40px; height:40px;">P</span>
+                            <div>
+                                <h6 class="mb-0">박개발</h6>
+                                <p class="text-muted small mb-0">네, 제가 DB 스키마는 오늘 중으로...</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="chatRoomView" class="d-none flex-column flex-grow-1 h-100">
+                    <div class="d-flex align-items-center p-3 border-bottom bg-white" id="chatRoomHeader">
+                        <button class="btn btn-sm btn-link text-primary me-2 p-0" onclick="closeChatRoom()">
+                            <i class="bi bi-arrow-left-short fs-4"></i>
+                        </button>
+                        <h6 class="mb-0 text-truncate" id="roomName">프로젝트 런치팀</h6>
+                        <button class="btn btn-sm btn-link text-secondary ms-auto p-0" onclick="alert('채팅방 설정 열기')">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="message-list-area flex-grow-1 overflow-auto p-3" id="messageArea" style="background-color: #f8f9fa;">
+                        <div class="d-flex flex-column align-items-end mb-2">
+                            <div class="bg-primary text-white p-2 rounded-3" style="max-width: 80%;">
+                                테스트 메시지입니다.
+                            </div>
+                            <small class="text-muted small me-1" style="font-size: 0.7rem;">오후 10:00</small>
+                        </div>
+                    </div>
+                    
+                    <div class="p-2 border-top d-flex bg-white">
+                        <input type="text" class="form-control form-control-sm me-2" id="chatInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) sendMessage()">
+                        <button class="btn btn-primary btn-sm" id="sendButton" onclick="sendMessage()"><i class="bi bi-send-fill"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer p-2 text-end" id="chatListFooter">
+                <button class="btn btn-success btn-sm" onclick="alert('새 채팅 만들기 모달')"><i class="bi bi-chat-left-text-fill me-1"></i> 새 채팅</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* 1. 결재 승인/반려 로직 */
+    function processApproval(type) {
+        let action = type === 'approve' ? '승인' : '반려';
+        if(confirm(action + " 처리하시겠습니까?")) {
+            // 실제 구현 시 AJAX 호출 또는 폼 전송
+            // document.getElementById('approvalForm').submit();
+            alert(action + " 처리가 완료되었습니다.");
+            location.reload();
+        }
+    }
+
+    /* 2. 댓글 등록 로직 */
+    function addComment() {
+        const input = document.getElementById('commentInput');
+        const text = input.value.trim();
+        
+        if (!text) {
+            alert('댓글 내용을 입력하세요.');
+            return;
+        }
+
+        // 동적 요소 생성 (실제론 AJAX 후 서버 응답으로 처리)
+        const commentHtml = `
+            <div class="comment-item mb-3 rounded">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span class="fw-bold">홍길동 (나)</span>
+                    <span class="text-muted">방금 전</span>
+                </div>
+                <p class="mb-0 small">\${text}</p>
+            </div>
+        `;
+        
+        // 목록 최상단에 추가
+        const list = document.getElementById('commentList');
+        list.insertAdjacentHTML('afterbegin', commentHtml);
+        
+        input.value = ''; // 초기화
+    }
+
+    /* 3. 채팅 모달 UI 조작 로직 */
+    const chatListView = document.getElementById('chatListView');
+    const chatRoomView = document.getElementById('chatRoomView');
+    const chatListFooter = document.getElementById('chatListFooter');
+    const roomNameEl = document.getElementById('roomName');
+    const messageArea = document.getElementById('messageArea');
+
+    // 채팅방 열기
+    window.openChatRoom = function(name, roomId) {
+        roomNameEl.textContent = name;
+        chatListView.classList.add('d-none');
+        chatListFooter.classList.add('d-none');
+        chatRoomView.classList.remove('d-none');
+        chatRoomView.classList.add('d-flex');
+        
+        // 스크롤 최하단으로 이동
+        messageArea.scrollTop = messageArea.scrollHeight;
+    };
+
+    // 채팅방 닫기 (목록으로 돌아가기)
+    window.closeChatRoom = function() {
+        chatRoomView.classList.remove('d-flex');
+        chatRoomView.classList.add('d-none');
+        chatListView.classList.remove('d-none');
+        chatListFooter.classList.remove('d-none');
+    };
+
+    // 메시지 전송 시뮬레이션
+    window.sendMessage = function() {
+        const input = document.getElementById('chatInput');
+        const msg = input.value.trim();
+        
+        if(msg) {
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // 내 말풍선 추가
+            const myMsgHtml = `
+                <div class="d-flex flex-column align-items-end mb-2">
+                    <div class="bg-primary text-white p-2 rounded-3" style="max-width: 80%;">
+                        \${msg}
+                    </div>
+                    <small class="text-muted small me-1" style="font-size: 0.7rem;">\${time}</small>
+                </div>
+            `;
+            messageArea.insertAdjacentHTML('beforeend', myMsgHtml);
+            input.value = '';
+            messageArea.scrollTop = messageArea.scrollHeight;
+
+            // (테스트용) 상대방 자동 응답
+            setTimeout(() => {
+                const replyHtml = `
+                    <div class="d-flex flex-column align-items-start mb-2">
+                        <div class="bg-light text-dark p-2 rounded-3 border" style="max-width: 80%;">
+                            네, 확인했습니다.
+                        </div>
+                        <small class="text-muted small ms-1" style="font-size: 0.7rem;">\${time}</small>
+                    </div>
+                `;
+                messageArea.insertAdjacentHTML('beforeend', replyHtml);
+                messageArea.scrollTop = messageArea.scrollHeight;
+            }, 1000);
+        }
+    };
+</script>

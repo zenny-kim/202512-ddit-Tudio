@@ -1,0 +1,69 @@
+@charset "UTF-8";
+
+/* =========================================
+   [공통] 레이아웃 & 애니메이션
+   ========================================= */
+:root {
+    --admin-color: #334155;
+}
+
+/* 화면 전환 애니메이션 */
+.admin-section {
+    display: none;
+}
+.admin-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 카드 박스 디자인 */
+.admin-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: #fff;
+    margin-bottom: 20px;
+}
+.admin-card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* =========================================
+   [전용] 공지사항 상세 스타일
+   ========================================= */
+/* 상세 내용 박스 */
+#notice-detail-content {
+    min-height: 200px;
+    white-space: pre-line; /* 줄바꿈 문자(\n)를 실제 줄바꿈으로 표현 */
+    color: #333;
+    line-height: 1.6;
+}
+
+/* 제목/작성일 구분선 */
+.vr {
+    display: inline-block;
+    align-self: stretch;
+    width: 1px;
+    min-height: 1em;
+    background-color: currentcolor;
+    opacity: .25;
+}
+
+/* 테이블 내 링크 스타일 */
+.btn-notice-detail-link {
+    text-decoration: none;
+    color: #212529;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+.btn-notice-detail-link:hover {
+    color: #0d6efd; /* Primary color hover */
+}

@@ -1,0 +1,146 @@
+@charset "UTF-8";
+/* 메인 색상 코드 : #EBF5FF, #C7E3FF, #8FC8FF, #56ACFF, #1E90FF, #0074E5, #0056AA, #00407F, #002B55, #00152A */
+
+/* [1] 공통 변수 및 기본 설정 */
+:root {
+    --primary-color: #00407F;
+    --hover-color: #002B55;
+    --bg-light: #F0F4F8;
+    --border-color: #C7E3FF;
+    --focus-ring: rgba(30, 144, 255, 0.15);
+    --text-dark: #00152A;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Pretendard', sans-serif;
+    color: var(--text-dark);
+}
+
+/* [2] 공통 컨테이너 & 입력창 */
+.login-container, .signup-container {
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 21, 42, 0.05) !important;
+}
+
+.signup-container {
+    max-width: 850px; /* 마이페이지 가로 길이를 시원하게 확장 */
+    margin: 40px auto;
+    padding: 50px 80px; /* 양옆 공백을 주어 파란 상자가 정갈해짐 */
+}
+
+.form-control {
+    border-radius: 8px;
+    height: 45px; /* 모든 입력창 높이 통일 */
+}
+
+/* [3] 마이페이지 프로필 섹션 (카메라 버튼 위치 핵심) */
+.profile-section {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.profile-thumb-wrapper {
+    position: relative; /* 자식인 카메라 버튼의 기준점 */
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    background-color: #f8f9fa;
+}
+
+.profile-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 카메라 아이콘: 이미지 오른쪽 밖으로 살짝 걸치게 */
+.profile-edit-label {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    transform: translate(15%, 15%);
+    background: var(--primary-color);
+    color: white !important;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    
+    /* --- 중앙 정렬 핵심 코드 --- */
+    display: none;          /* 자바스크립트에서 flex로 바꿀 테니 여기선 기본 none */
+    align-items: center;    /* 상하 중앙 정렬 */
+    justify-content: center; /* 좌우 중앙 정렬 */
+    font-size: 22px;        /* 이모지 크기를 박스에 맞게 조절 (중요!) */
+      /* 줄 간격 때문에 아래로 치우치는 것 방지 */
+    /* -------------------------- */
+    
+    cursor: pointer;
+    border: 3px solid #fff;
+    z-index: 10;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* [4] 마이페이지 테이블 & 정보창 */
+.info-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 15px;
+}
+
+.info-table th {
+    width: 20%;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.display-text {
+    width: 100%;
+    padding: 10px 20px;
+    background-color: var(--bg-light);
+    border-radius: 8px;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+}
+
+/* [5] 수정 모드 입력 그룹 & 버튼 조율 */
+.edit-input-group {
+    display: none; /* 기본 숨김 */
+    width: 100%;
+    gap: 10px;
+}
+
+/* 마이페이지 내의 모든 버튼들 크기 & 높이 통일 */
+.signup-container .btn {
+    min-width: 100px;
+    height: 45px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+/* 하단 버튼 영역 */
+.mypage-btn-area {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 40px;
+}
+
+.btn-cancel-custom {
+    background-color: #e2e8f0;
+    color: #475569;
+    border: none;
+}
+
+/* 유틸리티 */
+.hidden { display: none !important; }
+.error-msg { color: #d93025; font-size: 0.85rem; }

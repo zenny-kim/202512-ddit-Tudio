@@ -1,0 +1,113 @@
+@charset "UTF-8";
+
+:root {
+    --header-height: 60px;
+    --primary-color: #0d6efd;
+    --notification-badge-color: #dc3545;
+}
+
+/* ---------------------- 헤더 공통 레이아웃 ---------------------- */
+body {
+    padding-top: var(--header-height); /* 헤더 높이만큼 본문 여백 확보 */
+}
+
+/* 헤더 베이스 스타일 */
+.tudio-header {
+    height: var(--header-height);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); /* 부드러운 그림자 */
+    z-index: 1030; /* Bootstrap fixed-top 기본값 */
+}
+
+/* 로고 스타일 */
+.tudio-brand {
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* 로고 텍스트 간 간격 */
+}
+
+/* 우측 아이콘 버튼 (알림 등) */
+.header-icon-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    border: none;
+    background: transparent;
+}
+.header-icon-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* 호버 효과 */
+}
+/* 어두운 배경일 때 호버 효과 반전 */
+.navbar-dark .header-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* 알림 뱃지 */
+.notification-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    background-color: var(--notification-badge-color);
+    border-radius: 50%;
+    border: 1px solid #fff;
+}
+
+/* 프로필 영역 */
+.header-profile {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 30px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+.header-profile:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+.navbar-dark .header-profile:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* 프로필 이미지 원형 */
+.profile-img {
+    width: 32px;
+    height: 32px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+    margin-right: 8px;
+}
+
+/* 관리자용 로그아웃 버튼 스타일 */
+.btn-header-outline {
+    border: 1px solid rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.btn-header-outline:hover {
+    background-color: white;
+    color: #333;
+    border-color: white;
+}

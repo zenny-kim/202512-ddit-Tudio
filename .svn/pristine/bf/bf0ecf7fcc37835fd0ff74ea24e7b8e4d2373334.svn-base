@@ -1,0 +1,242 @@
+.project-main {
+  display: grid;
+  grid-template-columns: 0.9fr 1.6fr; /* 차트 ↓ / 테이블 ↑ */
+  gap: 24px;
+}
+
+.role-blue {
+    color: #0074E5;
+    font-weight: 600;
+}
+
+/* 공통 카드 */
+.main-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* 차트 영역 */
+.chart-box {
+  height: 220px;   /* 기존 280px → 축소 */
+}
+
+.chart-placeholder {
+  width: 180px;
+  height: 180px;
+}
+
+/* 테이블 */
+.member-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.member-table th,
+.member-table td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 14px;
+}
+
+.member-table th {
+  background: #fafafa;
+  text-align: left;
+}
+
+.member-name {
+  cursor: pointer;
+  font-weight: 600;
+  color: rgb(0, 0, 0);
+}
+
+.member-name:hover {
+  text-decoration: underline;
+}
+
+/* ====== member modal (photo-like) ====== C7E3FF 1E90FF*/
+.memTopCard{
+  background:#C7E3FF;
+  border-radius:22px;
+  padding:22px 20px 14px;
+  text-align:center;
+  box-shadow:0 14px 30px rgba(2,6,23,.12);
+}
+
+.memAvatarCircle{
+  width:110px;
+  height:110px;
+  border-radius:999px;
+  margin:0 auto 10px;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+  background:rgba(255,255,255,.25);
+  border:6px solid rgba(255,255,255,.35);
+  color:#0f172a;
+}
+
+.memName{
+  font-size:20px;
+  font-weight:900;
+  color:#0f172a;
+  margin-bottom:4px;
+}
+
+.memRoleLine{
+  font-size:13px;
+  font-weight:800;
+  color:rgba(15,23,42,.75);
+  margin-bottom:14px;
+}
+
+.memStatLine{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  border-top:1px solid rgba(15,23,42,.25);
+  padding-top:10px;
+}
+
+.memStatItem{
+  padding:8px 6px 2px;
+}
+
+.memStatItem .k{
+  font-size:12px;
+  font-weight:900;
+  color:rgba(15,23,42,.85);
+  margin-bottom:6px;
+}
+
+.memStatItem .v{
+  font-size:14px;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.memStatItem.danger .k,
+.memStatItem.danger .v{
+  color:#b91c1c;
+}
+
+/* Information */
+.memInfoWrap{
+  margin-top:16px;
+  padding:2px 4px 0;
+}
+
+.memInfoTitle{
+  font-size:22px;
+  font-weight:900;
+  margin:4px 0 12px;
+  color:#0f172a;
+}
+
+.memInfoBox{
+  border-left:3px solid #94a3b8;
+  padding-left:14px;
+}
+
+.infoRow{
+  display:grid;
+  grid-template-columns:72px 1fr;
+  gap:14px;
+  padding:7px 0;
+}
+
+.infoRow .label{
+  font-weight:900;
+  color:#0f172a;
+}
+
+.infoRow .val{
+  font-weight:800;
+  color:#0f172a;
+  opacity:.85;
+}
+
+/* icons */
+.memIcons{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  padding-top:12px;
+}
+
+.iconBtn{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  border:1px solid #e6eef8;
+  background:#fff;
+  display:grid;
+  place-items:center;
+  font-size:20px;
+  color:#0f172a;
+}
+.iconBtn:hover{ background:#f8fafc; }
+
+
+.memAvatarCircle{
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+#mAvatarImg{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 통계 라인 전체 가운데 정렬 */
+.memStatLine {
+  display: flex;
+  justify-content: center;   /* 가로 중앙 */
+  align-items: center;       /* 세로 중앙 */
+  gap: 60px;                 /* 항목 간 간격 (원하면 조절) */
+  margin-top: 16px;
+}
+
+/* 각 항목도 내부 정렬 */
+.memStatItem {
+  text-align: center;
+}
+
+.memStatItem .k {
+  font-weight: 700;   /* 굵게 */
+  font-size: 15px;    /* 살짝 키워도 좋음 */
+}
+
+.memStatItem .v {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-dialog.modal-lg {
+  max-width: 820px;   /* 기본 800~1140 → 줄임 */
+}
+
+/* 구성원 상세 모달 전체 폭 줄이기 */
+#memberModal .modal-dialog {
+  max-width: 820px;   /* ← 여기서 조절 (760~900 추천) */
+}
+
+
+/* 차트 크기. 차트의 크기는 부모의 크기를 따라간다. */
+.chart-box {
+  width: 100%;
+  height: 320px;              /* ← 이게 핵심 */
+  display: flex;
+  justify-content: center;    /* 가로 중앙 */
+  align-items: center;        /* 세로 중앙 */
+}

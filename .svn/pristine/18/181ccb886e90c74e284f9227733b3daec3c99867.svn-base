@@ -1,0 +1,167 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    // 부모 페이지에서 <jsp:param name="menu" value="..." /> 로 넘겨준 값을 받음
+    String activeMenu = request.getParameter("menu");
+    if(activeMenu == null) activeMenu = "";
+%>
+
+<nav class="sidebar shadow-lg">
+    <div class="sidebar-main-scroll" id="sidebarAccordion">
+        
+        <button class="sidebar-group-btn <%= activeMenu.startsWith("project") ? "" : "collapsed" %>" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#menu-project" 
+                aria-expanded="<%= activeMenu.startsWith("project") %>">
+            <span>프로젝트 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse <%= activeMenu.startsWith("project") ? "show" : "" %>" id="menu-project" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="project_list.jsp" class="nav-link <%= "projectList".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-clipboard-data me-2"></i> 프로젝트 목록
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn <%= activeMenu.startsWith("user") ? "" : "collapsed" %>" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#menu-user" 
+                aria-expanded="<%= activeMenu.startsWith("user") %>">
+            <span>회원 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse <%= activeMenu.startsWith("user") ? "show" : "" %>" id="menu-user" data-bs-parent="#sidebarAccordion">
+             <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="user_list.jsp" class="nav-link <%= "userList".equals(activeMenu) ? "active" : "" %>">
+                        전체 조회
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn <%= activeMenu.startsWith("schedule") ? "" : "collapsed" %>" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#menu-schedule" 
+                aria-expanded="<%= activeMenu.startsWith("schedule") %>">
+            <span>일정 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse <%= activeMenu.startsWith("schedule") ? "show" : "" %>" id="menu-schedule" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="schedule.jsp" class="nav-link <%= "scheduleList".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-calendar-check me-2"></i> 전체 일정
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn <%= activeMenu.startsWith("board") ? "" : "collapsed" %>" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#menu-board" 
+                aria-expanded="<%= activeMenu.startsWith("board") %>">
+            <span>고객센터</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse <%= activeMenu.startsWith("board") ? "show" : "" %>" id="menu-board" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="board_notice.jsp" class="nav-link <%= "boardNotice".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-megaphone me-2"></i> 공지사항
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="board_inquiry.jsp" class="nav-link <%= "boardInquiry".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-question-circle me-2"></i> 문의사항
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="board_faq.jsp" class="nav-link <%= "boardFaq".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-question-square-fill me-2"></i> FAQ 관리
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn <%= activeMenu.startsWith("policy") ? "" : "collapsed" %>" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#menu-policy" 
+                aria-expanded="<%= activeMenu.startsWith("policy") %>">
+            <span>정책 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse <%= activeMenu.startsWith("policy") ? "show" : "" %>" id="menu-policy" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="policy_terms.jsp" class="nav-link <%= "policyTerms".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-file-earmark-text me-2"></i> 이용약관 관리
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn <%= activeMenu.startsWith("chat") ? "" : "collapsed" %>" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#menu-chat" 
+                aria-expanded="<%= activeMenu.startsWith("chat") %>">
+            <span>채팅 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse <%= activeMenu.startsWith("chat") ? "show" : "" %>" id="menu-chat" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="chat_list.jsp" class="nav-link <%= "chatList".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-chat-dots me-2"></i> 채팅방 목록
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn <%= activeMenu.startsWith("log") ? "" : "collapsed" %>" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#menu-log" 
+                aria-expanded="<%= activeMenu.startsWith("log") %>">
+            <span>로그 관리</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse <%= activeMenu.startsWith("log") ? "show" : "" %>" id="menu-log" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="log_login.jsp" class="nav-link <%= "logLogin".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> 로그인 로그
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="log_error.jsp" class="nav-link <%= "logError".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-exclamation-triangle me-2"></i> 오류 로그
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="sidebar-group-btn <%= activeMenu.startsWith("stats") ? "" : "collapsed" %>" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#menu-stats" 
+                aria-expanded="<%= activeMenu.startsWith("stats") %>">
+            <span>통계</span><i class="bi bi-chevron-down toggle-icon"></i>
+        </button>
+        <div class="collapse <%= activeMenu.startsWith("stats") ? "show" : "" %>" id="menu-stats" data-bs-parent="#sidebarAccordion">
+            <ul class="nav flex-column collapse-inner">
+                <li class="nav-item">
+                    <a href="stats_member.jsp" class="nav-link <%= "statsMember".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-people-fill me-2"></i> 회원 통계
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="stats_company.jsp" class="nav-link <%= "statsCompany".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-building-fill-check me-2"></i> 기업 통계
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="stats_project.jsp" class="nav-link <%= "statsProject".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-pie-chart-fill me-2"></i> 프로젝트 통계
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="stats_login.jsp" class="nav-link <%= "statsLogin".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-door-open-fill me-2"></i> 로그인 통계
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="stats_sales.jsp" class="nav-link <%= "statsSales".equals(activeMenu) ? "active" : "" %>">
+                        <i class="bi bi-currency-dollar me-2"></i> 기간별 매출 통계
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</nav>

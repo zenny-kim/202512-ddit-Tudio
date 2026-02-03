@@ -1,0 +1,28 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>사이드바 자료실 리스트</title>
+
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/header.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/sidebar.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/footer.css">
+    
+</head>
+<body>
+
+	<jsp:include page="../include/headerUser.jsp"/>
+    <jsp:include page="../include/sidebarUser.jsp">
+          <jsp:param name="menu" value="projectList" />
+    </jsp:include>
+
+
+	<jsp:include page="../include/footer.jsp"/>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/js/footer.js"></script>
+
+</body>
+</html>

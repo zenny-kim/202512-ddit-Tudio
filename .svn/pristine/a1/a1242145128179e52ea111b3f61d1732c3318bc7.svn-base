@@ -1,0 +1,112 @@
+package kr.or.ddit.project.service.impl;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import kr.or.ddit.project.mapper.IProjectMapper;
+import kr.or.ddit.project.service.IProjectService;
+import kr.or.ddit.vo.ProjectMemberVO;
+import kr.or.ddit.vo.ProjectMiniHeaderVO;
+import kr.or.ddit.vo.ProjectVO;
+
+@Service
+public class ProjectServiceImpl implements IProjectService {
+
+	@Autowired
+	private IProjectMapper projectMapper;
+	
+	// 프로젝트 권한
+	private static final String ROLE_MANAGER = "MANAGER";	// 프로젝트 관리자
+	private static final String ROLE_MEMBER = "MEMBER";		// 프로젝트 참여자
+	private static final String ROLE_CLIENT = "CLIENT";		// 기업 담당자
+	
+	
+	@Override
+	@Transactional
+	public void createProject(ProjectVO projectVO) {
+		
+		// 1. [프로젝트 기본 정보] 저장
+		projectMapper.insertProject(projectVO);
+				
+		// 2. [프로젝트 구성원 정보] 저장
+		int newProjectNo = projectVO.getProjectNo();	// 새로 생성한 프로젝트 일련번호
+		
+		// 2-1. 프로젝트 관리자
+		ProjectMemberVO manager = new ProjectMemberVO();
+		manager.setProjectNo(newProjectNo);
+		manager.setMemberNo(projectVO.getMemberNo());
+		manager.setProjectRole(ROLE_MANAGER);			// 관리자 권한 등록
+		projectMapper.insertProjectMember(manager);
+		
+		// 2-2. 프로젝트 참여자
+		List<ProjectMemberVO> memberList = projectVO.getMemberList();
+		
+		if(memberList != null && !memberList.isEmpty()) {
+			for(ProjectMemberVO projectMember : memberList) {
+				
+				// 참여자 초대 목록에 자신이 있을 경우 스킵
+				if(projectMember.getMemberNo() == projectVO.getMemberNo()) {
+					continue;
+				}
+				
+				projectMember.setProjectNo(newProjectNo);
+				projectMember.setProjectRole(ROLE_MEMBER);
+				projectMapper.insertProjectMember(projectMember);
+				
+				// 초대 이메일 발송
+				sendInviteEmail(projectMember, projectVO.getProjectName());
+			}
+		}
+		
+		// 3. [ 기업 담당자 정보 ] 저장
+		if(projectVO.getClientList() != null) {
+			for(ProjectMemberVO client : projectVO.getClientList()) {
+				client.setProjectNo(newProjectNo);
+				
+				client.setProjectRole(ROLE_CLIENT);
+				projectMapper.insertProjectMember(client);
+				
+			}
+		}
+		
+		// 4. [ 미니헤더 설정 정보 ] 저장
+		// 1.게시판, 2.업무, 3.일정, 4.간트차트, 5.자료실, 6. 구성원
+		if(projectVO.getMiniheader() != null) {
+			ProjectMiniHeaderVO miniHeader = projectVO.getMiniheader();
+			miniHeader.setProjectNo(newProjectNo);
+			
+			List<Integer> order = miniHeader.getTabOrderList();	// 순서 정보
+			if(order != null && !order.isEmpty()) {
+				// 순서 정보 목록을 문자열로 변환
+				String orderToString = order.stream().map(String::valueOf).collect(Collectors.joining(","));
+				miniHeader.setFixTab(orderToString);	// 변환한 문자열 저장
+			} else {
+				miniHeader.setFixTab("1");				// 기본 설정
+			}
+			projectMapper.insertMiniHeader(miniHeader);
+		}
+	}
+
+	
+	// 프로젝트 구성원 초대 메소드
+	private void sendInviteEmail(ProjectMemberVO projectMember, String projectName) {
+		String to = projectMember.getMemberEmail();
+		String name = projectMember.getMemberName();
+		
+		// 이메일 발송
+		
+	}
+
+
+	// 프로젝트 목록
+	@Override
+	public List<ProjectVO> list() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

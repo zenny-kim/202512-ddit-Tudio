@@ -1,0 +1,10 @@
+package kr.or.ddit.project.service;
+
+import java.util.List;
+
+import kr.or.ddit.vo.ProjectVO;
+
+public interface IProjectService {
+	public void createProject(ProjectVO projectVO);
+	public List<ProjectVO> list();
+}

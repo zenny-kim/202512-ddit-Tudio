@@ -1,0 +1,33 @@
+package kr.or.ddit.siteAdmin.service.impl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.siteAdmin.mapper.INoticeMapper;
+import kr.or.ddit.siteAdmin.service.INoticeService;
+import kr.or.ddit.vo.NoticeVO;
+
+@Service
+public class NoticeServiceImpl implements INoticeService {
+	
+	@Autowired
+	private INoticeMapper noticeMapper;
+
+	@Override
+	public List<NoticeVO> selectNoticeList() {
+		return noticeMapper.selectNoticeList();
+	}
+
+	@Override
+	public int insertNotice(NoticeVO noticeVO) {
+		return noticeMapper.insertNotice(noticeVO);
+	}
+
+	@Override
+	public int updateNoticePin(NoticeVO noticeVO) {
+		return noticeMapper.updateNoticePin(noticeVO);
+	}
+
+}

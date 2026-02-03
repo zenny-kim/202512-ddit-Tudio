@@ -1,0 +1,75 @@
+package kr.or.ddit.chat.handler;
+
+import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+
+import com.google.gson.Gson;
+
+import kr.or.ddit.vo.chat.ChatMemberVO;
+import kr.or.ddit.vo.chat.ChatVO;
+import kr.or.ddit.vo.chat.ChatroomVO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Component
+public class WebSocketHandler extends TextWebSocketHandler {
+	private static final ConcurrentHashMap<String, WebSocketSession> CLIENTS = new ConcurrentHashMap<>();
+	
+	/**
+	 *	<p>사용자가 웹소캣 서버에 접속시 동작</p>
+	 *	@date 2025.11.27
+	 */
+	@Override
+	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+		CLIENTS.put(session.getId(), session);
+		String msg = " 님이 들어오셨습니다.";
+		sendMessages(session.getId(), "NOTICE", msg);
+	}
+	
+	/**
+	 *	<p>사용자가 웹소캣 서버에 접속이 끝날시 동작</p>
+	 *	@date 2025.11.27
+	 */
+	@Override
+	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+		CLIENTS.remove(session.getId());
+		String msg = " 님이 나가셨습니다.";
+		sendMessages(session.getId(), "NOTICE", msg);
+	}
+	
+	@Override
+	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+		sendMessages(session.getId(), "TALK", message.getPayload());
+	}
+	
+	/**
+	 * 본인을 제외한 다른 사용자에게 메세지 전송
+	 * @param paramMsg
+	 */
+	private void sendMessages(String myId, String chatType, String paramMsg) {
+		CLIENTS.forEach((id, clientSession) -> {
+			if(!id.equals(myId)) {	
+				Gson gson = new Gson();
+				ChatVO chat = new ChatVO();
+				ChatMemberVO member = new ChatMemberVO();
+				ChatroomVO room = new ChatroomVO();
+//				message.setType(chatType);
+//				message.setSender(id);
+//				message.setContent(paramMsg.toString());
+//				String messageJson = gson.toJson(message);
+//				
+//				try {
+//					clientSession.sendMessage(new TextMessage(messageJson));
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+			}
+		});
+	}
+}

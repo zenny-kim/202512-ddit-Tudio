@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.log.mapper.ILogMapper">
+
+	<insert id="insertLoginLog" parameterType="kr.or.ddit.vo.log.LogLoginVO">
+		INSERT INTO LOG_LOGIN (
+			  LOGIN_LOG_ID
+			, LOGIN_ID
+			, LOGIN_STATUS
+			, IP_ADDR
+			, USER_AGENT
+			, BROWSER
+			, FAIL_REASON
+			, MEMBER_NO
+			, REG_DATE
+		) VALUES (
+			  SEQ_LOG_LOGIN.NEXTVAL
+			, #{loginId}
+			, #{loginStatus}
+			, #{ipAddr}
+			, #{userAgent}
+			, #{browser}
+			, #{failReason}
+			, #{memberNo}
+			, SYSDATE
+		)
+	</insert>
+
+	<select id="selectLoginLogList" parameterType="kr.or.ddit.vo.log.LogSearchVO" resultType="kr.or.ddit.vo.log.LogLoginVO">
+	    SELECT * FROM (
+	        SELECT A.*, ROWNUM AS RNUM FROM (
+	            SELECT
+	                  LOGIN_LOG_ID
+	                , LOGIN_ID
+	                , LOGIN_STATUS
+	                , IP_ADDR
+	                , USER_AGENT
+	                , BROWSER
+	                , FAIL_REASON
+	                , MEMBER_NO
+	                , REG_DATE
+	            FROM LOG_LOGIN
+	            WHERE 1=1
+	            
+	            <if test="startDate != null and startDate != ''">
+	                AND REG_DATE <![CDATA[ >= ]]> TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	            </if>
+	            <if test="endDate != null and endDate != ''">
+	                AND REG_DATE <![CDATA[ < ]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	            </if>
+	            
+	            <if test="searchWord != null and searchWord != ''">
+	                AND (
+	                       LOGIN_ID LIKE '%' || #{searchWord} || '%'
+	                    OR IP_ADDR  LIKE '%' || #{searchWord} || '%'
+	                )
+	            </if>
+	            
+	            <if test="status != null and status != '' and status != 'all'">
+	                AND LOGIN_STATUS = #{status}
+	            </if>
+	            
+	            ORDER BY LOGIN_LOG_ID DESC
+	            
+	        ) A
+	        WHERE ROWNUM <![CDATA[ <= ]]> #{endRow}
+	    )
+	    WHERE RNUM <![CDATA[ >= ]]> #{startRow}
+	</select>
+	
+	<select id="selectLoginLogCount" parameterType="kr.or.ddit.vo.log.LogSearchVO" resultType="int">
+	    SELECT COUNT(*)
+	    FROM LOG_LOGIN
+	    WHERE 1=1
+	    
+	    <if test="startDate != null and startDate != ''">
+	        AND REG_DATE <![CDATA[ >= ]]> TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	    </if>
+	    <if test="endDate != null and endDate != ''">
+	        AND REG_DATE <![CDATA[ < ]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	    </if>
+	    
+	    <if test="searchWord != null and searchWord != ''">
+	        AND (
+	               LOGIN_ID LIKE '%' || #{searchWord} || '%'
+	            OR IP_ADDR  LIKE '%' || #{searchWord} || '%'
+	        )
+	    </if>
+	    
+	    <if test="status != null and status != '' and status != 'all'">
+	        AND LOGIN_STATUS = #{status}
+	    </if>
+	</select>
+	
+	<insert id="insertErrorLog" parameterType="kr.or.ddit.vo.log.LogErrorVO">
+	    <selectKey keyProperty="errorLogId" resultType="int" order="BEFORE">
+	        SELECT SEQ_LOG_ERROR.NEXTVAL FROM DUAL
+	    </selectKey>
+	
+	    INSERT INTO LOG_ERROR (
+	          ERROR_LOG_ID
+	        , ERROR_MESSAGE
+	        , ERROR_DETAIL
+	        , REQUEST_URI
+	        , HTTP_METHOD
+	        , IP_ADDR
+	        , USER_AGENT
+	        , MEMBER_NO
+	        , REG_DATE       
+	        , ERR_STATUS
+	        , STATUS_CODE     ) VALUES (
+	          #{errorLogId}
+	        , #{errorMessage}
+	        , #{errorDetail}
+	        , #{requestUri}
+	        , #{httpMethod}
+	        , #{ipAddr}
+	        , #{userAgent}
+	        , #{memberNo}
+	        , SYSDATE        
+	        , 'NEW'           , #{statusCode}   )
+	</insert>
+	
+	<select id="selectErrorLogList" parameterType="kr.or.ddit.vo.log.LogSearchVO" resultType="kr.or.ddit.vo.log.LogErrorVO">
+	    SELECT * FROM (
+	        SELECT A.*, ROWNUM AS RNUM FROM (
+	            SELECT
+	                  ERROR_LOG_ID
+	                , ERROR_MESSAGE
+	                , ERROR_DETAIL
+	                , REQUEST_URI
+	                , HTTP_METHOD
+	                , IP_ADDR
+	                , USER_AGENT
+	                , MEMBER_NO
+	                , REG_DATE
+	                , ERR_STATUS
+	                , STATUS_CODE
+	                , RESOLVED_DATE      
+	                , RESOLVED_MEMBER_NO 
+	            FROM LOG_ERROR
+	            WHERE 1=1
+	            
+	            <if test="searchType != null and searchType != '' and searchType != 'all'">
+	                AND ERR_STATUS = #{searchType}
+	            </if>
+	            
+	            <if test="startDate != null and startDate != ''">
+	                AND REG_DATE <![CDATA[ >= ]]> TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	            </if>
+	            
+	            <if test="endDate != null and endDate != ''">
+	                AND REG_DATE <![CDATA[ < ]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	            </if>
+	
+	            <if test="searchWord != null and searchWord != ''">
+	                AND (
+	                       REQUEST_URI LIKE '%' || #{searchWord} || '%'
+	                    OR ERROR_MESSAGE LIKE '%' || #{searchWord} || '%'
+	                    OR CAST(STATUS_CODE AS VARCHAR2(10)) LIKE '%' || #{searchWord} || '%'
+	                )
+	            </if>
+	            
+	            ORDER BY ERROR_LOG_ID DESC
+	        ) A
+	        WHERE ROWNUM <![CDATA[ <= ]]> #{endRow}
+	    )
+	    WHERE RNUM <![CDATA[ >= ]]> #{startRow}
+	</select>
+	
+	<select id="selectErrorLogCount" parameterType="kr.or.ddit.vo.log.LogSearchVO" resultType="int">
+	    SELECT COUNT(*) FROM LOG_ERROR
+	    WHERE 1=1
+	    
+	    <if test="searchType != null and searchType != '' and searchType != 'all'">
+	        AND ERR_STATUS = #{searchType}
+	    </if>
+	    
+	    <if test="startDate != null and startDate != ''">
+	        AND REG_DATE <![CDATA[ >= ]]> TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	    </if>
+	    
+	    <if test="endDate != null and endDate != ''">
+	        AND REG_DATE <![CDATA[ < ]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	    </if>
+	    
+	    <if test="searchWord != null and searchWord != ''">
+	        AND (
+	               REQUEST_URI LIKE '%' || #{searchWord} || '%'
+	            OR ERROR_MESSAGE LIKE '%' || #{searchWord} || '%'
+	            OR CAST(STATUS_CODE AS VARCHAR2(10)) LIKE '%' || #{searchWord} || '%'
+	        )
+	    </if>
+	</select>
+	
+	<update id="resolveErrorLog" parameterType="kr.or.ddit.vo.log.LogErrorVO">
+	    UPDATE LOG_ERROR
+	    SET 
+	          ERR_STATUS = 'RESOLVED'
+	        , RESOLVED_DATE = SYSDATE
+	        , RESOLVED_MEMBER_NO = #{resolvedMemberNo}
+	    WHERE ERROR_LOG_ID = #{errorLogId}
+	</update>
+	
+	<insert id="insertActionLog" parameterType="kr.or.ddit.vo.log.LogActionVO">
+	    INSERT INTO LOG_ACTION (
+	          ACTION_LOG_ID  , MENU_NAME
+	        , ACTION_TYPE
+	        , TARGET_IDV
+	        , ACTION_MSG
+	        , IP_ADDR
+	        , MEMBER_NO
+	        , REG_DATE
+	    ) VALUES (
+	          SEQ_LOG_ACTION.NEXTVAL
+	        , #{menuName}
+	        , #{actionType}
+	        , #{targetIdv}
+	        , #{actionMsg}
+	        , #{ipAddr}
+	        , #{memberNo}
+	        , SYSDATE
+	    )
+	</insert>
+	
+	<select id="selectActionLogCount" parameterType="kr.or.ddit.vo.log.LogSearchVO" resultType="int">
+	    SELECT COUNT(*) FROM LOG_ACTION
+	    <where>
+	        <if test="searchWord != null and searchWord != ''">
+	            AND (
+	                   MENU_NAME LIKE '%' || #{searchWord} || '%'
+	                OR ACTION_MSG LIKE '%' || #{searchWord} || '%'
+	            )
+	        </if>
+	        
+	        <if test="startDate != null and startDate != ''">
+	            AND REG_DATE <![CDATA[ >= ]]> TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	        </if>
+	        <if test="endDate != null and endDate != ''">
+	            AND REG_DATE <![CDATA[ < ]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	        </if>
+	    </where>
+	</select>
+	
+	<select id="selectActionLogList" parameterType="kr.or.ddit.vo.log.LogSearchVO" resultType="kr.or.ddit.vo.log.LogActionVO">
+	    SELECT * FROM (
+	        SELECT A.*, ROWNUM AS RNUM FROM (
+	            SELECT 
+	                  ACTION_LOG_ID , MENU_NAME
+	                , ACTION_TYPE
+	                , TARGET_IDV
+	                , ACTION_MSG
+	                , IP_ADDR
+	                , MEMBER_NO
+	                , REG_DATE
+	            FROM LOG_ACTION
+	            <where>
+	                <if test="searchWord != null and searchWord != ''">
+	                    AND (
+	                           MENU_NAME LIKE '%' || #{searchWord} || '%'
+	                        OR ACTION_MSG LIKE '%' || #{searchWord} || '%'
+	                    )
+	                </if>
+	                
+	                <if test="startDate != null and startDate != ''">
+	                    AND REG_DATE <![CDATA[ >= ]]> TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	                </if>
+	                <if test="endDate != null and endDate != ''">
+	                    AND REG_DATE <![CDATA[ < ]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	                </if>
+	            </where>
+	            ORDER BY ACTION_LOG_ID DESC ) A
+	        WHERE ROWNUM <![CDATA[ <= ]]> #{endRow}
+	    )
+	    WHERE RNUM <![CDATA[ >= ]]> #{startRow}
+	</select>
+	
+	<insert id="insertBatchLog" parameterType="kr.or.ddit.vo.log.LogBatchVO">
+	    INSERT INTO LOG_BATCH (
+	          BATCH_LOG_ID
+	        , JOB_NAME
+	        , BATCH_STATUS
+	        , RESULT_MSG
+	        , START_DATE
+	        , REG_DATE
+	        , DURATION
+	        , BATCH_PARAMS
+	        , ERROR_LOG_ID
+	    ) VALUES (
+	          SEQ_LOG_BATCH.NEXTVAL
+	        , #{jobName}
+	        , #{batchStatus}
+	        , #{resultMsg}
+	        , #{startDate}
+	        , #{regDate} , #{duration}
+	        , #{batchParams}
+	        , #{errorLogId}
+	    )
+	</insert>
+
+	<select id="selectBatchLogCount" parameterType="kr.or.ddit.vo.log.LogSearchVO" resultType="int">
+	    SELECT COUNT(*) 
+	    FROM LOG_BATCH
+	    <where>
+	        <if test="searchWord != null and searchWord != ''">
+	            AND (
+	                   JOB_NAME LIKE '%' || #{searchWord} || '%'
+	                OR RESULT_MSG LIKE '%' || #{searchWord} || '%'
+	            )
+	        </if>
+	        
+	        <if test="startDate != null and startDate != ''">
+	            AND START_DATE <![CDATA[ >= ]]> TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	        </if>
+	        <if test="endDate != null and endDate != ''">
+	            AND START_DATE <![CDATA[ < ]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	        </if>
+	        
+	        <if test="status != null and status != 'all'">
+	            AND BATCH_STATUS = #{status}
+	        </if>
+	    </where>
+	</select>
+
+	<select id="selectBatchLogList" parameterType="kr.or.ddit.vo.log.LogSearchVO" resultType="kr.or.ddit.vo.log.LogBatchVO">
+	    SELECT * FROM (
+	        SELECT A.*, ROWNUM AS RNUM FROM (
+	            SELECT 
+	                  BATCH_LOG_ID
+	                , JOB_NAME
+	                , BATCH_STATUS
+	                , RESULT_MSG
+	                , START_DATE
+	                , REG_DATE
+	                , DURATION
+	                , BATCH_PARAMS
+	                , ERROR_LOG_ID
+	            FROM LOG_BATCH
+	            <where>
+	                <if test="searchWord != null and searchWord != ''">
+	                    AND (
+	                           JOB_NAME LIKE '%' || #{searchWord} || '%'
+	                        OR RESULT_MSG LIKE '%' || #{searchWord} || '%'
+	                    )
+	                </if>
+	                
+	                <if test="startDate != null and startDate != ''">
+	                    AND START_DATE <![CDATA[ >= ]]> TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	                </if>
+	                <if test="endDate != null and endDate != ''">
+	                    AND START_DATE <![CDATA[ < ]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	                </if>
+	                
+	                <if test="status != null and status != 'all'">
+	                    AND BATCH_STATUS = #{status}
+	                </if>
+	            </where>
+	            ORDER BY BATCH_LOG_ID DESC
+	        ) A
+	        WHERE ROWNUM <![CDATA[ <= ]]> #{endRow}
+	    )
+	    WHERE RNUM <![CDATA[ >= ]]> #{startRow}
+	</select>
+</mapper>

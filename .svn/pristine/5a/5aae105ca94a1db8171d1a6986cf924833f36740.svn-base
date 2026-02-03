@@ -1,0 +1,63 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
+<h5 class="mb-3">프로젝트 통합 일정</h5>
+<div class="d-flex flex-column flex-lg-row" style="gap: 20px;">
+    <div style="flex: 0 0 250px;">
+        <button class="btn btn-primary w-100 mb-3" onclick="alert('새 이벤트 등록 모달 열기')"><i class="bi bi-plus-circle me-1"></i> 새 일정 등록</button>
+        <div class="card shadow-sm">
+            <div class="card-header fw-bold small bg-light">일정 필터</div>
+            <ul class="list-group list-group-flush small">
+                <li class="list-group-item"><input class="form-check-input me-2" type="checkbox" checked> <span class="text-info">나의 업무</span></li>
+                <li class="list-group-item"><input class="form-check-input me-2" type="checkbox" checked> <span class="text-danger">지연 업무</span></li>
+                <li class="list-group-item"><input class="form-check-input me-2" type="checkbox" checked> <span class="text-success">프로젝트 회의</span></li>
+            </ul>
+        </div>
+    </div>
+    <div class="calendar-container shadow-sm p-3">
+        <div id='projectCalendar'></div>
+    </div>
+</div>
+
+<script>
+    // 캘린더 전역 변수
+    var calendarInstance = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('projectCalendar');
+        const calendarTab = document.getElementById('calendar-tab'); // 메인 페이지의 탭 버튼 ID
+
+        const initCalendar = () => {
+            if (calendarInstance !== null) return; // 이미 생성됐으면 중단
+
+            calendarInstance = new FullCalendar.Calendar(calendarEl, {
+                locale: 'ko',
+                initialView: 'dayGridMonth',
+                height: 'auto',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: [
+                    { title: '팀 주간 회의', start: '2025-12-19T10:00:00', color: '#28a745' },
+                    { title: '런칭 발표회', start: '2025-12-30T14:00:00', color: '#28a745' },
+                    { title: 'DB 연동 마감', start: '2025-12-20', allDay: true, color: '#17a2b8' }
+                ]
+            });
+            calendarInstance.render();
+        };
+
+        // 탭이 클릭되어 보일 때 렌더링 (display:none 이슈 해결)
+        if(calendarTab){
+            calendarTab.addEventListener('shown.bs.tab', function () {
+                initCalendar();
+                if (calendarInstance) calendarInstance.updateSize();
+            });
+        }
+        
+        // 현재 탭이 이미 활성화된 상태라면 즉시 로드
+        if (document.querySelector('#calendar.active')) {
+            initCalendar();
+        }
+    });
+</script>

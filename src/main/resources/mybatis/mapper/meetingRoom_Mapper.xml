@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.meetingRoom.mapper.IMeetingRoomMapper">
+
+	<select id="selectBranchList" resultType="kr.or.ddit.vo.meetingRoom.MeetingBranchVO">
+		SELECT BRANCH_ID
+		     , BRANCH_NAME
+		     , BRANCH_ADDR
+		     , FILE_GROUP_NO
+		     , BRANCH_STATUS
+		     , MEMBER_NO
+		     , BRANCH_REGDATE
+		     , BRANCH_UPDDATE
+		  FROM MEETING_BRANCH
+		 WHERE BRANCH_STATUS = 'Y'
+		 ORDER BY BRANCH_ID ASC
+	</select>
+
+	<select id="selectMeetingRoomList" parameterType="int" resultType="kr.or.ddit.vo.meetingRoom.MeetingRoomVO">
+		SELECT ROOM_ID
+		     , BRANCH_ID
+		     , ROOM_NAME
+		     , ROOM_CAPACITY
+		     , ROOM_STATUS
+		     , ROOM_REGDATE
+		     , ROOM_UPDDATE
+		     , MEMBER_NO
+		  FROM MEETING_ROOM
+		 WHERE BRANCH_ID = #{branchId}
+		   AND ROOM_STATUS = 'Y'
+		 ORDER BY ROOM_ID ASC
+	</select>
+
+	<insert id="insertReservation" parameterType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+		<selectKey keyProperty="reservationId" resultType="int" order="BEFORE">
+			SELECT SEQ_MEETING_RESERVATION.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO MEETING_RESERVATION (
+		    RESERVATION_ID
+		  , ROOM_ID
+		  , PROJECT_NO
+		  , MEMBER_NO
+		  , RES_MEETING_TITLE
+		  , RES_STARTDATE
+		  , RES_ENDDATE
+		  , RES_STATUS
+		  , RES_MEMO
+		  , RES_REGDATE
+		  , RES_TYPE
+		) VALUES (
+		    #{reservationId}
+		  , #{roomId}
+		  , #{projectNo}
+		  , #{memberNo}
+		  , #{resMeetingTitle}
+		  , #{resStartdate}
+		  , #{resEnddate}
+		  , 701
+		  , #{resMemo}
+		  , SYSDATE
+		  , 'P'
+		)
+	</insert>
+
+	<!-- 내 프로젝트 예약 회의실 조회 -->
+	<select id="selectReservationList" parameterType="map" resultType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+	    SELECT R.RESERVATION_ID
+	         , R.ROOM_ID
+	         , R.PROJECT_NO
+	         , R.MEMBER_NO
+	         , M_OWNER.MEMBER_NAME
+	         , R.RES_MEETING_TITLE
+	         , R.RES_STARTDATE
+	         , R.RES_ENDDATE
+	         , R.RES_STATUS
+	         , R.RES_REGDATE
+	         , R.RES_CONTENT
+	         , R.RES_MEMO        
+	         , MR.ROOM_NAME
+	         , MB.BRANCH_NAME
+	         , (SELECT LISTAGG(M.MEMBER_NAME, ', ') WITHIN GROUP (ORDER BY M.MEMBER_NAME)
+	              FROM MEETING_ROOM_MEMBER MRM
+	             INNER JOIN MEMBER M ON MRM.MEMBER_NO = M.MEMBER_NO
+	             WHERE MRM.RESERVATION_ID = R.RESERVATION_ID) AS MEMBER_LIST_NAME
+	      FROM MEETING_RESERVATION R
+	     INNER JOIN MEETING_ROOM MR ON R.ROOM_ID = MR.ROOM_ID
+	     INNER JOIN MEETING_BRANCH MB ON MR.BRANCH_ID = MB.BRANCH_ID
+	     INNER JOIN MEMBER M_OWNER ON R.MEMBER_NO = M_OWNER.MEMBER_NO 
+	     WHERE (
+	            R.MEMBER_NO = #{memberNo}
+	         OR EXISTS (
+	                SELECT 1
+	                  FROM MEETING_ROOM_MEMBER SUB_MRM
+	                 WHERE SUB_MRM.RESERVATION_ID = R.RESERVATION_ID
+	                   AND SUB_MRM.MEMBER_NO = #{memberNo}
+	            )
+	     )
+	     <choose>
+		    <when test="filterType == 'HISTORY'">
+		        AND R.RES_STATUS IN (703, 704, 705, 706)
+		        ORDER BY 
+		            CASE WHEN R.RES_STATUS = 706 THEN 703 ELSE R.RES_STATUS END ASC, 
+		            R.RES_STARTDATE DESC
+		    </when>
+		    <otherwise>
+		        AND R.RES_STATUS IN (701, 702)
+		        ORDER BY R.RES_STARTDATE ASC
+		    </otherwise>
+		</choose>
+	</select>
+
+	<insert id="insertReservationMember">
+		INSERT INTO MEETING_ROOM_MEMBER (
+		    RESERVATION_ID
+		  , MEMBER_NO
+		) VALUES (
+		    #{reservationId}
+		  , #{memberNo}
+		)
+	</insert>
+	
+	<!-- 회의실 예약 취소 -->
+	<update id="cancelReservation" parameterType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+	    UPDATE MEETING_RESERVATION
+	       SET RES_STATUS = 703
+	     WHERE RESERVATION_ID = #{reservationId}
+	       AND MEMBER_NO = #{memberNo}
+	</update>
+	
+	<!-- 예약된 회의실 목록 조회 -->
+	<select id="selectBookedMeetingRoomList" parameterType="map" resultType="map">
+	    SELECT TO_CHAR(RES_STARTDATE, 'HH24') AS START_TIME
+	         , TO_CHAR(RES_ENDDATE, 'HH24')   AS END_TIME
+	      FROM MEETING_RESERVATION
+	     WHERE ROOM_ID = #{roomId}
+	       AND TO_CHAR(RES_STARTDATE, 'YYYY-MM-DD') = #{date}
+	       AND RES_STATUS NOT IN (703, 706)
+	</select>
+
+	<!-- 예약된 주간 회의실 목록 조회 -->
+	<select id="selectWeekBookedMeetingRoomList" parameterType="map" resultType="map">
+	    SELECT TO_CHAR(R.RES_STARTDATE, 'YYYY-MM-DD') AS RES_DATE
+	         , TO_CHAR(R.RES_STARTDATE, 'HH24:MI')    AS START_TIME
+	         , TO_CHAR(R.RES_ENDDATE, 'HH24:MI')      AS END_TIME
+	         , R.RESERVATION_ID
+	         , M.MEMBER_NAME
+	         , R.RES_TYPE
+	         , R.RES_CONTENT     
+	         , R.RES_MEETING_TITLE 
+	         , MB.BRANCH_NAME    
+	         , MR.ROOM_NAME
+	      FROM MEETING_RESERVATION R
+	     INNER JOIN MEMBER M ON R.MEMBER_NO = M.MEMBER_NO
+	     INNER JOIN MEETING_ROOM MR ON R.ROOM_ID = MR.ROOM_ID
+     	 INNER JOIN MEETING_BRANCH MB ON MR.BRANCH_ID = MB.BRANCH_ID
+	     WHERE R.ROOM_ID = #{roomId}
+	       AND R.RES_STATUS NOT IN (703, 706)
+	       AND R.RES_STARTDATE BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+	                             AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 0.99999
+	     ORDER BY R.RES_STARTDATE ASC
+	</select>
+
+
+	<!--회의실 예약 상세정보 -->
+	<select id="selectReservationDetail" parameterType="int" resultType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+        SELECT RESERVATION_ID
+             , ROOM_ID
+             , PROJECT_NO
+             , MEMBER_NO
+             , RES_MEETING_TITLE
+             , RES_STARTDATE
+             , RES_ENDDATE
+             , RES_STATUS
+          FROM MEETING_RESERVATION
+         WHERE RESERVATION_ID = #{reservationId}
+    </select>
+	
+	<!-- 회의실 예약 상세정보 - 멤버 -->
+	<select id="selectReservationMemberList" parameterType="int" resultType="int">
+        SELECT MEMBER_NO
+          FROM MEETING_ROOM_MEMBER
+         WHERE RESERVATION_ID = #{reservationId}
+    </select>
+    
+    <!-- 회의실 예약 수정 -->
+    <update id="updateReservation" parameterType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+        UPDATE MEETING_RESERVATION
+           SET RES_MEETING_TITLE = #{resMeetingTitle}
+             , RES_STARTDATE = #{resStartdate}
+             , RES_ENDDATE = #{resEnddate}
+             , RES_STATUS = 701  , RES_UPDDATE = SYSDATE
+         WHERE RESERVATION_ID = #{reservationId}
+    </update>
+
+	<!-- 회의실 예약 수정 시 멤버 삭제 후 재생성용 delete 쿼리 -->
+    <delete id="deleteReservationMemberList" parameterType="int">
+        DELETE FROM MEETING_ROOM_MEMBER
+         WHERE RESERVATION_ID = #{reservationId}
+    </delete>
+    
+    
+    <!-- 관리자용 -->
+    <!-- 관리자용 -->
+	
+	<insert id="insertAdminReservation" parameterType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+		<selectKey keyProperty="reservationId" resultType="int" order="BEFORE">
+			SELECT SEQ_MEETING_RESERVATION.NEXTVAL FROM DUAL
+		</selectKey>
+		
+		INSERT INTO MEETING_RESERVATION (
+		    RESERVATION_ID
+		  , ROOM_ID
+		  , PROJECT_NO
+		  , MEMBER_NO
+		  , RES_MEETING_TITLE
+		  , RES_CONTENT
+		  , RES_STARTDATE
+		  , RES_ENDDATE
+		  , RES_STATUS
+		  , RES_TYPE
+		  , RES_REGDATE
+		) VALUES (
+		    #{reservationId}
+		  , #{roomId}
+		  , 0                  
+		  , #{memberNo}        
+		  , #{resMeetingTitle} 
+		  , #{resContent}      
+		  , #{resStartdate}
+		  , #{resEnddate}
+		  , 702                
+		  , 'B'                
+		  , SYSDATE
+		)
+	</insert>
+	
+	<update id="cancelAdminReservation" parameterType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+	    UPDATE MEETING_RESERVATION
+	       SET RES_STATUS = 706  , RES_CONTENT = NVL(#{resContent}, '관리자 운영 정책에 의한 예약 취소')
+	         , RES_UPDDATE = SYSDATE
+	     WHERE ROOM_ID = #{roomId}
+	       AND RES_STATUS IN (701, 702) 
+	       AND RES_TYPE != 'B'
+	       AND (
+	           RES_STARTDATE <![CDATA[ < ]]> #{resEnddate}
+	           AND 
+	           RES_ENDDATE   <![CDATA[ > ]]> #{resStartdate}
+	       )
+	</update>
+	
+	
+	<select id="selectAdminMeetingRoomReservationList" resultType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+	    SELECT R.RESERVATION_ID
+	         , R.ROOM_ID
+	         , MR.ROOM_NAME          
+	         , MB.BRANCH_NAME        
+	         , R.MEMBER_NO
+	         , M.MEMBER_NAME         
+	         , R.RES_MEETING_TITLE
+	         , R.RES_STARTDATE
+	         , R.RES_ENDDATE
+	         , R.RES_STATUS
+	         , R.RES_REGDATE
+	         , R.RES_TYPE      
+	         , R.RES_MEMO      
+	         , R.RES_CONTENT   
+	     FROM MEETING_RESERVATION R
+	     INNER JOIN MEETING_ROOM MR ON R.ROOM_ID = MR.ROOM_ID
+	     INNER JOIN MEETING_BRANCH MB ON MR.BRANCH_ID = MB.BRANCH_ID
+	     INNER JOIN MEMBER M ON R.MEMBER_NO = M.MEMBER_NO
+	     ORDER BY R.RESERVATION_ID DESC
+	</select>
+
+	<update id="updateMeetingRoomReservationStatus" parameterType="kr.or.ddit.vo.meetingRoom.MeetingReservationVO">
+	    UPDATE MEETING_RESERVATION
+	       SET RES_STATUS = #{resStatus}
+	         , RES_UPDDATE = SYSDATE
+	         
+	         <if test="memberNo != 0">
+	            , MEMBER_NO = #{memberNo}
+	            , PROJECT_NO = #{projectNo}
+	            , RES_UPDMEMBER = #{resUpdmember}
+	         </if>
+	
+	         <if test="resMeetingTitle != null">, RES_MEETING_TITLE = #{resMeetingTitle}</if>
+	         
+	         <if test="resType != null">, RES_TYPE = #{resType}</if>
+	
+	         <if test="resContent != null and resContent != ''">
+	            <choose>
+	                <when test="resStatus == 703">
+	                    , RES_MEMO = #{resContent}
+	                </when>
+	                <otherwise>
+	                    , RES_CONTENT = #{resContent}
+	                </otherwise>
+	            </choose>
+	         </if>
+	         
+	     WHERE RESERVATION_ID = #{reservationId}
+	</update>
+	
+</mapper>

@@ -1,0 +1,399 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   Toss/iOS Style Modern Design
+   ========================================================================== */
+
+:root {
+    /* Color Palette */
+    --toss-bg-base: #ffffff;
+    --toss-bg-gray: #f2f4f6;
+    --toss-bg-input: #f9fafb;
+    
+    --toss-text-title: #191f28;
+    --toss-text-body: #333d4b;
+    --toss-text-sub: #8b95a1;
+    --toss-text-placeholder: #b0b8c1;
+    
+    --toss-primary: #3182f6;      /* Toss Blue */
+    --toss-primary-dark: #1b64da;
+    --toss-danger: #f04452;
+    
+    /* Spacing & Radius */
+    --toss-radius-lg: 24px;
+    --toss-radius-md: 16px;
+    --toss-radius-sm: 8px;
+    
+    /* Shadow */
+    --toss-shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+    --toss-shadow-md: 0 8px 16px rgba(0,0,0,0.08);
+}
+
+/* ==========================================================================
+   Layout & Container
+   ========================================================================== */
+
+/* 전체 래퍼: 모달 내부에서 넉넉한 여백 제공 */
+.task-create-wrap {
+    padding: 30px 40px 40px; /* 상 30, 좌우/하 40 */
+    color: var(--toss-text-body);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", Roboto, "Noto Sans KR", sans-serif;
+}
+
+/* 헤더 영역 */
+.task-create-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px; /* 카드와 간격 */
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--toss-bg-gray);
+}
+
+.task-create-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--toss-text-title);
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+}
+
+.task-create-subtitle {
+    font-size: 15px;
+    color: var(--toss-text-sub);
+    font-weight: 400;
+}
+
+.task-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ==========================================================================
+   Card Component
+   ========================================================================== */
+
+/* 섹션별 카드 디자인 */
+.task-card {
+    background-color: var(--toss-bg-base);
+    /* 테두리 없이 깔끔하게, 필요시 그림자 추가 가능 */
+    margin-bottom: 36px;
+}
+
+.task-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--toss-text-title);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+/* 라벨 스타일 */
+.task-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4e5968;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* ==========================================================================
+   Form Elements (Input, Select, Textarea)
+   ========================================================================== */
+
+.form-control, 
+.form-select {
+    background-color: var(--toss-bg-input);
+    border: 1px solid transparent; /* 평소엔 투명 테두리 */
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-size: 15px;
+    color: var(--toss-text-title);
+    transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.form-control:focus, 
+.form-select:focus {
+    background-color: #fff;
+    border-color: var(--toss-primary);
+    box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.12);
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: var(--toss-text-placeholder);
+}
+
+textarea.form-control {
+    resize: vertical;
+    line-height: 1.6;
+    min-height: 100px;
+}
+
+/* 필수 항목 별표 */
+.text-danger {
+    color: var(--toss-danger) !important;
+    font-weight: bold;
+    margin-left: 2px;
+}
+
+/* ==========================================================================
+   Assignee (담당자) UI
+   ========================================================================== */
+
+.assignee-box {
+    background-color: var(--toss-bg-input);
+    border-radius: var(--toss-radius-md);
+    padding: 20px;
+    position: relative;
+}
+
+.assignee-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    padding: 5px 0;
+    outline: none;
+    color: var(--toss-text-title);
+}
+
+.assignee-input::placeholder {
+    color: var(--toss-text-placeholder);
+}
+
+/* 선택된 담당자 태그 영역 */
+.assignee-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    min-height: 0; 
+}
+.assignee-tags:not(:empty) {
+    margin-bottom: 5px;
+}
+
+.assignee-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: #e8f3ff;
+    color: var(--toss-primary);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.assignee-tag button {
+    background: none;
+    border: none;
+    color: var(--toss-primary);
+    margin-left: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.7;
+}
+.assignee-tag button:hover { opacity: 1; }
+
+/* 담당자 드롭다운 */
+.assignee-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    margin-top: 8px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--toss-shadow-md);
+    border: 1px solid #e5e8eb;
+    z-index: 1050;
+    display: none;
+    max-height: 240px;
+    overflow-y: auto;
+}
+.assignee-dropdown.show { display: block; }
+
+.assignee-item {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid #f9f9f9;
+}
+.assignee-item:last-child { border-bottom: none; }
+.assignee-item:hover { background-color: var(--toss-bg-gray); }
+
+.assignee-item .name { font-weight: 500; font-size: 15px; }
+
+/* ==========================================================================
+   Subtask (하위업무) List
+   ========================================================================== */
+
+.subtask-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.subtask-item {
+    background-color: #fff;
+    border: 1px solid #e5e8eb;
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    transition: box-shadow 0.2s;
+}
+.subtask-item:hover {
+    box-shadow: var(--toss-shadow-sm);
+    border-color: #d1d6db;
+}
+
+.subtask-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #f2f4f6;
+    padding-bottom: 12px;
+}
+
+.subtask-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--toss-primary);
+    margin: 0;
+}
+
+.subtask-remove {
+    background: none;
+    border: none;
+    color: var(--toss-text-sub);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+.subtask-remove:hover {
+    background-color: #fff0f0;
+    color: var(--toss-danger);
+}
+
+/* 하위업무 담당자 체크리스트 */
+.sub-assignee-box {
+    background-color: var(--toss-bg-input);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid transparent;
+}
+.sub-assignee-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.sub-assignee-item {
+    display: inline-flex;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid #e5e8eb;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+}
+.sub-assignee-item:hover { border-color: #b0b8c1; }
+.sub-assignee-item input:checked + span { color: var(--toss-primary); font-weight: 600; }
+.sub-assignee-item:has(input:checked) {
+    border-color: var(--toss-primary);
+    background-color: #e8f3ff;
+}
+
+/* ==========================================================================
+   Buttons & Range & Helpers
+   ========================================================================== */
+
+/* Buttons */
+.btn {
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--toss-primary);
+    border-color: var(--toss-primary);
+    box-shadow: 0 4px 12px rgba(49, 130, 246, 0.25);
+}
+.btn-primary:hover {
+    background-color: var(--toss-primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-soft {
+    background-color: #f0f4f9; /* 아주 연한 블루그레이 */
+    color: #4e5968;
+    border: none;
+}
+.btn-soft:hover {
+    background-color: #e1e7ee;
+    color: #191f28;
+}
+
+/* Range Slider */
+.rate-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: var(--toss-bg-input);
+    padding: 16px;
+    border-radius: 12px;
+}
+.form-range { width: 100%; cursor: pointer; }
+.rate-value {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--toss-primary);
+    min-width: 45px;
+    text-align: right;
+}
+
+/* Helper Text */
+.task-help {
+    font-size: 13px;
+    color: var(--toss-text-sub);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+}
+.task-help::before {
+    content: 'i';
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background-color: #e5e8eb;
+    color: #8b95a1;
+    font-size: 11px;
+    font-weight: bold;
+    margin-right: 6px;
+}
+
+/* Footer */
+.task-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--toss-bg-gray);
+}

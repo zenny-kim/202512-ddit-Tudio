@@ -1,0 +1,100 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. 기본 변수 및 메인 컨테이너
+   ========================================= */
+:root { 
+    --primary-color: #0d6efd;
+    --border-color: #eaedf0;
+    --text-main: #333;
+    --bg-body: #f4f7f6;
+}
+
+/* 메인 콘텐츠 영역 (사이드바 제외 시 width 100%) */
+.main-content-wrap { 
+    padding: 30px; 
+    width: 100%; 
+    background-color: var(--bg-body);
+    min-height: 100vh;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    color: var(--text-main);
+}
+
+/* =========================================
+   2. 카드 스타일 (검색창, 리스트 박스)
+   ========================================= */
+.card { 
+    border: 1px solid var(--border-color); 
+    border-radius: 12px; 
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03); 
+    background-color: #fff; 
+    overflow: hidden; 
+    margin-bottom: 1.5rem; /* 카드 간 간격 */
+}
+
+/* =========================================
+   3. 탭 네비게이션 (결재 대기함/처리함)
+   ========================================= */
+.nav-tabs { 
+    border-bottom: 1px solid var(--border-color); 
+}
+
+.nav-tabs .nav-link { 
+    color: #6c757d; 
+    border: none; 
+    font-weight: 600; 
+    padding: 14px 24px; 
+    transition: 0.2s; 
+    cursor: pointer; 
+}
+
+.nav-tabs .nav-link:hover { 
+    color: var(--primary-color); 
+}
+
+.nav-tabs .nav-link.active { 
+    color: var(--primary-color); 
+    border-bottom: 2px solid var(--primary-color); 
+    background: transparent; 
+}
+
+/* =========================================
+   4. 데이터 테이블 스타일
+   ========================================= */
+.table th { 
+    background-color: #f8f9fa; 
+    color: #6c757d; 
+    font-weight: 600; 
+    font-size: 0.85rem; 
+    border-bottom: 1px solid #e3e6f0; 
+    padding: 14px 20px; 
+    white-space: nowrap; 
+}
+
+.table td { 
+    vertical-align: middle; 
+    padding: 16px 20px; 
+    font-size: 0.95rem; 
+    color: #444; 
+    border-bottom: 1px solid #f0f0f0; 
+}
+
+/* 테이블 행 호버 효과 (클릭 가능함 암시) */
+.table-hover tbody tr:hover { 
+    background-color: #f8f9fc; 
+    cursor: pointer; 
+}
+
+/* =========================================
+   5. 유틸리티 (배지 등)
+   ========================================= */
+/* 상태 표시 배지 고정 너비 설정 */
+.badge-status { 
+    width: 80px; 
+    padding: 6px 0; 
+    font-weight: 500; 
+    font-size: 0.75rem; 
+    border-radius: 6px; 
+    display: inline-block;
+    text-align: center;
+}

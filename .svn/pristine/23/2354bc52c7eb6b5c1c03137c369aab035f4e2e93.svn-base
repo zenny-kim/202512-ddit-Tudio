@@ -1,0 +1,23 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
+
+<!-- 알림 드롭다운 패널 -->
+<div id="notiPanel"
+     class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0"
+     style="width: 380px;">
+
+  <!-- 상단 헤더 -->
+  <div class="px-3 py-2 border-bottom d-flex align-items-center justify-content-between">
+    <span class="fw-bold">알림</span>
+
+    <div class="btn-group btn-group-sm noti-tabs">
+      <button type="button" class="btn noti-tab active" data-tab="all">전체</button>
+      <button type="button" class="btn noti-tab" data-tab="unread">안읽음</button>
+    </div>
+  </div>
+
+  <!-- 알림 리스트 -->
+  <div style="max-height: 420px; overflow-y: auto;">
+    <ul id="notiList" class="list-group list-group-flush"></ul>
+    <div id="notiEmpty" class="px-3 py-4 text-center text-muted d-none">알림이 없습니다.</div>
+  </div>
+</div>

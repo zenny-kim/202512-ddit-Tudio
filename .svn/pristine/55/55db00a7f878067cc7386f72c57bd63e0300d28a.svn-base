@@ -1,0 +1,13 @@
+package kr.or.ddit.dto;
+
+import lombok.Data;
+
+@Data
+public class AdminUserDTO {
+	private int memNo;          // MEMBER_NO
+
+    private String memId;       // MEMBER_ID
+    private String memName;     // MEMBER_NAME
+    
+    private String memProfile;	// MEMBER_PROFILEIMG
+}

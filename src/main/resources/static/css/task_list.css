@@ -1,0 +1,164 @@
+@charset "UTF-8";
+
+/* 아코디어 방식*/
+.sub-row, .sub-add-row {
+	display: none;
+}
+
+/*하위업무 추가 행 디자인*/
+.sub-add-row td {
+	/* [변경] 배경색을 일반 하위업무(흰색)와 확실히 구분되도록 약간 더 짙은 연회색 적용 */
+	background-color: #EEEEEE !important;
+	color: #64748b; /* 글자색 (차분한 톤) */
+	font-size: 13px;
+	font-weight: 600;
+	text-align: center !important; /* 가운데 정렬 */
+	cursor: pointer; /* 손가락 커서 */
+	/* [변경] 높이를 더 줄이기 위해 패딩 축소 (10px -> 8px) */
+	padding: 8px 0 !important;
+	transition: all 0.2s ease;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+/* [기존 유지] 마우스 올렸을 때 (Hover) */
+.sub-add-row:hover td {
+	background-color: #e2e8f0 !important; /* 배경색 진하게 */
+	color: #3b82f6; /* 글자색 파란색으로 강조 */
+}
+
+/* 아이콘 스타일 미세 조정 */
+.sub-add-row i {
+	font-size: 14px;
+	vertical-align: middle;
+	margin-bottom: 2px;
+	margin-right: 4px; /* 아이콘과 텍스트 사이 간격 살짝 추가 */
+}
+
+.sub-row.show, .sub-add-row.show {
+	display: table-row; /* 또는 block */
+}
+
+.tudio-table-wrap {
+	overflow-y: scroll; /* 항상 스크롤바 공간 확보 */
+}
+
+/* 테이블 레이아웃 고정 */
+.tudio-table-card {
+	table-layout: fixed;
+	width: 100%;
+}
+
+/* [수정 1] 제목 영역: 상단 정렬(flex-start) -> 중앙 정렬(center)로 변경 */
+.task-title {
+	display: flex !important;
+	align-items: center !important; /* 여기가 핵심입니다 (기존 flex-start 수정) */
+	gap: 4px;
+	height: 100%; /* 셀 높이만큼 가득 채워서 중앙 정렬 보장 */
+}
+
+/* [수정 2] 토글 버튼: 억지로 주었던 상단 여백 제거 */
+.task-title .toggle-btn {
+	flex-shrink: 0 !important;
+	/* margin-top: 3px; */ /* <--- 이 줄을 삭제하거나 주석 처리하세요 */
+	display: inline-flex !important;
+	align-items: center; /* 아이콘 자체도 중앙 정렬 */
+	justify-content: center;
+}
+
+/* 제목 텍스트 (기존 유지) */
+.task-title-text {
+	font-size: 1rem !important;
+	font-weight: 600 !important;
+	color: #1e293b !important;
+	text-decoration: none;
+	line-height: 1.5;
+	display: inline-block;
+	vertical-align: middle;
+	white-space: normal !important;
+	word-break: keep-all !important;
+}
+
+/* (선택) 마우스 올렸을 때만 색상 변경 (기존 유지) */
+.task-row:hover .task-title-text {
+	color: #3b82f6 !important;
+}
+
+.sub-row:hover .sub-title {
+    color: #3b82f6 !important;
+    cursor: pointer; /* 마우스 올리면 손가락 모양 확실하게 */
+}
+
+/* 핀 아이콘 기본 */
+.task-pin-icon, .sub-pin-icon {
+	font-size: 1.1rem;
+	color: #cbd5e1; /* 비활성 시 연한 회색 */
+	cursor: pointer;
+	transition: transform 0.2s, color 0.2s;
+}
+
+/* 마우스 올렸을 때 */
+.pin-wrapper:hover .task-pin-icon, .pin-wrapper:hover .sub-pin-icon {
+	transform: scale(1.2) rotate(15deg);
+	color: #64748b;
+}
+
+/* 활성화(고정) 상태 - 주황색/금색 계열 추천 */
+.task-pin-icon.active, .sub-pin-icon.active {
+	color: #f59e0b !important; /* Amber-500 */
+}
+
+/* 상위 업무 배경색 변경 */
+.task-row td {
+    background-color: #ffffff !important; /* 현재 값 */
+}
+
+/* 하위 업무 배경색 변경 */
+.sub-row td {
+	padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    background-color: #fcfcfc !important; /* 현재 값 */
+}
+
+/* 상위 업무 왼쪽에 굵은 파란색 띠 추가 */
+.task-row td:first-child {
+    border-left: 4px solid #C7E3FF !important; /* 굵은 파란선 */
+}
+
+/* 하위 업무는 띠 없이 (들여쓰기 느낌 유지) */
+.sub-row td:first-child {
+    border-left: 1px solid #e2e8f0; /* 일반 테두리 */
+}
+
+/* ----------------------------------------------------------- */
+/* [추가] 테이블 정렬 스타일 (업무명 제외 가운데 정렬) */
+/* ----------------------------------------------------------- */
+
+/* 1. 모든 헤더(th) 가운데 정렬 */
+.tudio-table-card thead th {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* 3. 모든 데이터 셀(td) 가운데 정렬 */
+.tudio-table-card tbody td {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* 4. 첫 번째 데이터 셀(업무명)만 왼쪽 정렬 */
+/* [수정] '업무 추가(.sub-add-row)' 행은 제외하고 왼쪽 정렬 적용 */
+.tudio-table-card tbody tr:not(.sub-add-row) td:first-child {
+    text-align: left !important;
+    justify-content: flex-start !important;
+}
+
+/* 5. Flex 컨테이너 정렬 (진척도 바 등) */
+.tudio-table-card tbody td .d-flex {
+    justify-content: center !important; /* 기본적으로 가운데 정렬 */
+}
+
+/* 단, 업무명(.task-title, .sub-title) 내부의 d-flex는 왼쪽 정렬이어야 함 */
+.tudio-table-card tbody td.task-title .d-flex,
+.tudio-table-card tbody td.sub-title .d-flex {
+    justify-content: flex-start !important;
+}

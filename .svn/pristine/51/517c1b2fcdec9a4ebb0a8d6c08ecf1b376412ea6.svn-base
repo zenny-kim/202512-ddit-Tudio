@@ -1,0 +1,22 @@
+@charset "UTF-8";
+
+/* 아코디어 방식*/
+.sub-row,
+.sub-add-row {
+    display: none;
+}
+
+.sub-row.show,
+.sub-add-row.show {
+    display: table-row; /* 또는 block */
+}
+
+.tudio-table-wrap {
+    overflow-y: scroll; /* 항상 스크롤바 공간 확보 */
+}
+
+/* 테이블 레이아웃 고정 */
+.tudio-table-card {
+    table-layout: fixed;
+    width: 100%;
+}

@@ -1,0 +1,482 @@
+@charset "UTF-8";
+
+/* ===============================
+   0) 패널(드롭다운) 기본
+   =============================== */
+#notiPanel{
+  width: 380px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* ===============================
+   1) 상단 헤더 (알림 + X)
+   =============================== */
+#notiPanel .noti-top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #EAECF0;
+  background: #fff;
+}
+
+#notiPanel .noti-title{
+  font-weight: 800;
+  font-size: 18px;
+  color: #101828;
+}
+
+#notiPanel .noti-close-btn{
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: #667085;
+  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#notiPanel .noti-close-btn:hover{
+  color: #344054;
+}
+
+/* ===============================
+   2) 상단 탭 (안읽음 / 읽음)
+   =============================== */
+#notiPanel .noti-tabs2{
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #EAECF0;
+}
+
+#notiPanel .noti-tab2{
+  flex: 1;
+  padding: 12px 0;
+  border: 0;
+  background: transparent;
+  color: #667085;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+}
+
+#notiPanel .noti-tab2.active{
+  color: #2563EB;
+}
+
+#notiPanel .noti-tab2.active::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: #2563EB;
+}
+
+#notiPanel .noti-count{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: #DC3545;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* ===============================
+   3) 카테고리 필터
+   =============================== */
+#notiPanel .noti-filters{
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+
+  /* ✅ 한 줄 고정 */
+  flex-wrap: nowrap;
+}
+
+#notiPanel .noti-filter-btn{
+  border: 1px solid #D0D5DD;
+  background: #fff;
+  color: #344054;
+  border-radius: 999px;
+
+  /* ✅ 중앙정렬 강제 */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  height: 28px !important;
+  padding: 0 12px !important;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  vertical-align: middle !important;
+
+  min-width: 44px;
+  text-align: center;
+  cursor: pointer;
+
+  /* ✅ baseline 미세 보정 */
+  transform: translateY(0.5px);
+}
+
+#notiPanel .noti-filter-btn.active{
+  border-color: #2563EB;
+  color: #2563EB;
+  background: #EFF6FF;
+}
+
+/* ===============================
+   4) 리스트 영역
+   =============================== */
+#notiPanel .noti-list-wrap{
+  max-height: 420px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+#notiPanel ul#notiList{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ===============================
+   5) 아이템 1개
+   =============================== */
+#notiPanel .noti-row{
+  position: relative;
+  padding: 12px 72px 12px 12px;
+  border-bottom: 1px solid #F2F4F7;
+  cursor: pointer;
+}
+
+#notiPanel .noti-row:hover{
+  background: #F9FAFB;
+}
+
+#notiPanel .noti-meta{
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+#notiPanel .noti-tag{
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+#notiPanel .tag-project{
+  background: #E6F0FF;
+  color: #2563EB;
+}
+
+#notiPanel .tag-mention{
+  background: #FFE4E6;
+  color: #E11D48;
+}
+
+#notiPanel .tag-system{
+  background: #F2F4F7;
+  color: #344054;
+}
+
+#notiPanel .tag-approval{
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+#notiPanel .tag-etc{
+  background: #EEF2FF;
+  color: #4F46E5;
+}
+
+/* ✅ 추가 라벨 */
+#notiPanel .tag-task{
+  background: #E0F2FE;
+  color: #0369A1;
+}
+
+#notiPanel .tag-schedule{
+  background: #ECFDF3;
+  color: #047857;
+}
+
+.noti-headline strong{
+  font-weight: 700;
+  color: #111827;
+}
+
+#notiPanel .noti-preview{
+  font-size: 12px;
+  color: #475467;
+  line-height: 1.35;
+}
+
+/* ===============================
+   6) 오른쪽 영역
+   =============================== */
+#notiPanel .noti-right{
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  right: 10px;
+  width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+#notiPanel .noti-item-x{
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: #98A2B3;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+#notiPanel .noti-item-x:hover{
+  background: rgba(16, 24, 40, 0.06);
+  color: #344054;
+  box-shadow: 0 6px 14px rgba(16, 24, 40, 0.10);
+  transform: translateY(-1px) scale(1.06);
+}
+
+#notiPanel .noti-item-x:active{
+  background: rgba(16, 24, 40, 0.10);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+  transform: translateY(0) scale(0.96);
+}
+
+#notiPanel .noti-item-x:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+#notiPanel .noti-when{
+  font-size: 12px;
+  color: #98A2B3;
+}
+
+/* ===============================
+   7) 빈 상태
+   =============================== */
+#notiPanel #notiEmpty{
+  padding: 18px 12px;
+  text-align: center;
+  color: #98A2B3;
+  display: none;
+}
+
+/* =========================================================
+   8) HEADER: 🔴 초소형 알림 숫자 배지 (종 안 가림)
+   ========================================================= */
+#headerNotiBtn{
+  position: relative !important;
+  overflow: visible !important;
+}
+
+#headerNotiDot{
+  all: unset !important;
+  position: absolute !important;
+  top: -3px !important;
+  right: -3px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 15px !important;
+  height: 15px !important;
+  padding: 0 !important;
+
+  background: #ff3b30 !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+
+  font-size: 8px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25) !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+}
+
+#headerNotiDot::before,
+#headerNotiDot::after{
+  content: none !important;
+}
+
+#headerNotiDot:not(.d-none){
+  animation: notiBadgeTinyPop 2.4s ease-in-out infinite;
+}
+
+@keyframes notiBadgeTinyPop{
+  0%, 88% { transform: scale(1); }
+  92%     { transform: scale(1.12); }
+  100%    { transform: scale(1); }
+}
+
+/* ✅ bootstrap d-none을 headerNotiDot에서 절대 지지 않게 */
+#headerNotiDot.d-none{
+  display: none !important;
+}
+
+/* ===============================
+   읽은 알림 톤다운 (확정)
+   =============================== */
+#notiPanel .noti-row.is-read .noti-headline{
+  color: #9CA3AF !important;
+  font-weight: 400 !important;
+}
+
+#notiPanel .noti-row.is-read .noti-headline strong{
+  color: #6B7280 !important;
+  font-weight: 500 !important;
+}
+
+#notiPanel .noti-row.is-read .noti-preview{
+  color: #B0B8C4 !important;
+}
+
+#notiPanel .noti-row.is-read .noti-tag{
+  opacity: 0.75;
+}
+
+/* ===============================
+   오른쪽 사이드 패널(한쪽 면 채우기)
+   - 기존 HTML/카테고리 배치 유지
+   =============================== */
+:root{
+  --local-header-height: 74px;
+  --noti-panel-width: 380px;
+}
+
+#notiPanel{
+  position: fixed !important;
+  top: var(--local-header-height) !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: 0 !important;
+
+  width: var(--noti-panel-width) !important;
+
+  /* ✅ 화면 아래까지 "쭉" 내려오게: 패널 자체가 전체 높이 확보 */
+  height: calc(100vh - var(--local-header-height)) !important;
+
+  margin: 0 !important;
+  transform: none !important;
+  inset: auto 0 0 auto;
+
+  border-radius: 0 !important;
+  border-left: 1px solid #e5e7eb;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+
+  background: #fff;
+  z-index: 2000;
+
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#notiPanel.show{
+  display: flex;
+}
+
+#notiPanel .noti-top{
+  flex: 0 0 auto;
+  background: #fff;
+  border-bottom: 1px solid #eef0f3;
+}
+
+#notiPanel .noti-tabs2{
+  flex: 0 0 auto;
+  background: #fff;
+}
+
+#notiPanel .noti-filters{
+  flex: 0 0 auto;
+  background: #fff;
+  border-bottom: 1px solid #eef0f3;
+}
+
+/* ✅ 핵심 수정:
+   - 기존 max-height:420px 때문에 "중간에서 잘리고 스크롤"이 생김
+   - 패널 남는 높이를 리스트가 먹고, 목록이 길 때만 스크롤 */
+#notiPanel .noti-list-wrap{
+  flex: 1 1 auto;
+  min-height: 0;                 /* flex 스크롤 필수 */
+  overflow-y: auto;
+  background: #fff;
+
+  /* ✅ 위에서 걸어둔 제한 해제(덮어쓰기) */
+  max-height: none !important;
+  height: auto !important;
+}
+
+#notiPanel #notiEmpty{
+  padding: 40px 16px;
+  text-align: center;
+  color: #6b7280;
+}
+
+@media (max-width: 480px){
+  #notiPanel{
+    width: 100vw !important;
+  }
+}
+
+/* ===============================
+   초대 옆 카테고리(회색 글씨)
+   =============================== */
+.noti-category{
+  font-size: 12px;
+  color: #9ca3af;
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+.noti-msg{
+  font-weight: 400;
+}
+
+.noti-msg strong{
+  font-weight: 700;
+}

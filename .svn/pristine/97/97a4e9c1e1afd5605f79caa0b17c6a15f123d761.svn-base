@@ -1,0 +1,883 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.project.mapper.IProjectMapper">
+
+	<resultMap id="projectDetailMap" type="kr.or.ddit.vo.project.ProjectVO">
+        <id property="projectNo" column="PROJECT_NO"/>
+        <result property="projectName" column="PROJECT_NAME"/>
+        <result property="projectDesc" column="PROJECT_DESC"/>
+        <result property="projectStartdate" column="PROJECT_STARTDATE"/>
+        <result property="projectEnddate" column="PROJECT_ENDDATE"/>
+        <result property="projectFinishdate" column="PROJECT_FINISHDATE"/>
+        <result property="projectStatus" column="PROJECT_STATUS"/>
+        <result property="projectType" column="PROJECT_TYPE"/>
+        <result property="memberNo" column="MEMBER_NO"/>
+        <result property="latestReportfileno" column="FILE_GROUP_NO"/>
+        <result property="overallProgress" column="OVERALL_PROGRESS" />
+        <result property="totalTaskCount" column="TOTAL_TASK_COUNT"/>
+    	<result property="completedTaskCount" column="COMPLETED_TASK_COUNT"/>
+        <result property="projectMemberCount" column="PROJECT_MEMBER_COUNT"/>
+        <result property="delayedTaskCount" column="DELAYED_TASK_COUNT"/>
+        <association property="miniheader" javaType="kr.or.ddit.vo.project.ProjectMiniHeaderVO">
+            <result property="fixTab" column="FIX_TAB"/>
+            <result property="projectNo" column="PROJECT_NO"/>
+        </association>
+        <collection property="memberList" ofType="kr.or.ddit.vo.project.ProjectMemberVO">
+            <result property="memberNo" column="MEM_NO"/>
+            <result property="memberEmail" column="MEM_EMAIL"/>
+            <result property="memberName" column="MEM_NAME"/>
+            <result property="projectMemstatus" column="PROJECT_MEM_STATUS"/>
+            <result property="projectRole" column="ROLE_IN_PROJECT"/>
+        </collection>
+    </resultMap>
+
+	<!-- 
+			[ INSERT ]
+	 -->
+    <insert id="insertProject" parameterType="kr.or.ddit.vo.project.ProjectVO">
+        <selectKey keyProperty="projectNo" resultType="int" order="BEFORE">
+            SELECT SEQ_PROJECT.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO PROJECT (
+            PROJECT_NO
+            , MEMBER_NO
+            , PROJECT_NAME
+            , PROJECT_STARTDATE
+            , PROJECT_ENDDATE
+            , PROJECT_STATUS
+            , PROJECT_REGDATE
+            , PROJECT_TYPE
+            , PROJECT_DESC
+        ) VALUES (
+            #{projectNo}
+            , #{memberNo}
+            , #{projectName}
+            , #{projectStartdate}
+            , #{projectEnddate}
+            , 0
+            , CURRENT_TIMESTAMP
+            , #{projectType}
+            , #{projectDesc}
+        )
+    </insert>
+    
+    <insert id="insertProjectMember" parameterType="kr.or.ddit.vo.project.ProjectMemberVO">
+	    INSERT INTO PROJECT_MEMBER (
+	    	PROJECT_MEM_NO
+	    	, PROJECT_NO
+	    	, MEMBER_NO
+	    	, PROJECT_MEM_REGDATE
+	    	, PROJECT_MEM_STATUS
+	    	, PROJECT_ROLE
+	    ) VALUES (
+	        SEQ_PROJECT_MEMBER.NEXTVAL
+	        , #{projectNo}
+	        , #{memberNo}
+	        , CURRENT_TIMESTAMP
+	        , 'Y'
+	        , #{projectRole}
+	    )
+	</insert>
+	
+	<!-- 프로젝트 참여 초대 -->
+	<insert id="insertInvitation" parameterType="kr.or.ddit.vo.project.ProjectMemberVO">
+		INSERT INTO PROJECT_INVITATION (
+			INVITE_TOKEN
+			, PROJECT_NO
+			, INVITER_NO
+			, INVITEE_EMAIL
+			, INVITEE_ROLE
+			, EXPIRY_DATE
+			, USED_YN
+			, REG_DATE
+		) VALUES (
+			#{inviteToken}
+	        , #{projectNo}
+	        , #{inviterNo}
+	        , #{memberEmail}
+	        , #{projectRole}
+	        , CURRENT_TIMESTAMP + INTERVAL '1' DAY
+	        , 'N'
+	        , CURRENT_TIMESTAMP
+		)
+	</insert>
+	
+	<insert id="insertInvitations" parameterType="java.util.List">
+	    INSERT INTO PROJECT_INVITATION (
+	        INVITE_TOKEN
+	        , PROJECT_NO
+	        , INVITER_NO
+	        , INVITEE_EMAIL
+	        , INVITEE_ROLE
+	        , EXPIRY_DATE
+	        , USED_YN
+	        , REG_DATE
+	    )
+	    <foreach collection="list" item="item" separator="UNION ALL">
+	        SELECT 
+	            #{item.inviteToken}
+	            , #{item.projectNo}
+	            , #{item.inviterNo}
+	            , #{item.memberEmail}
+	            , #{item.projectRole}
+	            , CURRENT_TIMESTAMP + INTERVAL '1' DAY
+	            , 'N'
+	            , CURRENT_TIMESTAMP
+	        FROM DUAL
+	    </foreach>
+	</insert>
+	
+	<select id="selectInvitationByToken" parameterType="String" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+	    SELECT 
+	        I.INVITE_TOKEN
+	        , I.PROJECT_NO
+	        , I.INVITER_NO
+	        , I.INVITEE_EMAIL AS "memberEmail"   
+	        , I.INVITEE_ROLE  AS "projectRole"   
+	        , I.EXPIRY_DATE   AS "expiryDate"
+	        , I.USED_YN       AS "usedYn"
+	        , P.PROJECT_NAME                     
+	    FROM PROJECT_INVITATION I
+	    LEFT JOIN PROJECT P ON I.PROJECT_NO = P.PROJECT_NO
+	    WHERE I.INVITE_TOKEN = #{token}
+	</select>
+	
+	<update id="updateInvitationUsed" parameterType="String">
+	    UPDATE PROJECT_INVITATION 
+	    SET USED_YN = 'Y' 
+	    WHERE INVITE_TOKEN = #{token}
+	</update>
+	
+	<!-- 프로젝트 참여 초대 취소 -->
+	<delete id="deleteInvitation" parameterType="kr.or.ddit.vo.project.ProjectMemberVO">
+	    DELETE FROM PROJECT_INVITATION 
+	    WHERE PROJECT_NO = #{projectNo} 
+	      AND INVITEE_EMAIL = #{memberEmail}
+	</delete>
+	
+	<delete id="deleteProjectMemberPending" parameterType="kr.or.ddit.vo.project.ProjectMemberVO">
+	    DELETE FROM PROJECT_MEMBER
+	    WHERE PROJECT_NO = #{projectNo}
+	      AND MEMBER_NO = (SELECT MEMBER_NO FROM MEMBER WHERE MEMBER_EMAIL = #{memberEmail})
+	      AND PROJECT_MEM_STATUS = 'P'
+	</delete>
+	
+	
+	<insert id="insertNotification" parameterType="kr.or.ddit.vo.NotificationVO">
+		INSERT INTO NOTIFICATION (
+			NOTI_NO
+			, MEMBER_NO
+			, NOTI_TYPE
+			, TARGET_ID
+			, NOTI_URL
+			, IS_READ
+			, NOTICE_REGDATE
+		) VALUES (
+			SEQ_NOTIFICATION.NEXTVAL
+			, #{memberNo}
+			, #{notiType}
+			, #{targetId}
+			, #{notiUrl}
+			, 'N'
+			, CURRENT_TIMESTAMP
+		)
+	</insert>
+
+    <insert id="insertMiniHeader" parameterType="kr.or.ddit.vo.project.ProjectMiniHeaderVO">
+        INSERT INTO MINI_HEADER_ORDER (
+            PROJECT_NO
+            , FIX_TAB
+        ) VALUES (
+            #{projectNo}
+            , #{fixTab}
+        )
+    </insert>
+	
+	<select id="findMemberByEmail" parameterType="string" resultType="kr.or.ddit.vo.MemberVO">
+		SELECT 
+			MEMBER_NO
+			, MEMBER_EMAIL
+			, MEMBER_NAME 
+		FROM MEMBER 
+		WHERE MEMBER_EMAIL = #{memberEmail}
+	</select>
+    
+	<select id="selectMemberByEmail" parameterType="String" resultType="kr.or.ddit.vo.MemberVO">
+        SELECT DISTINCT
+        	M.MEMBER_NO
+        	, M.MEMBER_NAME
+        	, M.MEMBER_EMAIL
+        	, C.COMPANY_NAME
+        	, M.MEMBER_POSITION
+        	, M.MEMBER_DEPARTMENT
+        FROM MEMBER M
+        LEFT JOIN CLIENT_COMPANY C ON M.COMPANY_NO = C.COMPANY_NO
+        JOIN MEMBER_AUTH MA ON M.MEMBER_NO = MA.MEMBER_NO
+        WHERE M.LEAVE_STATUS = 'N' AND MA.AUTH = #{auth}
+          AND (
+          	M.MEMBER_EMAIL = #{email}
+          )
+    </select>
+	
+	<select id="selectProjectForDelete" resultType="kr.or.ddit.vo.project.ProjectVO">
+		SELECT 
+			P.PROJECT_NO
+			, P.PROJECT_NAME
+			, P.MEMBER_NO
+			, (SELECT M.MEMBER_EMAIL 
+			   FROM MEMBER M 
+				WHERE M.MEMBER_NO = P.MEMBER_NO) AS adminEmail
+		FROM PROJECT P
+		WHERE P.PROJECT_STATUS = 0
+			AND TRUNC(CURRENT_TIMESTAMP - P.PROJECT_REGDATE) >= 7
+			AND NOT EXISTS (
+				SELECT 1 
+				FROM PROJECT_MEMBER PM
+				 WHERE PM.PROJECT_NO = P.PROJECT_NO 
+				   AND PM.PROJECT_ROLE = 'MEMBER'
+			)
+	</select>
+	
+	<select id="selectProjectForWarning" resultType="kr.or.ddit.vo.project.ProjectVO">
+		SELECT 
+			P.PROJECT_NO
+			, P.PROJECT_NAME
+			, P.MEMBER_NO
+			, (SELECT M.MEMBER_EMAIL FROM MEMBER M WHERE M.MEMBER_NO = P.MEMBER_NO) AS adminEmail
+			, TRUNC(CURRENT_TIMESTAMP - P.PROJECT_REGDATE) AS elapsedDays
+		FROM PROJECT P
+		WHERE P.PROJECT_STATUS = 0		
+		<![CDATA[	
+			AND TRUNC(CURRENT_TIMESTAMP - P.PROJECT_REGDATE) < 7
+		]]>
+			AND NOT EXISTS (
+				SELECT 1 FROM PROJECT_MEMBER PM
+				WHERE PM.PROJECT_NO = P.PROJECT_NO AND PM.PROJECT_ROLE = 'MEMBER'
+			)
+	</select>
+	
+	<!-- 
+			[ SELECT ]
+	 -->
+	<select id="checkProjectAccess" parameterType="map" resultType="int">
+	    SELECT COUNT(*)
+	    FROM PROJECT_MEMBER
+	    WHERE PROJECT_NO = #{projectNo}
+	      AND MEMBER_NO = #{memberNo}
+	      AND PROJECT_MEM_STATUS = 'Y'
+	</select>
+    
+    <select id="selectProjectDetail" parameterType="int" resultMap="projectDetailMap">
+        SELECT 
+            P.PROJECT_NO 
+            , P.PROJECT_NAME 
+            , P.PROJECT_DESC
+            , P.PROJECT_STARTDATE
+            , P.PROJECT_ENDDATE
+            , P.PROJECT_FINISHDATE
+            , P.PROJECT_STATUS
+            , P.PROJECT_TYPE
+            , P.MEMBER_NO
+            , M.FIX_TAB
+            , (SELECT NVL(ROUND(AVG(TASK_RATE), 1), 0) 
+           		 FROM PROJECT_TASK 
+                WHERE PROJECT_NO = P.PROJECT_NO) AS OVERALL_PROGRESS
+            , (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO) AS TOTAL_TASK_COUNT
+            , FN_GET_PROJ_DONE_CNT(P.PROJECT_NO) AS COMPLETED_TASK_COUNT
+            , MEM.MEMBER_NO AS MEM_NO
+            , MEM.MEMBER_EMAIL AS MEM_EMAIL
+            , MEM.MEMBER_NAME AS MEM_NAME
+            , PM.PROJECT_MEM_STATUS
+            , PM.PROJECT_ROLE AS ROLE_IN_PROJECT
+            , (SELECT MAX(FILE_NO) 
+         		FROM FILE_DETAIL 
+         		WHERE FILE_GROUP_NO = P.FILE_GROUP_NO) AS FILE_GROUP_NO
+            , (SELECT COUNT(*)
+            	FROM PROJECT_MEMBER 
+            	WHERE PROJECT_NO = P.PROJECT_NO 
+            	  AND PROJECT_MEM_STATUS = 'Y'
+            	  AND PROJECT_ROLE != 'CLIENT') AS PROJECT_MEMBER_COUNT
+        <![CDATA[
+            , (SELECT COUNT(*)
+           		 FROM PROJECT_TASK
+          		WHERE PROJECT_NO = P.PROJECT_NO
+            	  AND TASK_STATUS != 203 
+            	  AND TASK_ENDDATE < CURRENT_TIMESTAMP) AS DELAYED_TASK_COUNT
+        ]]>
+        FROM PROJECT P
+        LEFT JOIN MINI_HEADER_ORDER M ON P.PROJECT_NO = M.PROJECT_NO
+        LEFT JOIN PROJECT_MEMBER PM ON P.PROJECT_NO = PM.PROJECT_NO
+        LEFT JOIN MEMBER MEM ON PM.MEMBER_NO = MEM.MEMBER_NO
+        WHERE P.PROJECT_NO = #{projectNo}
+          AND P.PROJECT_STATUS != 2
+        ORDER BY
+        	PM.PROJECT_MEM_STATUS DESC
+            , CASE PM.PROJECT_ROLE
+              WHEN 'MANAGER' THEN 1  
+              WHEN 'CLIENT'  THEN 2  
+              ELSE 3                 
+              END ASC        
+            , MEM.MEMBER_NAME ASC
+    </select>
+    
+    <!-- 비회원 초대 목록 조회 -->
+    <select id="selectProjectInvitationList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+    	SELECT 
+        	PROJECT_NO
+        	, 0 AS MEMBER_NO             
+        	, INVITEE_EMAIL AS MEMBER_EMAIL  
+        	, '(비회원)' AS MEMBER_NAME        
+        	, INVITEE_ROLE AS PROJECT_ROLE
+        	, 'P' AS PROJECT_MEM_STATUS      
+        	, 'NON_MEMBER' AS INVITE_TYPE
+        FROM PROJECT_INVITATION
+   		WHERE PROJECT_NO = #{projectNo}
+          AND USED_YN = 'N'                 
+    </select>
+    
+    <select id="selectBookmark" parameterType="map" resultType="string">
+	    SELECT PROJECT_BOOKMARK
+	    FROM PROJECT_MEMBER
+	    WHERE PROJECT_NO = #{projectNo}
+	      AND MEMBER_NO = #{memberNo}
+	</select>
+	
+	<update id="toggleBookmark" parameterType="map">
+	    UPDATE PROJECT_MEMBER
+	    SET PROJECT_BOOKMARK = CASE 
+	        WHEN PROJECT_BOOKMARK = 'Y' THEN 'N' 
+	        ELSE 'Y' 
+	    END
+	    WHERE PROJECT_NO = #{projectNo}
+	      AND MEMBER_NO = #{memberNo}
+	</update>
+	
+	<delete id="deleteProject" parameterType="int">
+		DELETE FROM PROJECT
+		WHERE PROJECT_NO = #{projectNo}
+	</delete>
+	
+	<!-- 
+			[ UPDATE ]
+	 -->
+	<select id="checkManager" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM PROJECT_MEMBER
+        WHERE PROJECT_NO = #{projectNo}
+          AND MEMBER_NO = #{memberNo}
+          AND PROJECT_ROLE = 'MANAGER'       
+          AND PROJECT_MEM_STATUS = 'Y'
+    </select>
+    
+    <update id="updateProjectMemberStatus" parameterType="kr.or.ddit.vo.project.ProjectMemberVO">
+    	UPDATE PROJECT_MEMBER
+    	SET
+    		PROJECT_MEM_STATUS = #{projectMemstatus}
+    	WHERE PROJECT_NO = #{projectNo}
+    	  AND MEMBER_NO = #{memberNo}
+    </update>
+	 	
+	<update id="updateProject" parameterType="kr.or.ddit.vo.project.ProjectVO">
+		UPDATE PROJECT
+		SET
+			PROJECT_NAME = #{projectName}
+            , PROJECT_DESC = #{projectDesc}
+            , PROJECT_TYPE = #{projectType}
+            , PROJECT_STARTDATE = #{projectStartdate}
+            , PROJECT_ENDDATE = #{projectEnddate}
+		WHERE PROJECT_NO = #{projectNo}
+	</update>
+	
+	<update id="updateMiniHeader" parameterType="kr.or.ddit.vo.project.ProjectMiniHeaderVO">
+        MERGE INTO MINI_HEADER_ORDER M
+        USING DUAL
+        ON (M.PROJECT_NO = #{projectNo})
+        WHEN MATCHED THEN
+            UPDATE SET 
+                FIX_TAB = #{fixTab}
+        WHEN NOT MATCHED THEN
+            INSERT (
+                PROJECT_NO 
+                , FIX_TAB
+            ) VALUES (
+                #{projectNo} 
+                , #{fixTab}
+            )
+    </update>
+    
+    <select id="selectProjectMember" parameterType="map" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+        SELECT 
+            MEMBER_NO 
+            , PROJECT_NO 
+            , PROJECT_ROLE AS projectRole
+            , PROJECT_MEM_STATUS AS projectMemstatus
+            , PROJECT_MEM_REGDATE AS projectMemRegdate
+        FROM PROJECT_MEMBER
+        WHERE PROJECT_NO = #{projectNo} 
+          AND MEMBER_NO = #{memberNo}
+    </select>
+    
+    <select id="getMemberList" parameterType="list" resultType="kr.or.ddit.vo.MemberVO">
+		SELECT
+			MEMBER_NO
+			, MEMBER_EMAIL
+			, MEMBER_NAME
+		FROM MEMBER
+		WHERE MEMBER_EMAIL IN
+		<foreach collection="list" item="email" open="(" separator="," close=")">
+			#{email}
+		</foreach>
+	</select>
+	
+	<select id="selectProjectMemberByEmail" parameterType="kr.or.ddit.vo.project.ProjectMemberVO">
+		SELECT
+			MEMBER_NO
+			, PROJECT_NO
+			, PROJECT_ROLE as "projectRole"
+			, PROJECT_MEM_STATUS as "projectMemstatus"
+		FROM PROJECT_MEMBER
+		WHERE PROJECT_NO = #{projectNo}
+		  AND MEMBER_NO IN (
+		  	SELECT
+		  		MEMBER_NO
+		  	FROM MEMBER
+		  	WHERE MEMBER_EMAIL IN
+			  <foreach collection="emailList" item="email" open="(" separator="," close=")">
+			  	#{email}
+			  </foreach>
+		  )
+	</select>
+    
+	<update id="deactivateProjectMember" parameterType="map">
+        UPDATE PROJECT_MEMBER
+        SET PROJECT_MEM_STATUS = 'N'
+        WHERE PROJECT_NO = #{projectNo}
+          AND PROJECT_ROLE != 'MANAGER' 
+          <if test="emailList != null and emailList.size() > 0">
+              AND MEMBER_NO NOT IN (
+                  SELECT MEMBER_NO 
+                  FROM MEMBER 
+                  WHERE MEMBER_EMAIL IN
+                  <foreach collection="emailList" item="email" open="(" separator="," close=")">
+                      #{email}
+                  </foreach>
+              )
+          </if>
+    </update>
+    
+    <update id="mergeProjectMember" parameterType="kr.or.ddit.vo.project.ProjectMemberVO">
+        MERGE INTO PROJECT_MEMBER PM
+        USING DUAL ON (PM.PROJECT_NO = #{projectNo} AND PM.MEMBER_NO = #{memberNo})
+        WHEN MATCHED THEN
+            UPDATE SET 
+                PM.PROJECT_MEM_STATUS = #{projectMemstatus}
+                , PM.PROJECT_ROLE = #{projectRole}
+                , PM.PROJECT_MEM_REGDATE = CURRENT_TIMESTAMP
+        WHEN NOT MATCHED THEN
+            INSERT (
+            	PROJECT_MEM_NO
+                , PROJECT_NO 
+                , MEMBER_NO 
+                , PROJECT_ROLE 
+                , PROJECT_MEM_STATUS
+                , PROJECT_MEM_REGDATE
+            ) VALUES (
+            	SEQ_PROJECT_MEMBER.NEXTVAL
+                , #{projectNo} 
+                , #{memberNo} 
+                , #{projectRole} 
+                , #{projectMemstatus}
+                , CURRENT_TIMESTAMP
+            )
+    </update>
+	
+	<update id="mergeProjectMemberBatch" parameterType="list">
+		MERGE INTO PROJECT_MEMBER PM
+		USING (
+			<foreach collection="list" item="m" separator="UNION ALL">
+				SELECT
+					#{m.projectNo} as PROJECT_NO
+					, #{m.memberNo} as MEMBER_NO
+					, #{m.projectRole} as PROJECT_ROLE
+					, #{m.projectMemstatus} as PROJECT_MEM_STATUS
+				FROM DUAL
+			</foreach>
+		) T
+		ON (PM.PROJECT_NO = T.PROJECT_NO AND PM.MEMBER_NO = T.MEMBER_NO)
+		WHEN MATCHED THEN
+			UPDATE SET
+				PM.PROJECT_MEM_STATUS = T.PROJECT_MEM_STATUS
+				, PM.PROJECT_ROLE = T.PROJECT_ROLE
+				, PM.PROJECT_MEM_REGDATE = CURRENT_TIMESTAMP
+		WHEN NOT MATCHED THEN
+			INSERT(
+				PROJECT_MEM_NO
+				, PROJECT_NO
+				, MEMBER_NO
+				, PROJECT_ROLE
+				, PROJECT_MEM_STATUS
+				, PROJECT_MEM_REGDATE
+			) VALUES (
+				SEQ_PROJECT_MEMBER.NEXTVAL
+				, T.PROJECT_NO
+				, T.MEMBER_NO
+				, T.PROJECT_ROLE
+				, T.PROJECT_MEM_STATUS
+				, CURRENT_TIMESTAMP
+			)
+	</update>
+    
+    <!-- 
+			[ DELETE ]
+	 -->
+	<update id="deleteProjectLogically" parameterType="int">
+		UPDATE PROJECT
+		SET PROJECT_STATUS = 2
+		WHERE PROJECT_NO = #{projectNo}
+	</update>
+	
+	<!-- 
+			[ COMPLETE ]
+	 -->
+	<select id="countUnfinishedTask" parameterType="int">
+        SELECT COUNT(*)
+        FROM PROJECT_TASK
+        WHERE PROJECT_NO = #{projectNo}
+          AND TASK_STATUS != 203
+    </select>
+    
+    <select id="countActiveProjectMember" parameterType="map" resultType="int">
+	    SELECT COUNT(*) 
+	    FROM PROJECT_MEMBER 
+	    WHERE PROJECT_NO = #{projectNo} 
+	      AND PROJECT_ROLE = #{role} 
+	      AND PROJECT_MEM_STATUS = #{status}
+	</select>
+	
+	<select id="countTotalTasks" parameterType="int" resultType="int">
+	    SELECT COUNT(*) 
+	    FROM PROJECT_TASK 
+	    WHERE PROJECT_NO = #{projectNo}
+	</select>
+
+    <update id="updateProjectStatus" parameterType="kr.or.ddit.vo.project.ProjectVO">
+        UPDATE PROJECT
+        SET PROJECT_STATUS = #{projectStatus}
+            , PROJECT_FINISHDATE = CURRENT_TIMESTAMP
+        WHERE PROJECT_NO = #{projectNo}
+    </update>
+    
+    <!-- 프로젝트 관리자 권한 위임 -->
+    <update id="updateProjectRole" parameterType="map">
+	    UPDATE PROJECT_MEMBER
+	    SET PROJECT_ROLE = #{role}
+	    WHERE PROJECT_NO = #{projectNo}
+	      AND MEMBER_NO = #{memberNo}
+	</update>
+	
+	<update id="updateProjectManager" parameterType="map">
+	    UPDATE PROJECT
+	    SET MEMBER_NO = #{newManagerNo}
+	    WHERE PROJECT_NO = #{projectNo}
+	</update>
+  
+    
+    
+    <sql id="listSearch">
+    	<if test="searchWord != null and searchWord != '' and searchType == 'title'">
+    		AND (P.PROJECT_NAME like '%'||#{searchWord}||'%')
+    	</if>
+    	<if test="searchType == 'projectDuration' and startDate != null and startDate != '' and endDate !=null and endDate != ''">
+    		<![CDATA[ AND P.PROJECT_STARTDATE >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+    		AND P.PROJECT_STARTDATE < TO_DATE(#{endDate},'YYYY-MM-DD')+1 ]]>
+    	</if>
+    
+    </sql>
+
+    <!--  프로젝트 리스트 -->
+    <select id="list" parameterType="map" resultType="ProjectVO">    
+	  SELECT B.*
+	    FROM (
+	    	SELECT A.*,
+	    		ROW_NUMBER() OVER (
+	    			ORDER BY
+	    			CASE WHEN A.projectBookmark='Y' THEN 0 ELSE 1 END ASC,
+	    			<choose>
+	    				<when test="sort == 'deadline'">
+	    					A.PROJECT_ENDDATE ASC
+	    				</when>
+	    				<when test="sort == 'name'">
+	    					A.PROJECT_NAME ASC
+	    				</when>
+	    				<otherwise>
+	    					A.PROJECT_REGDATE DESC
+	    				</otherwise>
+	    			</choose>
+	    			) RNUM
+		    	FROM (
+		    		SELECT
+					    P.PROJECT_NO
+					  , PM.MEMBER_NO
+					  , P.PROJECT_NAME
+					  , P.PROJECT_STARTDATE
+					  , P.PROJECT_ENDDATE
+					  , P.PROJECT_STATUS
+					  , P.PROJECT_REGDATE
+					  , P.PROJECT_TYPE
+					  , P.PROJECT_DESC
+					  , PM.PROJECT_BOOKMARK AS projectBookmark
+					  , M.MEMBER_NAME
+					  , PMM.MEMBER_NAME AS pmName
+					FROM PROJECT_MEMBER PM 
+					INNER JOIN PROJECT P ON PM.PROJECT_NO=P.PROJECT_NO
+					INNER JOIN MEMBER M ON M.MEMBER_NO = PM.MEMBER_NO
+				    INNER JOIN MEMBER PMM ON PMM.MEMBER_NO = P.MEMBER_NO
+					WHERE 1=1  
+						AND PM.MEMBER_NO = #{memberNo}
+						AND PM.PROJECT_MEM_STATUS = 'Y'
+						
+						<![CDATA[ AND P.PROJECT_STATUS <> 2]]>	
+						
+						
+					<include refid="listSearch"/>
+				) A
+			)B	
+			<![CDATA[
+				WHERE B.RNUM >= #{startRow}
+				AND B.RNUM <= #{endRow}
+			]]>		
+    </select>
+    
+    <!--  로그인한 사람이 참여중인 프로젝트 갯수. 공용파일인 페이징VO에 컬럼을 추가할 수 없으니 컨트롤러에서 map으로 처리한다. -->
+    <!-- 지금 필요한 파라미터는 memberNo, searchType, searchWord, startDate, endDate 이다  -->
+    <select id="listCount" parameterType="map" resultType="int">
+    	SELECT COUNT(DISTINCT P.PROJECT_NO) AS TOTALCOUNT
+		FROM PROJECT_MEMBER PM
+		INNER JOIN PROJECT P ON PM.PROJECT_NO = P.PROJECT_NO
+		WHERE PM.MEMBER_NO = #{memberNo}
+  			AND PM.PROJECT_MEM_STATUS = 'Y'
+  			<![CDATA[ AND P.PROJECT_STATUS <> 2]]>
+  			AND 1=1
+  			<include refid="listSearch"/>
+    </select>
+    
+    <!-- 프로젝트 리스트 진척률 -->
+    <select id="selectProjectRateList" resultType="kr.or.ddit.vo.project.ProjectInsightVO">
+ SELECT
+      P.PROJECT_NO AS projectNo,
+      (SELECT NVL(ROUND(AVG(TASK_RATE), 1), 0)
+         FROM PROJECT_TASK
+        WHERE PROJECT_NO = P.PROJECT_NO
+      ) AS overallProgress
+  FROM PROJECT_MEMBER PM
+  JOIN PROJECT P
+    ON P.PROJECT_NO = PM.PROJECT_NO
+  WHERE PM.MEMBER_NO = #{memberNo}
+    AND PM.PROJECT_MEM_STATUS = 'Y'
+	</select> 
+    
+    
+    <!-- 프로젝트 결과보고서 -->
+    <select id="selectProjectDetailForReport" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectVO">
+        SELECT 
+            P.PROJECT_NO
+            , P.PROJECT_NAME
+            , P.PROJECT_DESC
+            , P.PROJECT_STARTDATE
+            , P.PROJECT_ENDDATE
+            , P.PROJECT_FINISHDATE
+            , M.MEMBER_NAME AS "pmName" 
+            , (SELECT MAX(FILE_NO) 
+                 FROM FILE_DETAIL 
+                WHERE FILE_GROUP_NO = P.FILE_GROUP_NO) AS "latestReportfileno"
+        FROM PROJECT P
+        JOIN MEMBER M ON P.MEMBER_NO = M.MEMBER_NO
+        WHERE P.PROJECT_NO = #{projectNo}
+    </select>
+
+    <select id="selectProjectMemberListForReport" parameterType="int" resultType="kr.or.ddit.vo.MemberVO">
+        SELECT 
+            M.MEMBER_NAME
+            , M.MEMBER_EMAIL
+            , M.MEMBER_DEPARTMENT
+            , M.MEMBER_POSITION
+            , PM.PROJECT_ROLE AS "memberRole"
+            , CC.COMPANY_NAME AS "companyName"
+        FROM PROJECT_MEMBER PM
+        JOIN MEMBER M ON PM.MEMBER_NO = M.MEMBER_NO
+        LEFT JOIN CLIENT_COMPANY CC ON M.COMPANY_NO = CC.COMPANY_NO
+        WHERE PM.PROJECT_NO = #{projectNo}
+          AND PM.PROJECT_MEM_STATUS = 'Y'
+        ORDER BY 
+        	CASE WHEN PM.PROJECT_ROLE = 'CLIENT' THEN 1 
+        		 WHEN PM.PROJECT_ROLE = 'MANAGER' THEN 2
+        	ELSE 3 END ASC 
+            , M.MEMBER_NAME DESC
+    </select>
+    
+    <select id="selectProjectTaskListForReport" parameterType="int" resultType="map">
+        SELECT * FROM (
+            SELECT 
+                T.TASK_ID AS "NO"
+                , 0 AS "ORDER"
+                , '업무' AS "WORK_TYPE"
+                , T.TASK_TITLE AS "TITLE"
+                , TO_CHAR(T.TASK_STARTDATE, 'YYYY-MM-DD') AS "START_DATE"
+                , TO_CHAR(T.TASK_ENDDATE, 'YYYY-MM-DD') AS "END_DATE"
+                , TO_CHAR(T.TASK_FINISHDATE, 'YYYY-MM-DD') AS "FINISH_DATE"
+                , CASE 
+                    WHEN T.TASK_STATUS = 203 AND T.TASK_FINISHDATE > T.TASK_ENDDATE THEN 'Y'  
+                    WHEN T.TASK_STATUS != 203 AND CURRENT_TIMESTAMP > T.TASK_ENDDATE THEN 'Y'
+                    ELSE 'N'                                        
+                  END AS "IS_DELAYED"
+                , (
+                    SELECT LISTAGG(M.MEMBER_NAME, ', ') WITHIN GROUP (ORDER BY M.MEMBER_NAME)
+                    FROM PROJECT_TASK_MANAGER TM
+                    JOIN MEMBER M ON TM.MEMBER_NO = M.MEMBER_NO
+                    WHERE TM.WORK_TYPE = 'T' 
+                      AND TM.WORK_ID = T.TASK_ID
+                ) AS "ASSIGNEE"
+                , (
+                    SELECT LISTAGG(FD.FILE_EXTENSION || ':' || FD.FILE_ORIGINAL_NAME, '\n') WITHIN GROUP (ORDER BY FD.FILE_NO)
+                    FROM FILE_DETAIL FD
+                    JOIN FILE_GROUP FG ON FD.FILE_GROUP_NO = FG.FILE_GROUP_NO
+                    WHERE FG.FILE_GROUP_NO = T.FILE_GROUP_NO
+                ) AS "FILE_INFO"
+            FROM PROJECT_TASK T
+            WHERE T.PROJECT_NO = #{projectNo}
+
+            UNION ALL
+
+            SELECT 
+                S.TASK_ID AS "NO"
+                , 1 AS "ORDER"
+                , '단위업무' AS "WORK_TYPE"
+                , S.SUB_TITLE AS "TITLE"
+                , TO_CHAR(S.SUB_STARTDATE, 'YYYY-MM-DD') AS "START_DATE"
+                , TO_CHAR(S.SUB_ENDDATE, 'YYYY-MM-DD') AS "END_DATE"
+                , TO_CHAR(S.SUB_FINISHDATE, 'YYYY-MM-DD') AS "FINISH_DATE"
+                , CASE 
+                    WHEN S.SUB_STATUS = 203 AND S.SUB_FINISHDATE > S.SUB_ENDDATE THEN 'Y'
+                    WHEN S.SUB_STATUS != 203 AND CURRENT_TIMESTAMP > S.SUB_ENDDATE THEN 'Y'
+                    ELSE 'N'
+                  END AS "IS_DELAYED"
+                , (
+                    SELECT LISTAGG(M.MEMBER_NAME, ', ') WITHIN GROUP (ORDER BY M.MEMBER_NAME)
+                    FROM PROJECT_TASK_MANAGER TM
+                    JOIN MEMBER M ON TM.MEMBER_NO = M.MEMBER_NO
+                    WHERE TM.WORK_TYPE = 'S' AND TM.WORK_ID = S.SUB_ID
+                ) AS "ASSIGNEE"
+                , (
+                    SELECT LISTAGG(FD.FILE_EXTENSION || ':' || FD.FILE_ORIGINAL_NAME, '\n') WITHIN GROUP (ORDER BY FD.FILE_NO)
+                    FROM FILE_DETAIL FD 
+                    JOIN FILE_GROUP FG ON FD.FILE_GROUP_NO = FG.FILE_GROUP_NO
+                    WHERE FG.FILE_GROUP_NO = S.FILE_GROUP_NO
+                ) AS "FILE_INFO"
+            FROM PROJECT_TASK_SUB S
+            JOIN PROJECT_TASK T ON S.TASK_ID = T.TASK_ID
+            WHERE T.PROJECT_NO = #{projectNo}         
+        ) ALL_LIST
+        ORDER BY "NO" ASC, "ORDER" ASC, "TITLE" ASC
+    </select>
+
+    <select id="selectTaskComplianceStats" parameterType="int" resultType="map">
+        SELECT
+            COUNT(CASE WHEN STATE = 'EARLY' THEN 1 END) AS "early"
+            , COUNT(CASE WHEN STATE = 'ON_TIME' THEN 1 END) AS "onTime"
+            , COUNT(CASE WHEN STATE = 'DELAYED' THEN 1 END) AS "delayed"
+        FROM (
+            SELECT 
+                CASE 
+                    WHEN TASK_STATUS = 203 AND TASK_FINISHDATE <![CDATA[<]]> TASK_ENDDATE THEN 'EARLY'
+                    WHEN TASK_STATUS = 203 AND TO_CHAR(TASK_FINISHDATE, 'YYYYMMDD') = TO_CHAR(TASK_ENDDATE, 'YYYYMMDD') THEN 'ON_TIME'
+                    WHEN (TASK_STATUS = 203 AND TASK_FINISHDATE > TASK_ENDDATE) 
+                      OR (TASK_STATUS != 203 AND CURRENT_TIMESTAMP > TASK_ENDDATE) THEN 'DELAYED'
+                    ELSE 'ING'
+                END AS STATE
+            FROM PROJECT_TASK WHERE PROJECT_NO = #{projectNo}
+            
+            UNION ALL
+            
+            SELECT 
+                CASE 
+                    WHEN SUB_STATUS = 203 AND SUB_FINISHDATE <![CDATA[<]]> SUB_ENDDATE THEN 'EARLY'
+                    WHEN SUB_STATUS = 203 AND TO_CHAR(SUB_FINISHDATE, 'YYYYMMDD') = TO_CHAR(SUB_ENDDATE, 'YYYYMMDD') THEN 'ON_TIME'
+                    WHEN (SUB_STATUS = 203 AND SUB_FINISHDATE > SUB_ENDDATE) 
+                      OR (SUB_STATUS != 203 AND CURRENT_TIMESTAMP > SUB_ENDDATE) THEN 'DELAYED'
+                    ELSE 'ING'
+                END AS STATE
+            FROM PROJECT_TASK_SUB S
+            JOIN PROJECT_TASK T ON S.TASK_ID = T.TASK_ID
+            WHERE T.PROJECT_NO = #{projectNo}
+        ) ALL_TASKS
+    </select>
+
+	<!-- 구성원별 업무 기여도  -->
+    <select id="selectMemberContributionStats" parameterType="int" resultType="map">
+        SELECT 
+            M.MEMBER_NAME AS "name"
+            , SUM(CASE WHEN WORK_TYPE = 'T' THEN 1 ELSE 0 END) AS "taskTotal"
+            , SUM(CASE WHEN WORK_TYPE = 'S' THEN 1 ELSE 0 END) AS "subTaskTotal"
+            , SUM(CASE WHEN STATE = 'NORMAL' THEN 1 ELSE 0 END) AS "normalCount"
+            , SUM(CASE WHEN STATE = 'DELAYED' THEN 1 ELSE 0 END) AS "delayedCount"          
+        FROM PROJECT_MEMBER PM
+        JOIN MEMBER M ON PM.MEMBER_NO = M.MEMBER_NO
+        LEFT JOIN (
+            SELECT 
+                TM.MEMBER_NO AS MEMBER_NO
+                , 'T' AS WORK_TYPE
+                , CASE 
+                    WHEN T.TASK_STATUS = 203 AND T.TASK_FINISHDATE <![CDATA[>]]> T.TASK_ENDDATE THEN 'DELAYED'
+                    WHEN T.TASK_STATUS != 203 AND CURRENT_TIMESTAMP > T.TASK_ENDDATE THEN 'DELAYED'
+                    ELSE 'NORMAL'
+                  END AS STATE
+            FROM PROJECT_TASK_MANAGER TM
+            JOIN PROJECT_TASK T ON TM.WORK_ID = T.TASK_ID
+            WHERE TM.WORK_TYPE = 'T'
+              AND T.PROJECT_NO = #{projectNo}
+            
+            UNION ALL
+            
+            SELECT 
+                TM.MEMBER_NO AS MEMBER_NO
+                , 'S' AS WORK_TYPE
+                , CASE 
+                    WHEN S.SUB_STATUS = 203 AND S.SUB_FINISHDATE <![CDATA[>]]> S.SUB_ENDDATE THEN 'DELAYED'                    
+                    WHEN S.SUB_STATUS != 203 AND CURRENT_TIMESTAMP > S.SUB_ENDDATE THEN 'DELAYED'
+                    ELSE 'NORMAL'
+                  END AS STATE
+            FROM PROJECT_TASK_MANAGER TM
+            JOIN PROJECT_TASK_SUB S ON TM.WORK_ID = S.SUB_ID
+            JOIN PROJECT_TASK T ON S.TASK_ID = T.TASK_ID 
+            WHERE TM.WORK_TYPE = 'S'    
+              AND T.PROJECT_NO = #{projectNo}
+              
+        ) ALL_TASKS ON PM.MEMBER_NO = ALL_TASKS.MEMBER_NO
+        
+        WHERE PM.PROJECT_NO = #{projectNo}
+          AND PM.PROJECT_MEM_STATUS = 'Y'
+          AND PM.PROJECT_ROLE != 'CLIENT' 
+        GROUP BY M.MEMBER_NAME, M.MEMBER_NO
+        ORDER BY "name"
+    </select>
+
+	<select id="selectLatestGroupNo" parameterType="map" resultType="int">
+	    SELECT MAX(FILE_GROUP_NO)
+	    FROM FILE_GROUP
+	    WHERE MEMBER_NO = #{memberNo}
+	      AND FILE_GROUP_TYPE = #{fileGroupType}
+	</select>
+	
+	<update id="updateProjectFileGroupNo" parameterType="map">
+	    UPDATE PROJECT 
+	    SET FILE_GROUP_NO = (
+	        SELECT MAX(FILE_GROUP_NO)
+	        FROM FILE_GROUP
+	        WHERE MEMBER_NO = #{pmNo}
+	          AND FILE_GROUP_TYPE = 415
+	    )
+	    WHERE PROJECT_NO = #{projectNo}
+	</update>
+	
+</mapper>

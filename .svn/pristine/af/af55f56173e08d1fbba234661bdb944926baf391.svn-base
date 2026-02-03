@@ -1,0 +1,114 @@
+@charset "UTF-8";
+
+/* 메인 색상 코드 : #EBF5FF, #C7E3FF, #8FC8FF, #56ACFF, #1E90FF, #0074E5, #0056AA, #00407F, #002B55, #00152A */
+/* 변수 설정 (나중에 색상 변경이 쉽도록) */
+:root {
+    --primary-color: #00407F;    /* 메인 버튼 */
+    --hover-color: #002B55;      /* 버튼 호버 */
+    --bg-light: #F0F4F8;         /* 파란색이 살짝 섞인 연한 회색 */
+    --border-color: #C7E3FF;     /* 테두리도 조금 더 연한 하늘색으로 조절 */
+    --focus-ring: rgba(30, 144, 255, 0.15);
+    --text-dark: #00152A;        /* 진한 텍스트 */
+}
+
+/* 1. 기본 배경 및 레이아웃 */
+body {
+    background-color: var(--bg-light); /* 전체 배경을 연한 하늘색으로 */
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    color: var(--text-dark);
+}
+
+/* 컨테이너: 로그인 & 회원가입 공통 */
+.login-container, .signup-container {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px; /* 조금 더 부드러운 곡선 */
+    box-shadow: 0 4px 12px rgba(0, 21, 42, 0.05) !important; /* 부드러운 푸른 그림자 */
+}
+
+.login-container {
+    max-width: 450px;
+    margin: 80px auto;
+    padding: 40px;
+}
+
+.signup-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 40px;
+}
+
+/* 2. 타이틀 & 레이블 */
+.login-title, .signup-title {
+    font-weight: 800;
+    color: var(--primary-color);
+    letter-spacing: -1px;
+}
+
+.fw-bold {
+    color: var(--text-dark);
+}
+
+.required-dot::after {
+    content: " *";
+    color: #1E90FF; /* 필수 표시는 조금 더 밝은 파랑으로 */
+}
+
+/* 3. 입력창 스타일 커스텀 */
+.form-control {
+    border: 1.5px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 15px;
+}
+
+.form-control:focus {
+    border-color: var(--border-color);
+    box-shadow: 0 0 0 0.25rem var(--focus-ring);
+}
+
+/* 4. 버튼 스타일 (제시해주신 #00407F 적용) */
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    font-weight: 600;
+    padding: 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--hover-color) !important;
+    border-color: var(--hover-color) !important;
+    transform: translateY(-1px); /* 살짝 떠오르는 효과 */
+}
+
+/* 보조 버튼 (중복확인, 인증번호 등) */
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: #ffffff;
+}
+
+/* 5. 기타 요소 */
+hr {
+    border-top: 1px solid var(--border-color);
+    opacity: 0.5;
+}
+
+.error-msg {
+    color: #d93025; /* 에러는 명확하게 빨간색 유지 */
+    font-weight: 500;
+}
+
+.success-msg {
+    color: #0074E5; /* 성공 메시지는 파란색 계열로 */
+}
+
+/* 읽기 전용 입력창 */
+.form-control[readonly] {
+    background-color: #f1f3f5 !important;
+    border-color: #e9ecef;
+}

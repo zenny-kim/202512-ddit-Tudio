@@ -1,0 +1,295 @@
+@charset "UTF-8";
+
+/* 기본 스타일 및 변수 설정 */
+:root {
+    --primary-color: #007aff;
+    --text-primary: #1c1c1e;
+    --text-secondary: #8e8e93;
+    --bg-color: #ffffff;
+    --bg-secondary: #f2f2f7;
+    --badge-color: #ff3b30;
+    --border-color: #e5e5ea;
+    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --radius-lg: 20px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* ==========================
+   메인 위젯 컨테이너
+========================== */
+.chat-widget {
+    width: 380px;
+    height: 700px;
+    background-color: var(--bg-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* ==========================
+   1. 헤더 영역 (수정됨)
+========================== */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: var(--bg-color);
+}
+
+.chat-header h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* [추가] 우측 버튼들을 감싸는 컨테이너 */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* 버튼 사이 간격 */
+}
+
+/* [수정] 헤더 버튼 공통 스타일 (검색, 닫기 모두 적용) */
+.header-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px; /* 터치 영역 확보를 위해 padding 증가 */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.header-btn:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* ==========================
+   2. 탭 영역
+========================== */
+.chat-tabs-container {
+    padding: 0 16px 12px;
+}
+
+.chat-tabs {
+    display: flex;
+    background-color: var(--bg-secondary);
+    padding: 4px;
+    border-radius: var(--radius-md);
+}
+
+.tab {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 8px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab.active {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+/* ==========================
+   3. 채팅 리스트 영역
+========================== */
+.chat-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 16px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.chat-list::-webkit-scrollbar {
+    display: none;
+}
+.chat-list {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+
+/* 개별 채팅 아이템 */
+.chat-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 0.5px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.chat-item:hover {
+    background-color: #f9f9f9;
+}
+
+.chat-item:last-child {
+    border-bottom: none;
+}
+
+/* 아바타 영역 */
+.avatar-container {
+    margin-right: 16px;
+    position: relative;
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* 채팅 내용 영역 */
+.chat-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* 타이틀 행 */
+.chat-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.chat-title {
+    display: flex;          
+    align-items: center;    
+    min-width: 0;            
+    margin-right: 10px;     
+    
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.name-text {
+    white-space: nowrap;      
+    overflow: hidden;         
+    text-overflow: ellipsis;  
+}
+
+.count {
+    white-space: nowrap;    
+    flex-shrink: 0;         
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-left: 4px;
+}
+
+.chat-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* 미리보기 행 */
+.chat-preview-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-preview {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 8px;
+}
+
+.sender {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* 뱃지 */
+.badge {
+    background-color: var(--badge-color);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    box-sizing: border-box;
+}
+
+/* ==========================
+   4. 새 채팅 플로팅 버튼
+========================== */
+.new-chat-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.new-chat-btn svg {
+    margin-right: 8px;
+}
+
+.new-chat-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+}
+
+.new-chat-btn:active {
+    transform: translateY(0);
+    background-color: #0066d6;
+}

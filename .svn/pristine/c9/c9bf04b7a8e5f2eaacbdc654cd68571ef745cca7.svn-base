@@ -1,0 +1,560 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tudio - 새 프로젝트 생성</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/sidebar.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/project.css">
+</head>
+<body>
+    
+	<jsp:include page="/WEB-INF/views/include/header_user.jsp">
+		<jsp:param name="header" value="create" />
+	</jsp:include>
+
+    <div class="d-flex">
+        
+        <jsp:include page="/WEB-INF/views/include/sidebar_user.jsp">
+		      <jsp:param name="menu" value="create" />
+		</jsp:include>
+
+        <main class="main-content-wrap flex-grow-1">
+            <div class="container-fluid">
+                <h1 class="h3 fw-bold mb-4 text-primary"><i class="bi bi-folder-plus me-2"></i>프로젝트 생성</h1>
+                
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow p-4">
+                            <form action="/tudio/project/create" method="post">
+                                
+                                <div class="admin-note mb-4">
+                                    <i class="bi bi-info-circle-fill me-1"></i> 프로젝트를 생성하는 사용자는 자동으로 프로젝트 관리자 권한이 부여됩니다.
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="projectName" class="form-label fw-bold">프로젝트명 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="projectName" name="projectName" placeholder="" required>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="projectDesc" class="form-label fw-bold">프로젝트에 대한 설명</label>
+                                    <textarea class="form-control" id="projectDesc" name="projectDesc" rows="3" placeholder="프로젝트의 목적, 주요 목표, 핵심 범위 등을 입력하세요."></textarea>
+                                </div>
+                                
+                                <div class="row mb-5">
+								    <div class="col-md-4">
+								        <label for="projectType" class="form-label fw-bold">프로젝트 타입 <span class="text-danger">*</span></label>
+								        <select class="form-select" id="projectType" name="projectType" required>
+								            <option value="" selected disabled>선택</option>
+								            <option value="it">IT</option>
+								            <option value="marketitng">마케팅</option>
+								            <option value="entertainment">엔터테인먼트</option>
+								            <option value="construction">건설</option>
+								            <option value="sequrities">증권</option>
+								            <option value="school">학교</option>
+								            <option value="design">디자인</option>
+								            <option value="research">연구</option>
+								            <option value="manufacturing">제조&amp;생산</option>
+								            <option value="fnb">F&amp;B</option>
+								            <option value="etc">기타</option>
+								        </select>
+								    </div>
+								
+								    <div class="col-md-4">
+								        <label for="startDate" class="form-label fw-bold">프로젝트 시작일시 <span class="text-danger">*</span></label>
+								        <input type="datetime-local" class="form-control" id="startDate" name="projectStartdate" required>
+								    </div>
+								
+								    <div class="col-md-4">
+								        <label for="endDate" class="form-label fw-bold">프로젝트 종료일시 <span class="text-danger">*</span></label>
+								        <input type="datetime-local" class="form-control" id="endDate" name="projectEnddate" required>
+								    </div>
+								</div>
+
+                                <h5 class="text-primary fw-bold mb-3 border-top pt-4">
+                                    <i class="bi bi-layout-text-window-reverse me-1"></i> 프로젝트 탭 및 순서 설정
+                                </h5>
+                                <p class="text-muted small mb-4">
+                                    프로젝트 상세 화면에서 사용할 탭을 선택하고, <strong>드래그하여 순서를 변경</strong>할 수 있습니다.<br/>
+                                    설정된 순서는 프로젝트 상세 화면의 메뉴 순서로 반영됩니다.
+                                </p>
+                                
+                                <div class="table-responsive mb-4">
+                                    <table class="table table-bordered align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 10%;" class="text-center">이동</th>
+                                                <th style="width: 40%;">탭 이름 (기능)</th>
+                                                <th style="width: 20%;" class="text-center">사용 여부</th>
+                                                <th style="width: 30%;">비고</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tabSortableList">
+                                        	<tr class="draggable-row" data-tap-id="1">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-card-list me-2 text-info"></i> <strong>게시판 (Board)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">공지 및 자유게시판</td>
+                                            </tr>
+                                            <tr class="bg-light static-row" data-tap-id="2">
+                                                <td class="text-center text-muted"><i class="bi bi-lock-fill"></i></td>
+                                                <td><i class="bi bi-kanban me-2 text-primary"></i><strong>업무 (Tasks)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">칸반보드 및 리스트 뷰 제공</td>
+                                            </tr>
+                                            <tr class="draggable-row" data-tap-id="3">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-calendar-date me-2 text-success"></i><strong>일정 (Schedule)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">캘린더 뷰 제공</td>
+                                            </tr>
+                                            <tr class="draggable-row" data-tap-id="4">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-bar-chart-steps me-2 text-danger"></i><strong>간트차트 (Gantt)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">간트차트 및 진척도</td>
+                                            </tr>
+                                            <tr class="draggable-row" data-tap-id="5">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-folder-fill me-2 text-warning"></i><strong>자료실 (Files)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">파일 저장소</td>
+                                            </tr>
+                                            
+                                            <tr class="draggable-row" data-tap-id="6">
+                                                <td class="text-center drag-handle"><i class="bi bi-grip-vertical"></i></td>
+                                                <td><i class="bi bi-people-fill me-2 text-dark"></i><strong>구성원 (Members)</strong></td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" checked>
+                                                    </div>
+                                                </td>
+                                                <td class="small text-muted">프로젝트 참여자 목록</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <h5 class="text-primary fw-bold mb-3 border-top pt-4">
+                                    <i class="bi bi-shield-lock me-1"></i> 고객사 접근 및 작성 권한 설정
+                                </h5>
+                                <div class="alert alert-light border mb-4" role="alert">
+                                    <i class="bi bi-exclamation-circle me-2 text-primary"></i>
+                                    <strong>안내:</strong> 위에서 '사용'으로 설정한 탭에 대해서만 권한 설정이 유효합니다. <br>
+                                    업무(Task) 생성 및 댓글 작성 권한은 개별 업무 생성 시 설정합니다.
+                                </div>
+
+                                <div class="table-responsive mb-5">
+                                    <table class="table table-bordered permission-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 30%;">메뉴 항목</th>
+                                                <th style="width: 25%;" class="text-center">고객사 메뉴 노출</th>
+                                                <th class="text-center">작성 권한 범위 설정</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <strong><i class="bi bi-card-list me-2 text-info"></i>게시판 (Board)</strong>
+                                                    <div class="text-muted small mt-1">공지사항 및 자유 게시글</div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="showBoard" checked>
+                                                        <label class="form-check-label ms-2" for="showBoard">노출함</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex justify-content-around">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="perm_board" id="perm_board_internal" value="internal">
+                                                            <label class="form-check-label" for="perm_board_internal">내부 팀원만 작성</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="perm_board" id="perm_board_all" value="all" checked>
+                                                            <label class="form-check-label" for="perm_board_all">전체 (고객사 포함)</label>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <strong><i class="bi bi-folder-fill me-2 text-warning"></i>자료실 (Files)</strong>
+                                                    <div class="text-muted small mt-1">프로젝트 산출물 및 자료 공유</div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="form-check form-switch d-flex justify-content-center">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="showFiles" checked>
+                                                        <label class="form-check-label ms-2" for="showFiles">노출함</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex justify-content-around">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="perm_files" id="perm_files_internal" value="internal">
+                                                            <label class="form-check-label" for="perm_files_internal">내부 팀원만 업로드</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="perm_files" id="perm_files_all" value="all" checked>
+                                                            <label class="form-check-label" for="perm_files_all">전체 (고객사 포함)</label>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="text-primary fw-bold mb-3 border-top pt-4"><i class="bi bi-people-fill me-1"></i> 팀원 구성 및 초대</h5>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <p class="text-muted small mb-0">프로젝트 생성 후에도 팀원을 추가하거나 변경할 수 있습니다.</p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                                        <i class="bi bi-envelope-plus me-1"></i> 이메일로 팀원 초대
+                                    </button>
+                                </div>
+                                
+                                <div class="table-responsive mb-4">
+                                    <table class="table table-striped align-middle small">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th scope="col" class="w-25">사용자 이름</th>
+                                                <th scope="col" class="w-50">이메일</th>
+                                                <th scope="col" class="w-25 text-center">관리</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="participantList">
+                                            <tr>
+                                                <td><span class="fw-bold">김사용 (본인)</span></td>
+                                                <td>user_ksy@tudio.com</td>
+                                                <td class="text-center"><button type="button" class="btn btn-sm btn-outline-secondary p-1" disabled><i class="bi bi-lock-fill"></i></button></td>
+                                            </tr>
+                                            </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="d-flex justify-content-end pt-3 border-top">
+                                    <button type="button" class="btn btn-outline-secondary me-2">취소</button>
+                                    <button type="button" class="btn btn-primary" onclick="submitProject()"><i class="bi bi-folder-plus me-1"></i> 프로젝트 생성</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+        
+		<jsp:include page="/WEB-INF/views/include/footer.jsp">
+			<jsp:param name="footer" value="create" />
+		</jsp:include>
+        
+    </div>
+	
+	<!-- chatbot -->    
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+    <script>
+        // 1. 탭 순서 변경 (SortableJS)
+        document.addEventListener('DOMContentLoaded', function() {
+            let el = document.getElementById('tabSortableList');
+            
+            // SortableJS 초기화
+            let sortable = Sortable.create(el, {
+                animation: 150,
+                handle: '.drag-handle', // 드래그 핸들 클래스 지정
+                ghostClass: 'sortable-ghost',
+                filter: '.static-row', // 고정 행(업무 탭)은 드래그 시작 불가
+                
+                // 이동 제한 로직
+                onMove: function (evt) {
+                    // 드래그 중인 항목이 'static-row' 클래스를 가진 고정 행 위로 이동하려 하면 취소
+                    return evt.related.className.indexOf('static-row') === -1;
+                }
+            });
+        });
+
+        // 2. 초대된 사용자 목록 삭제 함수
+        function removeParticipant(btn) {
+            if (confirm("이 사용자를 목록에서 제거하시겠습니까?")) {
+                const row = btn.closest('tr');
+                row.remove();
+            }
+        }
+        
+        // 프로젝트 생성 로직
+        async function submitProject(event) {
+			// 1. 프로젝트 기본 정보
+			const projectName = document.getElementById('projectName').value;
+			const projectDesc = document.getElementById('projectDesc').value;
+			const projectType = document.getElementById('projectType').value;
+			const startDate = document.getElementById('startDate').value;
+			const endDate = document.getElementById('endDate').value;
+			
+			if(projectName == null || projectName == "") {
+				Swal.fire({ icon: 'warning', title: '필수 입력', text: "프로젝트명을 입력해주세요!" });
+				return false;
+			}
+
+			if(!projectType) {
+		        Swal.fire({ icon: 'warning', title: '필수 선택', text: "프로젝트 타입을 선택해주세요!" });
+		        return false;
+		    }
+		    
+			if(!startDate) {
+		       Swal.fire({ icon: 'warning', title: '필수 입력', text: "프로젝트 시작일을 입력해주세요!" });
+     	       return false;
+			}
+			
+			if(!endDate) {
+		        Swal.fire({ icon: 'warning', title: '필수 입력', text: "프로젝트 종료일을 입력해주세요!" });
+		        return false;
+			}
+			
+			// 2. 탭 및 탭 순서 설정
+			const tabRows = document.querySelectorAll('#tabSortableList tr');
+			const tabOrderList = [];
+			
+			tabRows.forEach(row => {
+				// data-tab-id 속성이 있는 행의 데이터를 가져옴
+				const tabIdAttr = row.getAttribute('data-tap-id');
+				const checkbox = row.querySelector('input[type="checkbox"]');
+				
+				// 체크박스가 켜져있는(checked) 탭만 포함
+				if(tabIdAttr && checkbox && (checkbox.checked)) {
+					tabOrderList.push(parseInt(tabIdAttr));
+				}
+			});
+			
+			// 3. 프로젝트 참여자 및 기업 담당자 정보
+			const memberRows = document.querySelectorAll('#participantList tr');
+			const memberList = [];
+			const clientList = [];
+			
+			memberRows.forEach(row => {
+				const nameText = row.cells[0].innerText;
+				const emailText = row.cells[1].innerText;
+		
+				const userType = row.getAttribute('data-type') || 'MEMBER';
+				
+				// 본인(프로젝트 관리자) 제외한 구성원 정보
+				if(!nameText.includes("(본인)")) {
+					const memberData = {
+						memberEmail: emailText.trim(),
+						memberName: nameText.replace("초대됨", "").trim()
+					};
+					
+					// 기업 담당자
+					if(userType === 'CLIENT') {
+						clientList.push(memberData);
+					} else {	// 프로젝트 참여자
+						memberList.push(memberData);
+					}
+				}
+			});
+			
+			// 4. 권한 설정
+			const clientAccess = document.getElementById('clientAccessBoard')?.checked ? "Y" : "N" ;
+			
+			// 5. 프로젝트 생성 데이터 객체 생성
+			const data = {
+				projectName : projectName,
+				projectDesc : projectDesc,
+				projectType : projectType,
+				projectStartdate : startDate,
+				projectEnddate : endDate,
+				// mini header
+				miniheader: {
+					tabOrderList: tabOrderList
+				},
+				
+				// 멤버 목록
+				memberList: memberList,
+				clientList: clientList
+			};
+			
+			console.log("전송 데이터: ", data);
+			
+			if(typeof $ !== 'undefined') {
+				$.ajax({
+					url: "/tudio/project/create",
+					type: "post",
+					data: JSON.stringify(data),
+					contentType: "application/json; charset=utf-8",
+					success: function(res) {
+						if(res === "SUCCESS") {
+			                Swal.fire({
+		                        icon: 'success',
+		                        title: '생성 완료',
+		                        text: '프로젝트가 성공적으로 생성되었습니다!'
+		                    }).then(() => {
+			                    location.href = "/tudio/project/list"; 
+					        });
+		               	} else {
+		               		Swal.fire('실패', '프로젝트 생성에 실패했습니다.', 'error');
+				        }
+				    },
+	 	            error: function(xhr, status, error) {
+		                console.error(error);
+					    Swal.fire('에러', '서버 통신 중 오류가 발생했습니다.', 'error');
+					}
+				});
+			} else {
+				console.log("jquery error");
+			}	
+        }
+
+        // 3. 구성원 초대 처리 로직 (직접 입력 & 엑셀)
+		function processInvitations() {
+		    // 현재 활성화된 탭 확인
+		    const activeTabButton = document.querySelector('#inviteTabs .active');
+		    const activeTabId = activeTabButton.id;	    
+		    let emailList = [];
+			
+			// 초대 유형(역할) 가져오기
+			const inviteType = document.querySelector('input[name="inviteType"]:checked').value;
+
+		    if (activeTabId === 'excel-tab') {
+		        alert("엑셀 기능은 현재 구현 중입니다. 직접 입력을 이용해주세요.");
+		        return; 
+		    } else {
+		        // [직접 입력 로직]
+		        const emailText = document.getElementById('inviteEmails').value;
+		        if (!emailText.trim()) {
+		            Swal.fire('입력 오류', '이메일 주소를 입력해주세요.', 'warning');
+		            return;
+		        }
+		        // 쉼표, 줄바꿈으로 분리 및 공백 제거
+		        emailList = emailText.split(/[\n,]+/).map(e => e.trim()).filter(e => e);
+		    }
+
+		    if (emailList.length === 0) return;
+
+		    $.ajax({
+		        url: "/tudio/project/check-emails",
+		        type: "post",
+		        data: JSON.stringify(emailList),
+		        contentType: "application/json; charset=utf-8",
+		        success: function(res) {
+		            // 1. 유효한 회원 처리
+		            const validMembers = res.validMembers;
+		            let addedCount = 0;
+		            
+		            // 이미 추가된 사람인지 중복 체크를 위한 현재 목록 가져오기
+		            const currentEmails = [];
+		            document.querySelectorAll('#participantList tr td:nth-child(2)').forEach(td => {
+		                currentEmails.push(td.innerText.trim());
+		            });
+
+		            validMembers.forEach(member => {
+		                if (!currentEmails.includes(member.memberEmail)) {
+		                    addMemberRow(member.memberName, member.memberEmail);
+		                    addedCount++;
+		                }
+		            });
+
+		            // 2. 유효하지 않은 이메일 처리 (알림 표시)
+		            const invalidEmails = res.invalidEmails;
+					
+					// 결과 메시지 처리
+		            if (invalidEmails.length > 0) {
+		                // 실패 목록을 빨간 글씨로 보여줌
+		                let msg = `다음 이메일은 <b style="color:red;">가입되지 않은 회원</b>입니다:<br><br>` + invalidEmails.join('<br>');
+		                
+		                if (addedCount > 0) {
+		                    msg = `${addedCount}명은 추가되었습니다.<br><hr>` + msg;
+		                }
+		                
+		                Swal.fire({
+		                    icon: 'warning',
+		                    title: '초대 결과',
+		                    html: msg
+		                });
+		            } else if (addedCount > 0) {
+		                // 모두 성공했을 때
+						const roleName = inviteType === 'CUSTOMER' ? '기업 담당자' : '팀원';
+						Swal.fire({ 
+					    	icon: 'success', 
+					    	title: '초대 완료', 
+					    	text: `${roleName} ${addedCount}명을 추가했습니다.` 
+						});
+		                
+		                // 성공했으면 입력창 비우고 모달 닫기
+		                document.getElementById('inviteEmails').value = '';
+		                const modal = bootstrap.Modal.getInstance(document.getElementById('inviteModal'));
+		                modal.hide();
+		            } else {
+		                Swal.fire('중복', '이미 목록에 추가된 사용자들입니다.', 'info');
+		            }
+		        },
+		        error: function(xhr) {
+		            console.error(xhr);
+		            Swal.fire('에러', '회원 확인 중 오류가 발생했습니다.', 'error');
+		        }
+		    });
+		}
+
+
+		// 목록에 행 추가하는 헬퍼 함수
+		function addMemberRow(name, email, type = 'MEMBER') {
+			const listBody = document.getElementById('participantList');
+		    const newRow = listBody.insertRow();
+		            
+		    // data-type 속성에 역할 저장 (전송 시 식별용)
+		    newRow.setAttribute('data-type', type); 
+		            
+		    // 역할에 따른 배지 디자인
+		    let badgeHtml = '';
+		    if (type === 'CUSTOMER') {
+		    	badgeHtml = `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-building-fill me-1"></i>기업 담당자</span>`;
+		    } else {
+		        badgeHtml = `<span class="badge bg-primary ms-2"><i class="bi bi-person-fill me-1"></i>팀원</span>`;
+		    }
+		            
+		    newRow.innerHTML = `
+		    	<td>
+		        	<span class="fw-bold text-dark">${name}</span>
+		            ${badgeHtml}
+		            <span class="badge bg-light text-secondary border ms-1">초대됨</span>
+		        </td>
+		        <td>${email}</td>
+		        <td class="text-center">
+		        	<button type="button" class="btn btn-sm btn-outline-danger p-1" onclick="removeParticipant(this)" title="삭제">
+		            	<i class="bi bi-trash"></i>
+		            </button>
+		        </td>
+		    `;
+		}
+    </script>
+</body>
+</html>

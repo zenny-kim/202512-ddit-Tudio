@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.dashboard.mapper.IWidgetMapper">
+
+	<insert id="insertDefaultWidget" parameterType="list">
+        INSERT INTO WIDGET (
+            WIDGET_NO
+            , MEMBER_NO
+            , WIDGET_TYPE
+            , WIDTH
+            , HEIGHT
+            , LOCATION_NO
+            , WIDGET_STATUS
+        )
+        SELECT SEQ_WIDGET.NEXTVAL, A.* FROM (
+            <foreach collection="list" item="item" separator=" UNION ALL ">
+                SELECT 
+                    #{item.memberNo} as MEMBER_NO
+                    , #{item.widgetType} as WIDGET_TYPE
+                    , #{item.width} as WIDTH
+                    , #{item.height} as HEIGHT
+                    , #{item.locationNo} as LOCATION_NO
+                    , #{item.widgetStatus} as WIDGET_STATUS
+                FROM DUAL
+            </foreach>
+        ) A
+    </insert>
+
+	<select id="selectWidgetList" parameterType="int" resultType="kr.or.ddit.vo.WidgetVO">
+		SELECT 
+			WIDGET_NO
+			, MEMBER_NO
+			, WIDGET_TYPE
+			, WIDTH
+			, HEIGHT
+			, WIDGET_STATUS
+			, LOCATION_NO
+		FROM WIDGET
+		WHERE MEMBER_NO = #{memberNo}
+		<!-- AND WIDGET_STATUS = 'Y' -->
+	</select>
+	
+	<update id="updateWidgetLayout" parameterType="kr.or.ddit.vo.WidgetVO">
+		UPDATE WIDGET
+		SET
+			LOCATION_NO = #{locationNo}
+			, WIDTH = #{width}
+			, HEIGHT = #{height}
+			, WIDGET_STATUS = #{widgetStatus}
+		WHERE WIDGET_NO = #{widgetNo}
+	      AND MEMBER_NO = #{memberNo} 
+	</update>
+	
+	<update id="updateWidgetStatus" parameterType="map">
+	    UPDATE WIDGET
+	    SET WIDGET_STATUS = #{widgetStatus}
+	    WHERE WIDGET_NO = #{widgetNo}
+	</update>
+    
+   	<select id="selectDeadlineTask" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectTaskVO">
+        SELECT 
+            A.TASK_ID
+            , A.TASK_TITLE
+            , A.TASK_STATUS
+            , A.TASK_RATE
+            , A.TASK_ENDDATE
+            , A.TASK_PRIORITY
+            , A.PROJECT_NO
+            , A.PROJECT_NAME
+            , A.D_DAY AS taskDday
+        FROM (
+            SELECT 
+                T.TASK_ID
+                , T.TASK_TITLE
+                , T.TASK_STATUS
+                , T.TASK_RATE
+                , T.TASK_ENDDATE
+                , T.TASK_PRIORITY
+                , P.PROJECT_NO
+                , P.PROJECT_NAME
+                , CEIL(CAST(T.TASK_ENDDATE AS DATE) - CAST(CURRENT_TIMESTAMP AS DATE)) AS D_DAY
+            FROM PROJECT_TASK T
+            INNER JOIN PROJECT P ON T.PROJECT_NO = P.PROJECT_NO
+        	INNER JOIN PROJECT_TASK_MANAGER PTM ON T.TASK_ID = PTM.WORK_ID
+            WHERE PTM.MEMBER_NO = #{memberNo}    
+              AND T.TASK_STATUS NOT IN (203, 204)  
+            ORDER BY T.TASK_ENDDATE ASC       
+        ) A
+        WHERE 
+        <![CDATA[ ROWNUM <= 5 ]]>                  
+    </select>
+    
+    <select id="selectWeeklyWorkList" parameterType="map" resultType="map">
+	    SELECT T.*
+	    FROM (
+	        SELECT 
+	            CAST(A.TASK_ID AS VARCHAR2(20)) AS WORK_ID
+	            , A.TASK_TITLE AS WORK_TITLE
+	            , A.TASK_STATUS AS WORK_STATUS
+	            , TO_CHAR(A.TASK_STARTDATE, 'YYYY-MM-DD') AS WORK_DATE
+	            , TO_CHAR(A.TASK_STARTDATE, 'DY') AS WORK_DAY  
+	            , 'TASK' AS WORK_TYPE                                   
+	        FROM PROJECT_TASK A
+	        INNER JOIN PROJECT_TASK_MANAGER B ON A.TASK_ID = B.WORK_ID
+	        WHERE B.MEMBER_NO = #{memberNo}       
+	          AND B.WORK_TYPE = 'T'           
+	          AND A.TASK_STARTDATE BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+	                                   AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 0.99999
+	
+	        UNION ALL
+	
+	        SELECT 
+	            CAST(A.SUB_ID AS VARCHAR2(20)) AS WORK_ID
+	            , A.SUB_TITLE AS WORK_TITLE
+	            , A.SUB_STATUS AS WORK_STATUS
+	            , TO_CHAR(A.SUB_STARTDATE, 'YYYY-MM-DD') AS WORK_DATE
+	            , TO_CHAR(A.SUB_STARTDATE, 'DY') AS WORK_DAY
+	            , 'SUB' AS WORK_TYPE
+	        FROM PROJECT_TASK_SUB A
+	        INNER JOIN PROJECT_TASK_MANAGER B ON A.SUB_ID = B.WORK_ID
+	        WHERE B.MEMBER_NO = #{memberNo}       
+	          AND B.WORK_TYPE = 'S'            
+	          AND A.SUB_STARTDATE BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+	          						  AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 0.99999
+	    ) T
+	    ORDER BY WORK_DATE ASC
+	</select>
+	
+	<select id="selectWidgetNoticeList" resultType="kr.or.ddit.vo.NoticeVO">
+        SELECT 
+            NOTICE_NO
+            , NOTICE_TITLE
+            , NOTICE_REGDATE
+        FROM (
+            SELECT * FROM NOTICE 
+            ORDER BY NOTICE_REGDATE DESC   
+        )
+        <![CDATA[
+        WHERE ROWNUM <= 3        
+        ]]>
+    </select>
+    
+    <select id="selectWidgetNotiList" parameterType="int" resultType="kr.or.ddit.vo.NotificationVO">
+    	SELECT 
+    		NOTI_NO
+    		, MEMBER_NO
+    		, NOTI_TYPE
+    		, TARGET_ID
+    		, NOTI_URL
+    		, IS_READ
+    		, NOTICE_REGDATE
+    	FROM (
+    		SELECT * FROM NOTIFICATION
+    		WHERE MEMBER_NO = #{memberNo}
+    	  	  AND IS_READ = 'N'
+    	    ORDER BY NOTICE_REGDATE DESC
+    	) 
+    	<![CDATA[
+    	WHERE ROWNUM <= 3    	
+    	]]>
+    </select>
+	
+	<select id="selectWidgetBookmarkList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectVO">
+        SELECT 
+            P.PROJECT_NO
+            , P.PROJECT_NAME
+            , P.PROJECT_STATUS
+            , P.PROJECT_DESC
+            , (SELECT COUNT(*) 
+               	 FROM PROJECT_TASK T 
+              	WHERE T.PROJECT_NO = P.PROJECT_NO) AS totalTaskCount
+            , (SELECT COUNT(*) 
+                 FROM PROJECT_TASK T 
+                WHERE T.PROJECT_NO = P.PROJECT_NO 
+                  AND T.TASK_STATUS = 203) AS completedTaskCount
+        FROM PROJECT P
+        INNER JOIN PROJECT_MEMBER M ON P.PROJECT_NO = M.PROJECT_NO
+        WHERE M.MEMBER_NO = #{memberNo}
+          AND M.PROJECT_BOOKMARK = 'Y'  
+        ORDER BY P.PROJECT_NAME ASC
+    </select>
+</mapper>

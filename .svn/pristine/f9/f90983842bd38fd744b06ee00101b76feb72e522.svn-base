@@ -1,0 +1,327 @@
+/**
+ * myTask.js
+ * 내 업무 모아보기 전용 스크립트 (최종 완결판)
+ */
+
+const STATUS_MAP = { 201: 'REQUEST', 202: 'PROGRESS', 203: 'DONE', 204: 'HOLD', 205: 'DELAYED' };
+const PRIORITY_MAP = { 211: 'LOW', 212: 'NORMAL', 213: 'HIGH', 214: 'URGENT' };
+
+document.addEventListener("DOMContentLoaded", function() {
+    // 필터 UI 초기화
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type');
+    
+    document.querySelectorAll('.btn-group label').forEach(l => l.classList.remove('active'));
+    document.querySelectorAll('.btn-group input').forEach(r => r.checked = false);
+
+    let targetId = 'typeAll'; 
+    if (typeParam === 'writer') targetId = 'typeWriter';
+    else if (typeParam === 'manager') targetId = 'typeManager';
+
+    const targetInput = document.getElementById(targetId);
+    if (targetInput) {
+        targetInput.checked = true; 
+        document.querySelector('label[for="' + targetId + '"]').classList.add('active');
+    }
+
+    initMyTaskEvents();
+});
+
+function initMyTaskEvents() {
+
+    // 2. 전체 토글 버튼
+    const toggleAllBtn = document.getElementById('toggleAllCheckbox');
+    if(toggleAllBtn){
+        toggleAllBtn.addEventListener('change', function(){
+            const isChecked = this.checked;
+            document.querySelectorAll('.sub-row').forEach(row => row.style.display = isChecked ? 'table-row' : 'none');
+            document.querySelectorAll('.toggle-btn i').forEach(icon => {
+                icon.classList.replace(isChecked ? 'bi-caret-right-fill' : 'bi-caret-down-fill', isChecked ? 'bi-caret-down-fill' : 'bi-caret-right-fill');
+            });
+        });
+    }
+
+    // 3. 버튼 이벤트
+    document.getElementById('btnSaveDetail').addEventListener('click', updateTask);
+    document.getElementById('btnDeleteDetail').addEventListener('click', deleteTask);
+    
+    // 4. 슬라이더 UI
+    document.getElementById('detailRate').addEventListener('input', function() {
+        document.getElementById('detailRateVal').innerText = this.value + '%';
+    });
+}
+
+// [함수 이동] 토글 로직 함수
+function toggleSubTasks(taskId, btnElement) {
+    const subRows = document.querySelectorAll('.sub-group-' + taskId);
+    const icon = btnElement.querySelector('i');
+    
+    let isVisible = false;
+    // 현재 상태 확인 (첫 번째 하위 행 기준)
+    if(subRows.length > 0) isVisible = (window.getComputedStyle(subRows[0]).display !== 'none');
+    
+    // 상태 반전
+    subRows.forEach(row => row.style.display = isVisible ? 'none' : 'table-row');
+    
+    // 아이콘 변경
+    if(isVisible) {
+        icon.classList.replace('bi-caret-down-fill', 'bi-caret-right-fill');
+    } else {
+        icon.classList.replace('bi-caret-right-fill', 'bi-caret-down-fill');
+    }
+}
+
+// ============================================================
+// [기능 1] 상세 패널 열기
+// ============================================================
+function openDetailPanel(id, type) {
+    const panel = document.getElementById('taskDetailPanel');
+    const form = document.getElementById('taskEditForm');
+    
+    panel.classList.add('open');
+    form.reset();
+    document.getElementById('detailTitle').value = "데이터 불러오는 중...";
+    
+    // ID 초기화
+    const badgeArea = document.getElementById('selectedAssigneeArea');
+    if(badgeArea) badgeArea.innerHTML = ''; 
+    
+    document.getElementById('assigneeDropdownBtn').innerText = "로딩 중...";
+    document.getElementById('assigneeDropdownList').innerHTML = '';
+
+    const url = type === 'T' 
+        ? `/tudio/project/task/detail/${id}` 
+        : `/tudio/project/task/sub/detail/${id}`;
+
+    fetch(url)
+        .then(res => {
+            if(!res.ok) throw new Error("Network Error");
+            return res.json();
+        })
+        .then(data => {
+            // [중요] data.projectNo가 없으면 여기서 멈춤 -> VO 수정 필수!
+            if(!data.projectNo) {
+                console.error("ProjectNo is missing in data", data);
+                alert("데이터 오류: 프로젝트 번호가 없습니다.");
+                return;
+            }
+
+            loadProjectMembers(data.projectNo, function() {
+                fillDetailForm(data, type);
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            alert("상세 정보를 불러오지 못했습니다.");
+            closeTaskPanel();
+        });
+}
+
+// 프로젝트 멤버 동적 로딩
+function loadProjectMembers(projectNo, callback) {
+    fetch(`/tudio/project/member/list/json/${projectNo}`)
+        .then(res => res.json())
+        .then(members => {
+            const listContainer = document.getElementById('assigneeDropdownList');
+            listContainer.innerHTML = ''; 
+
+            if(!members || members.length === 0) {
+                listContainer.innerHTML = '<li class="p-2 text-muted small">멤버가 없습니다.</li>';
+            } else {
+                members.forEach(m => {
+                    const li = document.createElement('li');
+                    li.className = 'form-check dropdown-item'; 
+                    li.innerHTML = `
+                        <input class="form-check-input assignee-checkbox" type="checkbox" 
+                               value="${m.memberNo}" 
+                               id="assignee_${m.memberNo}"
+                               data-name="${m.memberName}">
+                        <label class="form-check-label w-100" for="assignee_${m.memberNo}" style="cursor:pointer;">
+                            ${m.memberName} <small class="text-muted">(${m.projectRole})</small>
+                        </label>
+                    `;
+                    li.addEventListener('click', function(e) { e.stopPropagation(); });
+                    listContainer.appendChild(li);
+                });
+            }
+            if(callback) callback();
+        })
+        .catch(err => {
+            console.error("멤버 로딩 실패", err);
+            document.getElementById('assigneeDropdownBtn').innerText = "멤버 로딩 실패";
+        });
+}
+
+function fillDetailForm(data, type) {
+    document.getElementById('detailId').value = (type === 'T' ? data.taskId : data.subId);
+    document.getElementById('detailType').value = type;
+    document.getElementById('detailProjectNo').value = data.projectNo;
+    document.getElementById('detailProjectName').value = data.projectName || '-';
+    document.getElementById('detailTitle').value = (type === 'T' ? data.taskTitle : data.subTitle);
+    
+    const content = (type === 'T' ? data.taskContent : data.subContent);
+    document.getElementById('detailContent').value = content || '';
+
+    // 상태/중요도 매핑
+    const statusObj = (type === 'T' ? data.taskStatus : data.subStatus);
+    const priorityObj = (type === 'T' ? data.taskPriority : data.subPriority);
+
+    let statusVal = "REQUEST"; 
+    if (statusObj) {
+        if (typeof statusObj === 'object' && statusObj.code) statusVal = STATUS_MAP[statusObj.code] || "REQUEST";
+        else statusVal = statusObj;
+    }
+
+    let priorityVal = "NORMAL";
+    if (priorityObj) {
+        if (typeof priorityObj === 'object' && priorityObj.code) priorityVal = PRIORITY_MAP[priorityObj.code] || "NORMAL";
+        else priorityVal = priorityObj;
+    }
+
+    setSelectValue('detailStatus', statusVal);
+    setSelectValue('detailPriority', priorityVal);
+
+    // 날짜
+    const start = (type === 'T' ? data.taskStartdate : data.subStartdate);
+    const end = (type === 'T' ? data.taskEnddate : data.subEnddate);
+    document.getElementById('detailStart').value = formatDate(start);
+    document.getElementById('detailEnd').value = formatDate(end);
+
+    // 진척도
+    const rate = (type === 'T' ? data.taskRate : data.subRate) || 0;
+    document.getElementById('detailRate').value = rate;
+    document.getElementById('detailRateVal').innerText = rate + '%';
+
+    // 담당자 체크박스 동기화
+    const managers = (type === 'T' ? data.taskManagers : data.subManagers);
+
+    document.querySelectorAll('.assignee-checkbox').forEach(chk => chk.checked = false);
+    const selectedArea = document.getElementById('selectedAssigneeArea');
+    selectedArea.innerHTML = ''; 
+
+    if (managers && managers.length > 0) {
+        managers.forEach(m => {
+            const chk = document.getElementById(`assignee_${m.memberNo}`);
+            if (chk) {
+                chk.checked = true;
+                addBadge(m.memberName);
+            }
+        });
+        updateDropdownLabel(managers.length);
+    } else {
+        updateDropdownLabel(0);
+    }
+
+    bindCheckboxEvents();
+}
+
+function addBadge(name) {
+    const area = document.getElementById('selectedAssigneeArea');
+    const span = document.createElement('span');
+    span.className = "badge bg-light text-dark border me-1";
+    span.innerText = name;
+    area.appendChild(span);
+}
+
+function updateDropdownLabel(count) {
+    const btn = document.getElementById('assigneeDropdownBtn');
+    btn.innerText = count > 0 ? `${count}명 선택됨` : "담당자 선택";
+}
+
+function bindCheckboxEvents() {
+    const checkboxes = document.querySelectorAll('.assignee-checkbox');
+    checkboxes.forEach(chk => {
+        chk.onclick = function(e) {
+            const area = document.getElementById('selectedAssigneeArea');
+            area.innerHTML = ''; 
+            let count = 0;
+            document.querySelectorAll('.assignee-checkbox:checked').forEach(c => {
+                addBadge(c.getAttribute('data-name'));
+                count++;
+            });
+            updateDropdownLabel(count);
+        };
+    });
+}
+
+// ============================================================
+// [기능 2] 수정 (Update)
+// ============================================================
+function updateTask() {
+    const type = document.getElementById('detailType').value;
+    const id = document.getElementById('detailId').value;
+    const url = type === 'T' ? '/tudio/project/task/update' : '/tudio/project/task/sub/update';
+
+    const formData = new FormData();
+    formData.append(type === 'T' ? 'taskId' : 'subId', id);
+    formData.append('projectNo', document.getElementById('detailProjectNo').value);
+    
+    formData.append(type === 'T' ? 'taskTitle' : 'subTitle', document.getElementById('detailTitle').value);
+    formData.append(type === 'T' ? 'taskContent' : 'subContent', document.getElementById('detailContent').value);
+    formData.append(type === 'T' ? 'taskStatus' : 'subStatus', document.getElementById('detailStatus').value);
+    formData.append(type === 'T' ? 'taskPriority' : 'subPriority', document.getElementById('detailPriority').value);
+    formData.append(type === 'T' ? 'taskRate' : 'subRate', document.getElementById('detailRate').value);
+    formData.append(type === 'T' ? 'taskStartdate' : 'subStartdate', document.getElementById('detailStart').value);
+    formData.append(type === 'T' ? 'taskEnddate' : 'subEnddate', document.getElementById('detailEnd').value);
+
+    // 담당자 (상위업무는 taskManagerNos, 하위업무는 subManagerNos)
+    const paramName = (type === 'T' ? 'taskManagerNos' : 'subManagerNos');
+    document.querySelectorAll('.assignee-checkbox:checked').forEach(chk => {
+        formData.append(paramName, chk.value); 
+    });
+    
+    fetch(url, { method: 'POST', body: formData })
+    .then(res => res.text())
+    .then(result => {
+        if(result === 'SUCCESS' || result === 'OK') {
+            alert("저장되었습니다.");
+            location.reload();
+        } else {
+            alert("저장에 실패했습니다.");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("서버 오류가 발생했습니다.");
+    });
+}
+
+// ============================================================
+// [기능 3] 삭제 (Delete)
+// ============================================================
+function deleteTask() {
+    if(!confirm("정말 이 업무를 삭제하시겠습니까?")) return;
+
+    const type = document.getElementById('detailType').value;
+    const id = document.getElementById('detailId').value;
+    const url = '/tudio/project/task/delete';
+
+    const formData = new FormData();
+    formData.append('workId', id); 
+    formData.append('type', type);
+
+    fetch(url, { method: 'POST', body: formData })
+    .then(res => res.text())
+    .then(res => {
+        if(res === 'SUCCESS') {
+            alert("삭제되었습니다.");
+            closeTaskPanel();
+            location.reload();
+        } else alert("삭제 실패");
+    })
+    .catch(() => alert("오류 발생"));
+}
+
+function closeTaskPanel() { 
+    document.getElementById('taskDetailPanel').classList.remove('open'); 
+}
+
+function formatDate(dateStr) {
+    if(!dateStr) return '';
+    return dateStr.length >= 10 ? dateStr.substring(0, 10) : dateStr;
+}
+
+function setSelectValue(id, val) {
+    const el = document.getElementById(id);
+    if(el && val) el.value = val;
+}

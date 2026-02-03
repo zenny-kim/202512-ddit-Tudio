@@ -1,0 +1,177 @@
+@charset "UTF-8";
+@import url("../fonts/pretendard/pretendard.css");
+
+:root {
+    --header-height: 60px;
+    --primary-color: #0d6efd;
+    --notification-badge-color: #dc3545;
+}
+
+* {
+	font-family: 'Pretendard', sans-serif;;
+}
+
+/* ---------------------- 헤더 공통 레이아웃 ---------------------- */
+body {
+    padding-top: var(--header-height); /* 헤더 높이만큼 본문 여백 확보 */
+}
+
+/* 헤더 베이스 스타일 */
+.header-container-wrapper {
+    height: var(--header-height);
+	border-bottom: 1px solid #cbd5e1 !important; 
+    box-shadow: 0 1px 0 0 #dee2e6 !important;
+    background-color: #ffffff; 
+    z-index: 1030 !important; 
+     padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* 로고 스타일 */
+.tudio-brand {
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* 로고 텍스트 간 간격 */
+}
+
+/* 공지, FAQ 글씨 관련 */
+.tudio-header .nav-link{
+  font-size: 1.0rem !important;   /* 원하는 크기로 조절 (예: 1.1rem, 18px 등) */
+  font-weight: 400;     /* 선택: 더 또렷하게 */
+  margin-top: 2px; 
+}
+
+/* 공지, faq 크기 조정( 상단기울어져있어서 ) */
+@media (min-width: 992px){
+  .tudio-header .navbar-collapse{
+    height: var(--header-height);
+  }
+  .tudio-header .navbar-nav{
+    height: var(--header-height);
+    align-items: center;
+  }
+  .tudio-header .navbar-nav .nav-link{
+    position: relative;
+    top: 3px;
+  }
+}
+
+
+/* 우측 아이콘 버튼 (알림 등) */
+.header-icon-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    border: none;
+    background: transparent;
+    cursor: pointer !important; /* ✅ 마우스 커서 손모양 강제 */
+    padding: 0 !important;      /* ✅ 불필요한 여백 제거 */
+    overflow: visible;         /* 뱃지 잘림 방지 */
+}
+.header-icon-btn:hover {
+    background-color : rgba(0, 0, 0, 0.05) ; /* 호버 효과 */
+}
+/* 어두운 배경일 때 호버 효과 반전 */
+.navbar-dark .header-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* 알림 뱃지 */
+.notification-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    background-color: var(--notification-badge-color);
+    border-radius: 50%;
+    border: 1px solid #fff;
+}
+
+/* 프로필 영역 */
+.header-profile {
+    display: flex !important;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 30px;
+    transition: background-color 0.2s;
+    cursor: pointer !important;
+    text-decoration: none;
+    color: inherit;
+}
+.header-profile:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+.navbar-dark .header-profile:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* 프로필 영역 (부모) - 내부 요소들을 가로로 정렬 */
+.header-profile {
+    display: inline-flex !important;
+    align-items: center !important;
+    text-decoration: none !important;
+    padding: 4px 12px !important;
+    gap: 0 !important; /* 내부 간격은 margin으로 조절 */
+}
+
+/* 프로필 이미지 원형 (자식) */
+.profile-img {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important; /* 찌그러짐 방지 */
+    min-height: 32px !important; /* 찌그러짐 방지 */
+    
+    border: 1.5px solid #cbd5e1 !important;
+    padding: 1px; /* 테두리와 이미지 사이 간격 */
+    background-color: #ffffff !important;
+    object-fit: cover;
+    
+    color: white !important;
+    border-radius: 50% !important;
+    
+    /* 글자 중앙 정렬 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    font-weight: 800 !important;
+    font-size: 0.85rem !important;
+    margin-right: 10px !important; /* 이름과의 간격 */
+    
+    /* 혹시 모를 내부 여백/테두리 초기화 */
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+
+/* 이름 텍스트 (자식) - 세로 정렬 보정 */
+.header-profile span {
+    line-height: 1 !important;
+    display: inline-block !important;
+}
+
+/* 관리자용 로그아웃 버튼 스타일 */
+.btn-header-outline {
+    border: 1px solid rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.btn-header-outline:hover {
+    background-color: white;
+    color: #333;
+    border-color: white;
+}

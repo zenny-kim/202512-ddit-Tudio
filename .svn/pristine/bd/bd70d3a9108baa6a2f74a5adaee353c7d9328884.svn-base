@@ -1,0 +1,12 @@
+package kr.or.ddit.admin.siteMember.mapper;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.dto.AdminUserDTO;
+
+@Mapper
+public interface IAdminMemberMapper {
+	
+	// 관리자 정보 조회
+	public AdminUserDTO selectAdminMember(String memId);
+}

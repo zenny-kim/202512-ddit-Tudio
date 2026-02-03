@@ -1,0 +1,124 @@
+@charset "UTF-8";
+
+/* main.css 맨 윗줄에 추가 */
+:root {
+    --color-primary: #0d6efd;   /* 부트스트랩 기본 파랑 */
+    --color-secondary: #0d6efd; /* 버튼 배경색 */
+    --color-text-val: #333333;  /* 제목 텍스트 색상 */
+}
+
+/* 네비게이션 바 아래부터 내용이 시작되도록 패딩 추가 */
+body {
+    padding-top: 60px; 
+    background-color: #ffffff;
+}
+
+/* Hero 섹션 (소개글) 스타일 */
+.intro-section {
+    padding: 80px 0;
+    
+    /* 기존 주석을 지우고, 연한 파란색(#e3f2fd)으로 설정했습니다 */
+    background-color: #e3f2fd; 
+    
+    /* 배경 이미지가 있다면 이미지가 우선, 없으면 위 색상이 나옵니다 */
+    background-image: url("../images/backdrop.svg"); 
+    background-size: cover;
+    background-position: center;
+}
+
+.divsec {
+    padding: 15px;
+    background: #ffffff;
+    border-radius: 8px;
+}
+
+.three {
+    gap : 15px;
+}
+
+/* 사용법 섹션 */
+.usage-section {
+    padding: 60px 0;
+}
+
+.title {
+    color: var(--color-text-val) !important;
+}
+
+.subtitle {
+    color: var(--color-primary) !important;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.btn-primary {
+    background-color: var(--color-secondary) !important;
+}
+
+/* ---------------------- 로고 애니메이션 CSS ---------------------- */
+.logo-section {
+    padding: 40px 0;
+    background-color: #f8f9fa;
+    overflow: hidden; 
+    white-space: nowrap;
+}
+
+.logo-slider {
+    display: inline-block;
+    animation: slide-left 30s linear infinite; 
+    padding-right: 50px; 
+}
+
+.logo-slider img {
+    height: 50px; 
+    margin: 0 40px;
+    filter: grayscale(100%); 
+    opacity: 0.6;
+    transition: opacity 0.3s;
+}
+
+.logo-slider img:hover {
+        opacity: 1; 
+}
+
+@keyframes slide-left {
+    0% {
+        transform: translateX(0%);
+    }
+    100% {
+        transform: translateX(-50%); 
+    }
+}
+
+.logo-slider-wrap:hover .logo-slider {
+    animation-play-state: paused;
+}
+
+/* ---------------------- 푸터 스타일 ---------------------- */
+.footer {
+    background-color: #343a40; 
+    color: #ccc;
+    padding: 40px 0;
+    font-size: 0.9rem;
+}
+.footer a {
+    color: #ccc;
+    text-decoration: none;
+}
+.footer a:hover {
+    color: #fff;
+}
+.footer .border-top {
+    border-color: #495057 !important;
+}
+
+.glass-border {
+    border: 1px solid rgba(0, 0, 0, 0.1);  /* 연한 테두리 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 살짝 그림자 */
+    transition: transform 0.2s; /* 마우스 올렸을 때 부드럽게 */
+}
+
+.glass-border:hover {
+    transform: translateY(-5px); /* 마우스 올리면 살짝 위로 뜸 */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}

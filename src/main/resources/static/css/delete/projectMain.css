@@ -1,0 +1,275 @@
+@charset "UTF-8";
+
+/* 1. 레이아웃 및 공통 설정 */
+.main-content-wrap {
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease;
+    background-color: #f8fafc;
+    min-height: calc(100vh - var(--header-height));
+    padding: 30px; 
+    min-width: 0;
+}
+
+/* 2. 상단 인덱스 탭 (Project Tabs) */
+.custom-index-tabs {
+    gap: 2px;
+    padding-left: 0; /* 왼쪽 끝에 붙이기 */
+}
+
+.custom-index-tabs .nav-link {
+    background-color: #f1f3f5;
+    border: 1px solid #BFDBFE !important;
+    border-bottom: none !important;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    color: #64748b;
+    padding: 12px 25px;
+    margin-right: 4px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.custom-index-tabs .nav-link:hover {
+    background-color: #e9ecef;
+    color: #212529;
+}
+
+/* 활성화된 탭 (Active) - 하얀색 배경 고정 */
+.custom-index-tabs .nav-link.active {
+    background-color: #ffffff !important; 
+    color: #3B82F6 !important;
+    font-weight: 700 !important;
+    border-top: 1px solid #BFDBFE !important;
+    border-left: 1px solid #BFDBFE !important;
+    border-right: 1px solid #BFDBFE !important;
+    border-bottom: 1px solid #ffffff !important;
+    position: relative;
+    z-index: 5;
+    margin-bottom: -1px; 
+}
+
+/* 탭 아래 본문 카드 영역 */
+.tab-content-card {
+    background: #fff;
+    border: 1px solid #BFDBFE;
+    border-radius: 0 8px 8px 8px;
+    margin-top: -1px;
+    padding: 24px;
+}
+
+/* 3. 게시판 내부 카테고리 탭 (둥근 버튼 스타일) */
+.board-tabs {
+    display: inline-flex;
+    flex-direction:row;
+    align-items:center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+
+/* ✅ 탭 버튼을 가로 정렬 + 세로 가운데 정렬 */
+
+.custom-index-tabs .nav-link{
+  display: inline-flex;        /* 또는 flex 도 OK */
+  align-items: center;
+  gap: 6px;                    /* 아이콘-글씨 간격 */
+  flex-direction: row;
+  
+}
+
+/* ✅ 아이콘은 inline으로 */
+.custom-index-tabs .nav-link i{
+  font-size: 0.85rem;
+  display: inline-flex;        /* 기존 display:flex 제거 */
+  align-items: center;
+  line-height: 1;
+  margin-right: 0;             /* gap 쓰니까 margin 제거 */
+  margin-bottom: 0;
+  margin-top: 2px;
+  min-width: 24px;      /* ✅ 탭 가로 길이(원하는 값으로 조절) */
+  justify-content: center; /* ✅ 아이콘+글씨를 가운데 정렬 */
+  white-space: nowrap;   /* ✅ 글씨 줄바꿈 방지 */
+}
+
+.board-tabs .tab {
+    border: 1px solid #e6edf6;
+    background: #fff;
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    color: #495057;
+    font-weight: 500;
+    transition: .15s ease;
+}
+
+.board-tabs .tab:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+}
+
+.board-tabs .tab.is-active {
+    border-color: #0d6efd;
+    background: rgba(13, 110, 253, .08);
+    color: #0d6efd;
+    font-weight: 700;
+}
+
+/* 4. 검색 필터 및 버튼 스타일 */
+.board-filter {
+    background-color: #f8fafc;
+    border: 1px solid #eef2f7;
+}
+
+.btn-primary.rounded-pill {
+    font-weight: 600;
+    padding: 8px 20px;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+}
+
+/* 5. 게시판 테이블 (목록) 스타일 */
+.table {
+    font-size: 0.95rem;
+    border-collapse: separate;
+}
+
+/* 테이블 헤더 */
+.table thead th {
+    font-weight: 700;
+    color: #495057;
+    padding: 15px 10px;
+    background-color: #f8f9fa !important;
+    border-bottom: 2px solid #eef2f7;
+}
+
+/* 테이블 본문 행(Row) 애니메이션 */
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #fcfdfe !important;
+    transform: scale(1.002);
+}
+
+.table tbody td {
+    font-weight: 500;
+    color: #495057;
+    padding: 16px 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+
+
+/* 제목 링크 스타일 */
+.table tbody td a {
+    color: #1e293b;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.table tbody td a:hover {
+    color: #0d6efd;
+}
+
+/* 6. 페이지네이션 (Pagination) */
+.board-footer {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+
+
+.pager { display: flex; gap: 5px; }
+.pg {
+    border: 1px solid #dee2e6;
+    background: #fff;
+    color: #495057;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-decoration: none;
+    transition: .15s ease;
+}
+
+.pg:hover { background: #f1f5ff; color: #0d6efd; }
+.pg.is-active {
+    background: #0d6efd;
+    color: #fff;
+    border-color: #0d6efd;
+    font-weight: 700;
+}
+
+/* 카드 레이아웃: 달력의 .calendar-wrapper 스타일 계승 */
+.summary-container {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 25px;
+}
+
+.summary-card {
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid #BFDBFE; /* 달력의 --border-blue 활용 */
+    border-radius: 14px;       /* 게시판보다 조금 더 부드러운 라운딩 */
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(44, 62, 80, 0.05);
+    transition: all 0.2s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
+}
+
+/* 카드 내부 라벨 스타일 */
+.summary-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b; /* 게시판 탭 컬러와 통일 */
+    margin-bottom: 8px;
+}
+
+/* 카드 내부 수치 스타일 */
+.summary-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #002B55; /* 달력 타이틀 컬러와 통일 */
+    margin-bottom: 5px;
+}
+
+/* 완료율 프로그레스 바: 달력의 --main-blue 활용 */
+.summary-progress-wrapper {
+    height: 6px;
+    background-color: #E2E8F0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 12px;
+}
+
+.summary-progress-bar {
+    height: 100%;
+    background-color: #3B82F6; /* 달력의 --main-blue */
+    border-radius: 10px;
+}
+
+/* 배지 및 기타 텍스트 */
+.summary-subtext {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.summary-badge {
+    background-color: #D9E9FF; /* 달력의 --header-blue */
+    color: #1E40AF;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.text-danger-custom {
+    color: #ef4444 !important;
+}

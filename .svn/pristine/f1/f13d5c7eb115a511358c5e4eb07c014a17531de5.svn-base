@@ -1,0 +1,217 @@
+@charset "UTF-8";
+
+/* :root 삭제 -> common.css 변수 사용 */
+
+/* ==========================
+   메인 위젯 컨테이너
+========================== */
+.chat-widget {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+    border-radius: 0; 
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    position: relative; 
+    box-sizing: border-box;
+}
+
+/* ==========================
+   헤더 영역
+========================== */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px; 
+    background-color: var(--bg-color);
+    flex-shrink: 0;
+    min-height: 56px; 
+    border-bottom: none; 
+}
+
+.chat-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0px; 
+    margin-left: 8px;
+}
+
+.header-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px; 
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    position: relative; 
+}
+
+.header-btn:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* ==========================
+   탭 영역
+========================== */
+.chat-tabs-container {
+    padding: 0 16px 12px;
+    flex-shrink: 0;
+    background-color: var(--bg-color);
+}
+
+.chat-tabs {
+    display: flex;
+    background-color: var(--bg-secondary);
+    padding: 3px;
+    border-radius: 12px;
+}
+
+.tab {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 6px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab.active {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+/* ==========================
+   채팅 리스트 영역
+========================== */
+/* ==========================
+   채팅 리스트 영역
+========================== */
+/* ==========================
+   채팅 리스트 영역
+========================== */
+/* ==========================
+   채팅 리스트 영역
+========================== */
+.chat-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+    background-color: var(--bg-color);
+    
+    /* [수정] 아까 추가했던 margin-bottom은 지웁니다! 이게 회색 바의 원인입니다. */
+    margin-bottom: 0;
+    
+    /* 내용은 바닥에 너무 딱 붙지 않게 쿠션만 줍니다 */
+    padding-bottom: 10px;
+}
+
+/* 커스텀 스크롤바 디자인 */
+.chat-list::-webkit-scrollbar {
+    width: 14px; 
+}
+
+.chat-list::-webkit-scrollbar-thumb {
+    background-color: #d1d1d6; 
+    border-radius: 10px;
+    background-clip: padding-box;
+    border: 4px solid transparent; 
+}
+
+/* [핵심 수정] 트랙(레일) 자체에 위아래 여백을 줍니다 */
+.chat-list::-webkit-scrollbar-track {
+    background-color: transparent;
+    
+    /* 스크롤바가 위/아래 끝에 닿지 않도록 공백 추가 */
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.chat-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--bg-secondary);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.chat-item:hover { background-color: #f9f9f9; }
+.chat-item:last-child { border-bottom: none; }
+
+.avatar-container { margin-right: 14px; position: relative; }
+
+/* .avatar는 common.css의 .avatar-base를 활용하거나 여기서 확장 */
+.avatar {
+    width: 44px; height: 44px; /* list는 사이즈가 조금 큼 */
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 600; flex-shrink: 0;
+    color: white;
+}
+
+.chat-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.chat-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.chat-title {
+    display: flex; align-items: center; min-width: 0;
+    font-size: 15px; font-weight: 600; color: var(--text-primary);
+}
+.name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.count { white-space: nowrap; flex-shrink: 0; color: var(--text-secondary); font-weight: 400; margin-left: 4px; font-size: 13px; }
+.chat-time { font-size: 11px; color: var(--text-secondary); white-space: nowrap; margin-left: 6px; }
+
+.chat-preview-row { display: flex; justify-content: space-between; align-items: center; }
+.chat-preview {
+    margin: 0; font-size: 13px; color: var(--text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px;
+}
+.room-badge {
+    background-color: var(--danger-color); /* 변수 통일됨 */
+    color: white;
+    font-size: 11px; font-weight: 700; min-width: 18px; height: 18px;
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    padding: 0 5px; box-sizing: border-box; flex-shrink: 0;
+}
+
+/* 새 채팅 플로팅 버튼 */
+.new-chat-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    background-color: var(--primary-color); color: white;
+    border: none; border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    cursor: pointer; transition: all 0.2s ease;
+}
+.new-chat-btn svg { margin-right: 6px; }
+
+/* 툴팁 스타일 삭제됨 (common.css에 통합) */

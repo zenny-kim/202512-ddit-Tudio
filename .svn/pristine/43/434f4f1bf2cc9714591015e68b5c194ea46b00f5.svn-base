@@ -1,0 +1,85 @@
+@charset "UTF-8";
+
+/* =========================================
+   [공통] 레이아웃 & 애니메이션
+   (회원 관리 섹션의 기본 틀을 잡는 스타일입니다)
+   ========================================= */
+:root {
+    --admin-color: #334155;
+}
+
+/* 섹션 전환 애니메이션 */
+.admin-section {
+    display: none; /* 기본적으로 숨김 */
+}
+.admin-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 카드 컨테이너 스타일 */
+.admin-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: #fff;
+    margin-bottom: 20px;
+}
+.admin-card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* =========================================
+   [전용] 회원 관리 탭(Tab) 스타일
+   ========================================= */
+/* 탭 네비게이션 컨테이너 (밑줄) */
+.custom-tabs {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* 탭 링크 기본 스타일 */
+.custom-tabs .nav-link {
+    color: #64748b;
+    font-weight: 600;
+    border: none;
+    padding: 10px 20px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+/* 활성화된 탭 스타일 (파란색 글씨 + 밑줄) */
+.custom-tabs .nav-link.active {
+    color: #0d6efd; /* Bootstrap Primary Color */
+    border-bottom: 2px solid #0d6efd;
+    background: transparent;
+}
+
+/* 탭 호버 효과 */
+.custom-tabs .nav-link:hover {
+    color: #0d6efd;
+}
+
+/* =========================================
+   [전용] 탭 컨텐츠 (테이블 영역) 제어
+   ========================================= */
+/* 기본적으로 모든 테이블 숨김 */
+.tab-content-area {
+    display: none;
+}
+
+/* 선택된 탭의 내용만 표시 (+ 페이드인 효과) */
+.tab-content-area.active {
+    display: block;
+    animation: fadeIn 0.2s ease-in-out;
+}

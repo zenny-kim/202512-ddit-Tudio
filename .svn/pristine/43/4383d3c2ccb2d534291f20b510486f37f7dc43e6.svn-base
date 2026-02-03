@@ -1,0 +1,263 @@
+@charset "UTF-8";
+
+/* ✅ Kanban - 팀 공통 디자인 시스템 적용 버전 */
+.kanban-wrapper {
+	display: flex;
+	gap: 20px; /* 공통 가이드에 맞춰 간격 소폭 조정 */
+	align-items: flex-start;
+	overflow-x: auto;
+	padding: 10px 0;
+	margin: 0;
+}
+
+.kanban-col {
+	flex: 1;
+	min-width: 300px;
+	display: flex;
+	flex-direction: column;
+	/* ✅ 공통 배경색 및 테두리 적용 */
+	background: #f8fafc; /* --bg-body와 유사한 톤 */
+	border: 1px solid var(--border-blue);
+	border-radius: 12px; /* 팀 공통 border-radius 반영 */
+	padding-bottom: 12px;
+}
+
+.col-header {
+	display: flex;
+	align-items: center;
+	padding: 18px 16px 12px 16px;
+	color: var(--dark-navy); /* 강조색 적용 */
+	font-weight: 700;
+	text-align: left;
+	font-size: 14px;
+	letter-spacing: 0.5px;
+}
+
+/* ✅ 하단 라인 강조색 수정 */
+.col-header.request { border-bottom: 3px solid #F59E0B ; margin: 0 12px; }
+.col-header.inprogress { border-bottom: 3px solid var(--main-blue); margin: 0 12px; }
+.col-header.done { border-bottom: 3px solid #22C55E; margin: 0 12px; }
+.col-header.hold { border-bottom: 3px solid var(--text-muted); margin: 0 12px; }
+.col-header.delayed { border-bottom: 3px solid #ef4444; margin: 0 12px; } /* 지연 상태 추가 */
+
+.col-header .count {
+	margin-left: 8px;
+	font-size: 12px;
+	color: var(--text-muted);
+	background: #fff !important;
+	padding: 2px 8px;
+	border-radius: 10px;
+	font-weight: 600;
+}
+
+.task-list {
+	padding: 12px;
+	min-height: 600px;
+}
+
+/* ✅ 작업 카드: tudio-item 스타일 계승 */
+.task-card {
+	background: #ffffff;
+	padding: 18px;
+	border-radius: 12px; /* 팀 공통 라운딩 */
+	margin-bottom: 12px;
+	border: 1px solid var(--tudio-border-soft);
+	box-shadow: 0 4px 6px rgba(15, 23, 42, 0.04);
+	cursor: grab;
+	position: relative;
+	transition: all 0.2s ease;
+}
+
+.task-card:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--tudio-shadow-hover);
+	border-color: var(--border-blue);
+}
+
+.task-card:active { cursor: grabbing; }
+
+.task-card.read-only {
+    cursor: not-allowed !important;  /* 마우스 커서 금지 모양 */
+    background-color: #ffffff !important; /* 배경 흰색 유지 */
+    border: 1px solid var(--tudio-border-soft) !important; /* 기본 테두리 */
+    box-shadow: none !important;
+}
+
+/* 읽기 전용 카드는 호버 시 뜨는 효과(transform) 제거 */
+.task-card.read-only:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* 읽기 전용 내부의 슬라이더도 금지 표시 */
+.task-card.read-only .rate-slider {
+    cursor: not-allowed;
+}
+
+/* 읽기 전용 카드의 상위 업무(parent-title) 색상 변경 */
+.task-card.read-only .parent-title {
+    /* background-color: #e2e8f0 !important; */ /* 연한 회색 배경 */
+    color: #64748b !important;            /* 진한 회색 글자 */
+}
+
+/* 읽기 전용 카드의 자물쇠 아이콘 스타일 */
+.task-card.read-only .lock-icon {
+    color: #64748b;     /* 상위 업무 글자색과 통일 */
+    font-size: 12px;
+    margin-left: 6px;
+    opacity: 0.8;
+}
+
+/* ✅ 2. '담당업무' 뱃지 디자인 (옐로우 톤) */
+.my-task-badge {
+    display: inline-block;
+    background-color: #FEF3C7; /* 연한 옐로우 (Amber 100) */
+    color: #92400E;           /* 진한 갈색 옐로우 텍스트 (Amber 800) */
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 20px;      /* 모서리 아주 둥글게 */
+    margin-left: 8px;         /* 제목과의 간격 */
+    vertical-align: middle;
+    border: 1px solid #FDE68A; /* 뱃지 테두리 */
+    letter-spacing: -0.5px;
+}
+
+/* 내가 담당자인 카드는 테두리에 살짝 포인트를 줘도 좋습니다 (선택사항) */
+.task-card:not(.read-only) {
+    border-left: 4px solid #3B82F6 !important; /* 카드 왼쪽에 옐로우 포인트 바 추가 */
+}
+
+.task-card.pin-on:not(.read-only) {
+    border-left: 4px solid #3B82F6 !important;
+}
+
+/* 보류(ON HOLD) 상태 카드 전용 스타일 */
+.task-card.status-hold {
+    /* 1. 연한 회색 사선 패턴 (멈춰있는 느낌) */
+    background: repeating-linear-gradient(
+        45deg,
+        #f8fafc,
+        #f8fafc 10px,
+        #f1f5f9 10px,
+        #f1f5f9 20px
+    ) !important;
+    
+    border: 1px solid #cbd5e1 !important;
+    opacity: 0.8; /* 살짝 흐리게 */
+}
+
+/* 보류 카드의 제목과 텍스트들도 회색톤으로 변경 */
+.task-card.status-hold .task-title,
+.task-card.status-hold .manager-name,
+.task-card.status-hold .end-date {
+    color: #64748b !important;
+}
+
+/* 보류 카드의 상위업무 태그도 회색으로 */
+.task-card.status-hold .parent-title {
+    background-color: #e2e8f0 !important;
+    color: #475569 !important;
+}
+
+/* 보류 카드의 슬라이더 바 색상도 회색으로 */
+.task-card.status-hold .rate-slider {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+
+.pin-btn {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-size: 18px; /* 📌 아이콘 크기는 여기서 조절하세요! */
+    transition: all 0.2s ease-in-out;
+    flex-shrink: 0;
+}
+
+/* 색상 제어 */
+.task-card.pin-on .pin-btn { color: #ef4444 !important; }
+.task-card.pin-off .pin-btn { color: #64748b !important; }
+
+/* ✅ 핀 고정된 카드에만 은은한 그림자 포인트를 주고 싶을 때 (선택사항) */
+.task-card.pin-on {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    border-color: #f1f5f9 !important;
+}
+
+/* 핀 버튼 호버 시 살짝 커지는 효과 */
+.pin-btn:hover {
+    transform: scale(1.15);
+}
+
+.task-card .card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.parent-title {
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--main-blue);
+	background: var(--header-blue); /* 공통 연파랑 배경 */
+	padding: 3px 8px;
+	border-radius: 6px;
+}
+
+.task-title {
+	font-weight: 700;
+	font-size: 15px;
+	color: var(--text-main);
+	margin: 10px 0;
+	display: block;
+	line-height: 1.4;
+}
+
+.manager-name {
+	font-size: 13px;
+	color: var(--text-main);
+	font-weight: 500;
+}
+
+.end-date {
+	font-size: 12px;
+	color: var(--text-muted);
+	margin-top: 6px;
+	display: block;
+}
+
+/* ✅ 프로그레스 바 영역: 팀 공통 스타일 반영 */
+.rate-container {
+	margin-top: 15px;
+	border-top: 1px solid var(--tudio-border-subtle);
+	padding-top: 12px;
+}
+
+.rate-slider {
+	width: 100%;
+	height: 5px;
+	cursor: pointer;
+	accent-color: var(--main-blue); /* 슬라이더 색상 통일 */
+}
+
+.rate-text {
+	display: block;
+	margin-top: 4px;
+	font-size: 11px;
+	color: var(--main-blue);
+	text-align: right;
+	font-weight: 800;
+}
+
+/* 스크롤바 디자인 */
+.kanban-wrapper::-webkit-scrollbar { height: 8px; }
+.kanban-wrapper::-webkit-scrollbar-thumb {
+	background: var(--border-blue);
+	border-radius: 10px;
+}

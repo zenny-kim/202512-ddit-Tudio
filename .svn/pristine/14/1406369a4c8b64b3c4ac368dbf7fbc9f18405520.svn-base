@@ -1,0 +1,19 @@
+package kr.or.ddit.projectTask.mapper;
+
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : IProjectTaskMapper
+ * DESC : 프로젝트 상위업무 생성, 수정, 삭제, 목록 매퍼
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 PSE
+ * @version 1.0, 2025.01.02
+ * 
+ */
+@Mapper
+public interface IProjectTaskMapper {
+	
+}

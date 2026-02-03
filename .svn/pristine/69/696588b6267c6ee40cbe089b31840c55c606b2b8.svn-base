@@ -1,0 +1,658 @@
+/**
+ * projectCreate.js
+ * - 프로젝트 생성 및 수정 페이지 핵심 로직
+ * - 팀원 초대 프로세스: [검색] -> [대기목록(장바구니)] -> [최종 적용]
+ * @author YHB
+ * @since 2025.01.12
+ */
+
+// ============================================================
+// 1. 전역 변수 및 상수 정의
+// ============================================================
+const DOM = {
+    // Context Info
+    body: document.body,
+    // Forms & Inputs
+    submitBtn: document.getElementById('projectSubmitBtn'),
+    searchInput: document.getElementById('searchEmailKeyword'),
+    searchBtn: document.getElementById('btnSearchMember'),
+    applyInviteBtn: document.getElementById('processInviteBtn'),
+    participantList: document.getElementById('participantList'),
+    // Modal Areas
+    inviteModal: document.getElementById('inviteModal'),
+    searchResultArea: document.getElementById('searchResultArea'),
+    candidateListArea: document.getElementById('inviteCandidateList'),
+    candidateCountBadge: document.getElementById('candidateCount'),
+    // Status Buttons
+    btnComplete: document.getElementById('btnCompleteProject'),
+    btnReopen: document.getElementById('btnReopenProject'),
+};
+
+// 초대 대기자 목록 (메모리상 관리)
+let inviteCandidates = []; 
+
+// ============================================================
+// 2. 초기화 및 이벤트 리스너 등록
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // 환경 변수 로드
+    const CONTEXT_PATH = DOM.body.dataset.contextPath || '';
+    const STATUS = DOM.body.dataset.status;
+    const PROJECT_NO = DOM.body.dataset.projectNo;
+
+    // 2-1. 탭 순서 변경 (SortableJS) 초기화
+    initSortable();
+
+    // 2-2. 메인 프로젝트 저장/수정 버튼
+    if (DOM.submitBtn) {
+        DOM.submitBtn.addEventListener('click', () => submitProject(CONTEXT_PATH, PROJECT_NO, STATUS));
+    }
+
+    // 2-3. 모달 관련 이벤트 (검색, 적용, 닫기)
+    if (DOM.searchInput) {
+        DOM.searchInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') handleSearchMember(CONTEXT_PATH);
+        });
+    }
+    if (DOM.searchBtn) {
+        DOM.searchBtn.addEventListener('click', () => handleSearchMember(CONTEXT_PATH));
+    }
+    if (DOM.applyInviteBtn) {
+        DOM.applyInviteBtn.addEventListener('click', applyInvitationsToMain);
+    }
+    if (DOM.inviteModal) {
+        DOM.inviteModal.addEventListener('hidden.bs.modal', resetInviteModal);
+    }
+
+    // 2-4. 동적 요소 이벤트 위임 (모달 내 '추가' 버튼)
+    // jQuery의 on 메서드를 사용하여 동적 생성된 버튼 클릭 감지
+    $(document).on('click', '.btn-add-candidate', function() {
+        const roleType = document.querySelector('input[name="inviteType"]:checked').value;
+        const member = {
+            memberNo: $(this).data('no'),
+            memberName: $(this).data('name'),
+            memberEmail: $(this).data('email'),
+            deptName: $(this).data('dept'),
+            positionName: $(this).data('pos'),
+            role: roleType
+        };
+        addCandidateToBasket(member);
+    });
+
+    // 2-5. 메인 테이블(참여자 목록) 관리 (삭제/복구)
+    if (DOM.participantList) {
+        DOM.participantList.addEventListener('click', handleMainTableClick);
+    }
+
+    // 2-6. 프로젝트 상태 변경 (완료[1]/재진행[0])
+    if (DOM.btnComplete) DOM.btnComplete.addEventListener('click', () => toggleProjectStatus(CONTEXT_PATH, PROJECT_NO, 1));
+    if (DOM.btnReopen) DOM.btnReopen.addEventListener('click', () => toggleProjectStatus(CONTEXT_PATH, PROJECT_NO, 0));
+});
+
+
+// ============================================================
+// 3. [모달] 팀원 검색 및 대기 목록(Basket) 로직
+// ============================================================
+
+/**
+ * 회원 검색 핸들러 (AJAX)
+ */
+function handleSearchMember(contextPath) {
+    const email = DOM.searchInput.value.trim();
+
+    if (!email) {
+        Swal.fire('알림', '이메일 주소를 입력해주세요.', 'warning');
+        return;
+    }
+	
+	// 현재 선택된 초대 유형 (MEMBER_AUTH : ROLE_MEMBER / ROLE_CLIENT)
+	const roleRadio = document.querySelector('input[name="inviteType"]:checked');
+	const inviteType = roleRadio ? roleRadio.value : 'MEMBER';
+    
+    // 로딩 표시
+    DOM.searchResultArea.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary spinner-border-sm"></div> 검색 중...</div>';
+
+    $.ajax({
+        url: `${contextPath}/tudio/project/searchMember`,
+        type: 'GET',
+        data: { keyword: email, type: inviteType }, 
+        dataType: 'json',
+        success: function(memberList) {
+			if (!memberList || memberList.length === 0) {
+				renderNoResult();
+			} else {
+				// 리스트 렌더링 함수 호출
+				renderSearchResultList(memberList);
+			}
+        },
+        error: function(xhr) {
+            console.error(xhr);
+            DOM.searchResultArea.innerHTML = '<div class="text-center text-danger py-2">서버 오류가 발생했습니다.</div>';
+        }
+    });
+}
+
+/**
+ * 검색 결과 없음 렌더링
+ */
+function renderNoResult() {
+    DOM.searchResultArea.innerHTML = `
+        <div class="alert alert-warning d-flex align-items-center mt-2 mb-0" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <div>해당 이메일을 가진 사용자를 찾을 수 없습니다.</div>
+        </div>
+    `;
+}
+
+/**
+ * 검색 결과 있음 렌더링 (카드 UI)
+ */
+function renderSearchResultList(memberList) {
+	const searchResultArea = DOM.searchResultArea;
+	
+    const roleRadio = document.querySelector('input[name="inviteType"]:checked');
+    const roleType = roleRadio ? roleRadio.value : 'MEMBER';
+    
+    const roleBadge = roleType === 'MEMBER' 
+        ? '<span class="badge bg-primary">팀원</span>' 
+        : '<span class="badge bg-warning text-dark">기업 담당자</span>';
+	let html = '';
+	
+	memberList.forEach(member => {
+		// 중복 체크
+		const isPending = inviteCandidates.some(c => c.memberEmail === member.memberEmail);
+		const isJoined = isMemberInMainTable(member.memberEmail);
+		
+		let btnHtml = '';
+		if (isJoined) {
+			btnHtml = `<button class="btn btn-sm btn-secondary w-100" disabled>참여중</button>`;
+		} else if (isPending) {
+			btnHtml = `<button class="btn btn-sm btn-outline-secondary w-100" disabled>대기중</button>`;
+		} else {
+			// 버튼에 데이터 심기
+			btnHtml = `<button class="btn btn-sm btn-outline-primary w-100 btn-add-candidate" 
+						data-no="${member.memberNo}" 
+						data-name="${member.memberName}" 
+						data-email="${member.memberEmail}"
+						data-dept="${member.memberDepartmemnt || ''}"
+						data-pos="${member.memberPosition || ''}">
+						<i class="bi bi-plus-lg"></i> 추가
+					</button>`;
+		}
+
+		html += `
+			<div class="alert alert-light border shadow-sm mt-2 mb-0">
+				<div class="d-flex justify-content-between align-items-center">
+					<div class="d-flex align-items-center" style="max-width: 70%;">
+						<div class="me-3 flex-shrink-0">
+							<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:40px; height:40px;">
+								${member.memberName.charAt(0)}
+							</div>
+						</div>
+						<div class="overflow-hidden">
+							<div class="fw-bold text-dark text-truncate">
+								${member.memberName} <small class="text-muted fw-normal">(${member.memberEmail})</small>
+							</div>
+							<div class="small text-muted text-truncate">
+								${member.memberDepartmemnt || '-'} | ${member.memberPosition || '-'}
+							</div>
+						</div>
+					</div>
+					<div class="text-end ps-2" style="min-width: 80px;">
+						<div class="mb-1">${roleBadge}</div>
+							${btnHtml}
+						</div>
+					</div>
+				</div>
+			</div>
+		`;
+	});	
+	
+   searchResultArea.innerHTML = html;
+}
+
+/**
+ * 대기 목록(Basket)에 사용자 추가
+ */
+function addCandidateToBasket(member) {
+    inviteCandidates.push(member);
+    renderCandidateList();
+    
+    // UI 초기화 (연속 입력을 위해)
+    DOM.searchResultArea.innerHTML = '';
+    DOM.searchInput.value = '';
+    DOM.searchInput.focus();
+}
+
+/**
+ * 대기 목록 UI 렌더링
+ */
+function renderCandidateList() {
+    DOM.candidateListArea.innerHTML = '';
+    DOM.candidateCountBadge.innerText = inviteCandidates.length + "명";
+
+    if (inviteCandidates.length === 0) {
+        DOM.candidateListArea.innerHTML = '<li class="list-group-item bg-transparent text-center text-muted small py-4 empty-msg">검색된 사용자를 추가하면 여기에 표시됩니다.</li>';
+        return;
+    }
+
+    inviteCandidates.forEach((member, index) => {
+        const roleBadge = member.role === 'MEMBER' 
+            ? '<span class="badge bg-primary me-2">팀원</span>' 
+            : '<span class="badge bg-warning text-dark me-2">담당자</span>';
+
+        const li = document.createElement('li');
+        li.className = 'list-group-item bg-white border rounded mb-1 d-flex justify-content-between align-items-center p-2';
+        li.innerHTML = `
+            <div>
+                ${roleBadge}
+                <span class="fw-bold">${member.memberName}</span>
+                <small class="text-muted ms-1">(${member.memberEmail})</small>
+            </div>
+            <button type="button" class="btn-close btn-sm" aria-label="Remove" onclick="removeCandidateFromBasket(${index})"></button>
+        `;
+        DOM.candidateListArea.appendChild(li);
+    });
+}
+
+/**
+ * 대기 목록에서 사용자 제거 (전역 노출 필요)
+ */
+window.removeCandidateFromBasket = function(index) {
+    inviteCandidates.splice(index, 1);
+    renderCandidateList();
+}
+
+/**
+ * 모달 초기화 핸들러
+ */
+function resetInviteModal() {
+    DOM.searchInput.value = '';
+    DOM.searchResultArea.innerHTML = '';
+    inviteCandidates = [];
+    renderCandidateList();
+}
+
+
+// ============================================================
+// 4. [메인 화면] 테이블 관리 로직
+// ============================================================
+
+/**
+ * [모달 -> 메인] 최종 적용
+ */
+function applyInvitationsToMain() {
+	// 초대 적용 버튼에 남아있는 포커스 즉시 해제 (Focus hidden error 방지)
+	if (document.activeElement) {
+		document.activeElement.blur();
+	}
+
+    if (inviteCandidates.length === 0) {
+        Swal.fire('알림', '초대할 사용자가 없습니다.', 'warning');
+        return;
+    }
+
+	// 프로젝트 생성/수정폼 메인 테이블 행 추가
+    inviteCandidates.forEach(member => {
+        addMemberRowToMainTable(member);
+    });
+	
+    // 모달 닫기
+	// 모달 강제 닫기 및 백드롭 제거
+	const modalEl = DOM.inviteModal
+	    
+	let modal = bootstrap.Modal.getInstance(modalEl);
+	
+	if (modal) {
+		modal.hide();
+	} 
+	
+	setTimeout(() => {
+		// A. 모달 컨테이너 강제 숨김 (투명 벽 제거)
+		// !important 효과를 주기 위해 setAttribute 사용
+		modalEl.setAttribute('style', 'display: none !important');
+		modalEl.classList.remove('show');
+		modalEl.setAttribute('aria-hidden', 'true');
+		modalEl.removeAttribute('aria-modal');
+		modalEl.removeAttribute('role');
+
+		// 배경(검은색) 잔여물 제거
+		const backdrops = document.querySelectorAll('.modal-backdrop');
+		backdrops.forEach(backdrop => backdrop.remove());
+
+		// 스크롤 잠금 해제
+		document.body.classList.remove('modal-open');
+		document.body.style.overflow = 'auto';     
+		document.body.style.paddingRight = '0px';   // 밀림 현상 복구
+
+		// 데이터 초기화 (선택 사항)
+		// 모달을 강제로 닫았으므로 이벤트 리스너가 안 돌 수도 있어 수동 초기화
+		// resetInviteModal();
+
+	}, 300); // 0.3s delay (충돌방지)
+}
+
+/**
+ * 메인 테이블에 목록 행 추가 (DOM)
+ */
+function addMemberRowToMainTable(member) {
+    const newRow = DOM.participantList.insertRow();
+    
+    newRow.setAttribute('data-type', member.role);
+    newRow.classList.add('new-member-row'); // 신규 행 표시
+    
+    let badgeHtml = member.role === 'CLIENT' 
+        ? `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-building-fill me-1"></i>기업 담당자</span>` 
+        : `<span class="badge bg-primary ms-2"><i class="bi bi-person-fill me-1"></i>팀원</span>`;
+    
+    newRow.innerHTML = `
+        <td>
+            <span class="fw-bold text-dark">${member.memberName}</span>
+            ${badgeHtml}
+            <span class="badge bg-info text-dark border ms-1">신규</span>
+        </td>
+        <td>${member.memberEmail}</td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger p-1 btn-remove-member" title="삭제">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+}
+
+/**
+ * 메인 테이블 중복 확인 (이메일 기준)
+ */
+function isMemberInMainTable(email) {
+    let exists = false;
+    const rows = DOM.participantList.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        const emailCell = row.cells[1];
+        if(emailCell) {
+            const rowEmail = emailCell.innerText.trim();
+            // 삭제된 멤버(취소선)가 아니면 중복으로 간주
+            if (rowEmail === email && !emailCell.classList.contains('text-decoration-line-through')) {
+                exists = true;
+            }
+        }
+    });
+    return exists;
+}
+
+/**
+ * 메인 테이블 클릭 이벤트 핸들러 (삭제/복구 위임)
+ */
+function handleMainTableClick(e) {
+    // 1. [삭제] 버튼 클릭 시
+    const btnRemove = e.target.closest('.btn-remove-member');
+    if (btnRemove) {
+        const tr = btnRemove.closest('tr');
+        
+        // 신규 행이면 바로 삭제 (DB에 없음)
+        if(tr.classList.contains('new-member-row')) {
+            tr.remove();
+        } else {
+            // 기존 멤버는 논리적 삭제 처리 (업데이트용)
+            if (confirm("이 사용자를 목록에서 제외하시겠습니까?")) {
+                toggleMemberRowStatus(tr, 'REMOVE');
+            }
+        }
+        return;
+    }
+    
+    // 2. [복구] 버튼 클릭 시
+    const btnRestore = e.target.closest('.btn-restore-member');
+    if (btnRestore) {
+        const tr = btnRestore.closest('tr');
+        if (confirm("이 사용자를 다시 프로젝트에 참여시키겠습니까?")) {
+            toggleMemberRowStatus(tr, 'RESTORE');
+        }
+    }
+}
+
+/**
+ * 행 상태 변경 헬퍼 (삭제 <-> 복구)
+ */
+function toggleMemberRowStatus(tr, action) {
+    const nameSpan = tr.querySelector('.fw-bold');
+    const emailCell = tr.cells[1];
+    const statusBadge = tr.querySelector('.badge:last-child');
+    const tdAction = tr.cells[2];
+
+    if (action === 'REMOVE') {
+        tr.classList.add('table-secondary', 'text-muted', 'excluded-member');
+        if(nameSpan) { nameSpan.classList.add('text-muted'); nameSpan.classList.remove('text-dark'); }
+        emailCell.classList.add('text-decoration-line-through');
+        
+        if(statusBadge) { statusBadge.className = 'badge bg-secondary border ms-1'; statusBadge.innerText = '제외됨'; }
+        
+        tdAction.innerHTML = `
+            <button type="button" class="btn btn-sm btn-outline-success p-1 btn-restore-member" title="복구">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>`;
+            
+    } else if (action === 'RESTORE') {
+        tr.classList.remove('table-secondary', 'text-muted', 'excluded-member');
+        if(nameSpan) { nameSpan.classList.remove('text-muted'); nameSpan.classList.add('text-dark'); }
+        emailCell.classList.remove('text-decoration-line-through');
+
+        if(statusBadge) { statusBadge.className = 'badge bg-success border ms-1'; statusBadge.innerText = '복구됨'; }
+
+        tdAction.innerHTML = `
+            <button type="button" class="btn btn-sm btn-outline-danger p-1 btn-remove-member" title="삭제">
+                <i class="bi bi-trash"></i>
+            </button>`;
+    }
+}
+
+
+// ============================================================
+// 5. [서버 통신] 프로젝트 생성/수정/상태변경
+// ============================================================
+
+/**
+ * SortableJS 초기화
+ */
+function initSortable() {
+    const el = document.getElementById('tabSortableList');
+    if (el) {
+        Sortable.create(el, {
+            animation: 150,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost',
+            filter: '.static-row',
+            onMove: evt => evt.related.className.indexOf('static-row') === -1
+        });
+    }
+}
+
+/**
+ * 프로젝트 저장/수정 제출
+ */
+function submitProject(contextPath, projectNo, status) {
+    // 입력값 수집
+    const projectName = document.getElementById('projectName').value;
+    const projectDesc = document.getElementById('projectDesc').value;
+    const projectType = document.getElementById('projectType').value;
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    // 유효성 검사 (SweetAlert2)
+    if (!projectName) { Swal.fire({ icon: 'warning', title: '필수 입력', text: "프로젝트명을 입력해주세요!" }); return false; }
+    if (!projectType) { Swal.fire({ icon: 'warning', title: '필수 선택', text: "프로젝트 타입을 선택해주세요!" }); return false; }
+    if (!startDate) { Swal.fire({ icon: 'warning', title: '필수 입력', text: "프로젝트 시작일을 입력해주세요!" }); return false; }
+    if (!endDate) { Swal.fire({ icon: 'warning', title: '필수 입력', text: "프로젝트 종료일을 입력해주세요!" }); return false; }
+
+    // 미니헤더 탭 순서
+    const tabRows = document.querySelectorAll('#tabSortableList tr');
+    const tabOrderList = [];
+    tabRows.forEach(row => {
+        const tabIdAttr = row.getAttribute('data-tap-id');
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        if (tabIdAttr && checkbox && (checkbox.checked)) {
+            tabOrderList.push(parseInt(tabIdAttr));
+        }
+    });
+    
+    // 구성원 수집 (MEMBER / CLIENT)
+    const memberList = [];
+    const clientList = [];
+    const memberRows = DOM.participantList.querySelectorAll('tr');
+
+    memberRows.forEach(row => {
+        // 제외된 멤버는 전송 데이터에 포함하지 않음
+        if (row.classList.contains('excluded-member')) return;
+        
+        // 이름/이메일 추출
+        let nameText = "";
+        const nameSpan = row.querySelector('.fw-bold');
+        nameText = nameSpan ? nameSpan.innerText.trim() : row.cells[0].innerText.trim();
+        const emailText = row.cells[1].innerText.trim();
+        const memberType = row.getAttribute('data-type') || 'MEMBER';
+        
+        // 본인(관리자) 제외 필터링
+        const fullCellText = row.cells[0].innerText;
+		// 본인(관리자) 제외 추가
+        if (!fullCellText.includes("(본인)") && !fullCellText.includes("관리자")) {
+            const memberData = {
+                memberEmail: emailText,
+                memberName: nameText,
+                projectRole: memberType,
+				projectMemstatus: 'P' // 상태: 초대중
+            };
+
+            if (memberType === 'CLIENT') {
+                clientList.push(memberData);
+            } else {
+                memberList.push(memberData);
+            }
+        }
+    });
+    
+    // 필수 구성원 유효성 검사 : 기업 담장자(CLIENT)
+    if (clientList.length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: '구성원 누락',
+            html: '프로젝트에는 최소 1명의 <b>기업 담당자(CLIENT)</b>가<br>포함되어야 합니다.'
+        });
+        return false; // 전송 중단
+    }
+
+    // 전송 데이터 객체 생성
+    const data = {
+        projectNo: projectNo,
+        projectName: projectName,
+        projectDesc: projectDesc,
+        projectType: projectType,
+        projectStartdate: startDate,
+        projectEnddate: endDate,
+        miniheader: { tabOrderList: tabOrderList },
+        memberList: memberList,
+        clientList: clientList
+    };
+
+    console.log("전송할 데이터: ", data);
+    
+    let requestUrl = `${contextPath}/tudio/project/create`;
+	let loadingMsg = "프로젝트 생성 중 ...";
+    let successMsg = "프로젝트가 생성되었습니다.";
+            
+    if (status === 'u') {
+        requestUrl = `${contextPath}/tudio/project/update`;
+		loadingMsg = "프로젝트 수정 중 ...";
+        successMsg = "프로젝트가 수정되었습니다.";
+    }
+    
+    if (typeof $ !== 'undefined') {
+        $.ajax({
+            url: requestUrl,
+            type: "post",
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8",
+			beforeSend: function() {
+				// 전송 시작 전 로딩바 노출
+				Swal.fire({
+					title: loadingMsg,
+					html: '초대 메일을 발송하고 있습니다.<br>잠시만 기다려주세요.',
+					allowOutsideClick: false,
+					didOpen: () => {
+						Swal.showLoading();
+					}
+				});
+			},
+            success: function(res) {
+                if (res.status === "SUCCESS") {
+                    Swal.fire({ icon: 'success', title: '완료', text: successMsg })
+                        .then(() => location.href = `${contextPath}/tudio/project/detail?projectNo=${res.projectNo}`);
+                } else if (res.status === "ACCESS_DENIED") {
+                    Swal.fire('권한 없음', res.message, 'error');  // message: 프로젝트 관리자만 수정할 수 있습니다.
+                } else {
+                    Swal.fire('실패', '프로젝트 처리에 실패했습니다.', 'error');
+                }
+            },
+            error: function(xhr) {
+                console.error(xhr);
+                Swal.fire('에러', '서버 통신 중 오류가 발생했습니다.', 'error');
+            }
+        });
+    }
+}
+
+/**
+ * 프로젝트 상태 변경 (완료[1]/재진행[0])
+ */
+function toggleProjectStatus(contextPath, projectNo, projectStatus) {
+    let confirmTitle = '프로젝트 완료';
+    let confirmText = "프로젝트를 완료 처리하시겠습니까? (모든 업무가 완료 상태여야 합니다)";
+    let confirmBtnText = '네, 완료합니다';
+    let confirmBtnColor = '#198754'; // color: green
+
+	// 프로젝트를 재진행할 경우
+    if (projectStatus === 0) {
+        confirmTitle = '완료 취소';
+        confirmText = "프로젝트를 다시 진행 상태로 변경하시겠습니까?";
+        confirmBtnText = '네, 재진행합니다';
+        confirmBtnColor = '#ffc107'; // color: yellow
+    }
+
+    Swal.fire({
+        title: confirmTitle,
+        text: confirmText,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: confirmBtnColor,
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: confirmBtnText,
+        cancelButtonText: '취소'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: `${contextPath}/tudio/project/status`,
+                type: 'POST',
+                data: JSON.stringify({ projectNo: projectNo, status: projectStatus }), 
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === "SUCCESS") {
+                        Swal.fire('처리 완료', '상태가 변경되었습니다.', 'success')
+							.then(() => location.reload());	// 화면을 새로고침하여 배지/버튼 변경사항 반영
+                    } else if (res.status === "UNFINISHED_TASKS") {
+                        Swal.fire({
+                            title: '완료 불가',
+                            html: `미완료된 업무가 <b>${res.count}</b>건 존재합니다.`,
+                            icon: 'warning'
+                        });
+                    } else {
+                        Swal.fire('실패', res.message || '오류 발생', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire('에러', '서버 통신 중 오류가 발생했습니다!', 'error');
+                }
+            });
+        }
+    });
+}

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.projectBoard.mapper.IProjectBoardMapper">
+
+<resultMap type="kr.or.ddit.vo.project.ProjectBoardVO" id="boardlist">
+	<result column="BO_NO" property="boNo"/>
+	<result column="BO_TITLE" property="boTitle"/>
+	<result column="BO_REGDATE" property="boRegdate"/>
+	<result column="BO_UPDDATE" property="boUpddate"/>
+	<result column="BO_HIT" property="boHit"/>
+	<result column="FILE_GROUP_NO" property="fileGroupNo"/>
+	<result column="CATEGORY_NAME" property="categoryName"/>
+	<result column="MEMBER_NAME" property="memberName"/>
+	<result column="COMMENT_CNT" property="commentCnt"/>
+	<result column="HAS_FILE" property="hasFile"/>
+	<result column="MEMBER_NO" property="memberNo"/>
+</resultMap>
+
+
+
+
+
+<!--  페이징  -->
+<sql id="projectBoardSearch">
+  <if test="categoryName != null and categoryName != ''">
+    AND BC.CATEGORY_NAME = #{categoryName}
+  </if>
+
+  <if test="page.searchWord != null and page.searchWord != '' and page.searchType == 'boTitle'">
+    AND PB.BO_TITLE like '%'||#{page.searchWord}||'%'
+  </if>
+
+  <if test="page.searchWord != null and page.searchWord != '' and page.searchType == 'boContent'">
+    AND PB.BO_CONTENT like '%'||#{page.searchWord}||'%'
+  </if>
+
+  <if test="page.searchWord != null and page.searchWord != '' and page.searchType == 'boWriter'">
+    AND M.MEMBER_NAME like '%'||#{page.searchWord}||'%'
+  </if>
+</sql>
+
+<!--  전체 게시글 세는거. 검색조건이 없으면 전체 목록 갯수 나옴 parameterType="kr.or.ddit.vo.PaginationInfoVO"-->
+<select id="projectBoardCount" resultType="int">
+	SELECT count(PB.BO_NO)
+	from PROJECT_BOARD PB
+	INNER JOIN BOARD_CATEGORY BC ON BC.CATEGORY_NO = PB.CATEGORY_NO
+	JOIN MEMBER M ON M.MEMBER_NO = PB.MEMBER_NO
+	where BC.PROJECT_NO = #{projectNo}
+	AND 1=1
+	<include refid="projectBoardSearch"/>
+</select>
+<!--  전체 게시글 세는거. 검색조건이 없으면 전체 목록 갯수 나옴 -->
+<!--  페이징  -->
+
+
+<!-- parameterType="kr.or.ddit.vo.PaginationInfoVO" -->
+<select id="list"  resultMap="boardlist">
+
+SELECT B.*
+FROM (
+    SELECT A.*,
+           ROW_NUMBER() OVER (ORDER BY A.BO_NO DESC) AS RNUM
+    FROM (
+        SELECT
+              PB.BO_NO
+            , PB.BO_TITLE
+            , PB.BO_REGDATE
+            , PB.BO_UPDDATE
+            , PB.BO_HIT
+            , PB.FILE_GROUP_NO
+            , BC.CATEGORY_NAME
+            , M.MEMBER_NAME
+            , M.MEMBER_NO
+            , NVL(CM.COMMENT_CNT, 0) AS COMMENT_CNT
+            , CASE
+                WHEN PB.FILE_GROUP_NO IS NOT NULL
+                 AND EXISTS (
+                     SELECT 1
+                     FROM FILE_DETAIL FD
+                     WHERE FD.FILE_GROUP_NO = PB.FILE_GROUP_NO
+                       AND FD.FILE_DELETE = 'N'
+                 )
+                THEN 'Y'
+                ELSE 'N'
+            END AS HAS_FILE
+        FROM PROJECT_BOARD PB
+        JOIN BOARD_CATEGORY BC
+          ON BC.CATEGORY_NO = PB.CATEGORY_NO
+        JOIN MEMBER M 
+          ON M.MEMBER_NO = PB.MEMBER_NO  
+        LEFT JOIN (
+            SELECT TARGET_ID AS BO_NO, COUNT(*) AS COMMENT_CNT
+            FROM "COMMENT"
+            WHERE TARGET_TYPE = 'B'
+              AND CMT_STATUS  = 'Y'
+            GROUP BY TARGET_ID
+        ) CM
+          ON CM.BO_NO = PB.BO_NO
+        WHERE BC.PROJECT_NO = #{projectNo}
+       <include refid="projectBoardSearch"/>
+        
+    ) A
+) B
+
+<![CDATA[ WHERE B.RNUM >= #{page.startRow} AND B.RNUM <= #{page.endRow}]]>
+ORDER BY B.BO_NO DESC
+
+</select>
+<!--  페이징  -->
+
+
+
+
+<!-- 게시글 insert selectKey ㄴㄴ -->
+
+
+
+</mapper>

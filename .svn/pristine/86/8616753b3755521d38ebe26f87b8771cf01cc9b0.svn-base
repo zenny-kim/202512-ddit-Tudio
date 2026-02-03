@@ -1,0 +1,20 @@
+package kr.or.ddit.chat.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.vo.chat.ChatVO;
+import kr.or.ddit.vo.chat.ChatroomVO;
+
+@Mapper
+public interface IChatMapper {
+
+	public List<ChatroomVO> selectChatroomList(int memberNo);
+
+	public List<ChatVO> selectChatList(ChatVO chatVo);
+
+	public Map<String, Object> selectChatroomTitle(ChatVO chatVo);
+
+}

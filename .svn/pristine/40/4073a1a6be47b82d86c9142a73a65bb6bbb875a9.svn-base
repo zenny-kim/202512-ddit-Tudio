@@ -1,0 +1,379 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Kanban Board</title>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script
+	src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<style>
+/* 기본 레이아웃 */
+body {
+	font-family: 'Malgun Gothic', sans-serif;
+	background: #fdfdfd; 
+	margin: 0;
+	padding: 20px;
+}
+
+.kanban-wrapper {
+	display: flex;
+	gap: 16px;
+	align-items: flex-start;
+}
+
+/* [컬럼 디자인 수정] */
+.kanban-col {
+	flex: 1;
+	background: #f4f5f7; /* 연회색 */
+	border-radius: 8px;
+	min-width: 300px;
+	display: flex;
+	flex-direction: column;
+}
+
+/* [컬럼 헤더 디자인] */
+.col-header {
+	display: flex;
+    align-items: center;
+	padding: 16px 12px 8px 16px; /* 위아래 여백 조절 */
+	color: #5e6c84; /* 진회색 글자 */
+	font-weight: 600;
+	text-align: left; /* 왼쪽 정렬 */
+	font-size: 13px;
+	text-transform: uppercase; 
+	letter-spacing: 0.5px;
+}
+
+.col-header.request {
+	border-bottom: 3px solid #3498db;
+	margin: 0 10px;
+	padding-left: 6px;
+}
+
+.col-header.progress {
+	border-bottom: 3px solid #f1c40f;
+	margin: 0 10px;
+	padding-left: 6px;
+}
+
+.col-header.done {
+	border-bottom: 3px solid #2ecc71;
+	margin: 0 10px;
+	padding-left: 6px;
+}
+
+.col-header.hold {
+	border-bottom: 3px solid #95a5a6;
+	margin: 0 10px;
+	padding-left: 6px;
+}
+
+.task-list {
+	padding: 12px;
+	min-height: 700px;
+}
+
+.task-card {
+	background: white;
+	padding: 16px;
+	border-radius: 4px; 
+	margin-bottom: 10px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); /
+	cursor: grab;
+	position: relative;
+	border: none;
+	transition: background-color 0.2s;
+}
+
+.task-card:hover {
+	background-color: #f9fafb; 
+}
+
+.task-card:active {
+	cursor: grabbing;
+}
+
+.task-card.pin-on {
+	background-color: #fff9db !important; /* 고정된 카드는 살짝 따뜻한 느낌 */
+	box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+	border: 1px solid rgba(52, 152, 219, 0.3) !important;
+}
+
+.task-card.pin-on .pin-btn svg {
+	fill: #3498db !important;
+}
+
+.task-card.pin-off .pin-btn svg {
+	fill: #ccc !important;
+	transform: rotate(-45deg);
+}
+
+.pin-btn {
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.parent-title {
+	font-size: 11px;
+	color: #5e6c84;
+	background: #ebecf0;
+	padding: 2px 6px;
+	border-radius: 3px;
+}
+
+.task-title {
+	font-weight: 500;
+	font-size: 14px;
+	color: #172b4d;
+	margin: 8px 0;
+	display: block;
+}
+
+.manager-name {
+	font-size: 12px;
+	color: #5e6c84;
+}
+
+.end-date {
+	font-size: 11px;
+	color: #6b778c;
+	margin-top: 4px;
+}
+
+.rate-container {
+	margin-top: 12px;
+	border-top: 1px solid #f4f5f7;
+	padding-top: 8px;
+}
+
+.rate-slider {
+	width: 100%;
+	cursor: pointer;
+	opacity: 0.7;
+}
+
+.rate-text {
+	font-size: 11px;
+	color: #0052cc;
+	text-align: right;
+	font-weight: bold;
+}
+.col-header .count {
+    margin-left: 8px;
+    font-size: 12px;
+    color: #95a5a6; /* 약간 흐린 회색 */
+    font-weight: normal;
+}
+</style>
+</head>
+<body>
+
+	<input type="hidden" id="projectNoInput" value="${projectNo}" />
+
+	<div class="kanban-wrapper">
+		<div class="kanban-col">
+			<div class="col-header request">TO DO<span class="count" id="count-1">0</span></div>
+			<div class="task-list" data-status="1"></div>
+		</div>
+		<div class="kanban-col">
+			<div class="col-header progress">IN PROGRESS<span class="count" id="count-2">0</span></div>
+			<div class="task-list" data-status="2"></div>
+		</div>
+		<div class="kanban-col">
+			<div class="col-header done">DONE<span class="count" id="count-3">0</span></div>
+			<div class="task-list" data-status="3"></div>
+		</div>
+		<div class="kanban-col">
+			<div class="col-header hold">ON HOLD<span class="count" id="count-4">0</span></div>
+			<div class="task-list" data-status="4"></div>
+		</div>
+	</div>
+
+	<script>
+$(document).ready(function() {
+    var pNo = $("#projectNoInput").val() || "7";
+
+    // 공통 SVG 도장
+    var pinIconSvg = `
+        <svg viewBox="0 -960 960 960">
+            <path d="M680-120 480-320H280v-80l80-80v-280q0-33 23.5-56.5T440-840h80q33 0 56.5 23.5T600-760v280l80 80v80H480l200 200-80 80Z"/>
+        </svg>`;
+
+    // [이벤트] 핀 클릭 처리
+    $(document).on('click', '.pin-btn', function(e) {
+        e.stopPropagation();
+        
+        var $card = $(this).closest('.task-card');
+        var id = $card.data('id');
+        
+        var currentPin = $card.attr('data-pin');
+        var newPin = (currentPin === 'Y') ? 'N' : 'Y';
+        
+        console.log("현재 상태:", currentPin, "-> 변경될 상태:", newPin);
+
+        $.post("/kanban/updatePin", { taskId: id, pinYn: newPin }, function() {
+        	
+        	$card.attr('data-pin', newPin);
+        	
+        	if (newPin === 'Y') {
+                $card.removeClass('pin-off').addClass('pin-on');
+                $card.prependTo($card.closest('.task-list'));
+            } else {
+                $card.removeClass('pin-on').addClass('pin-off');
+            }
+        });
+    });
+
+    function loadTasks() {
+        $.ajax({
+            url: "/kanban/getTaskList",
+            type: "GET",
+            data: { projectNo: pNo },
+            success: function(data) { renderCards(data); },
+            error: function(xhr) { console.error("데이터 로드 실패", xhr.status); }
+        });
+    }
+
+    function renderCards(data) {
+        $(".task-list").empty();
+        $(".count").text("0");
+        
+        var counts = { "1": 0, "2": 0, "3": 0, "4": 0 };
+
+        // [정렬] 핀 고정(Y)인 데이터를 상단으로 정렬
+        data.sort(function(a, b) {
+            var aPin = a.subPinYn || 'N';
+            var bPin = b.subPinYn || 'N';
+            return (aPin === 'Y' && bPin === 'N') ? -1 : (aPin === 'N' && bPin === 'Y') ? 1 : 0;
+        });
+
+        data.forEach(function(item) {
+            var status = item.subStatus.toString();
+            var rate = parseInt(item.subRate);
+            var pinYn = item.subPinYn || 'N';
+            var pinClass = (pinYn === 'Y') ? 'pin-on' : 'pin-off';
+
+            if (rate == 100 && status != "3") {
+                status = "3";
+            }
+            
+            if(counts[status] !== undefined) {
+                counts[status]++;
+            }
+
+            var $target = $('.task-list[data-status="' + status + '"]');
+            if ($target.length > 0) {
+                var cardHtml = `
+                    <div class="task-card \${pinClass}" data-id="\${item.subId}" data-pin="\${pinYn}">
+                        <div class="card-header">
+                            <span class="parent-title">📁 \${item.parentTitle || '일반'}</span>
+                            <span class="pin-btn">\${pinIconSvg}</span>
+                        </div>
+                        <span class="task-title">\${item.subTitle}</span>
+                        <span class="manager-name">👤 \${item.taskManagerName || '미지정'}</span>
+                        <span class="end-date">📅 \${item.subEnddate ? item.subEnddate.substring(0,10) : "-"}</span>
+                        <div class="rate-container">
+                            <input type="range" class="rate-slider" min="0" max="100" step="10" value="\${item.subRate}"
+                                   onmousedown="event.stopPropagation();" ontouchstart="event.stopPropagation();">
+                            <span class="rate-text">\${item.subRate}% 완료</span>
+                        </div>
+                    </div>
+                `;
+                $target.append(cardHtml);
+            }
+        });
+        
+        for (var s in counts) {
+            $("#count-" + s).text(counts[s]);
+        }
+
+        // 슬라이더 조작 로직
+        $(".rate-slider").off('input change').on('input', function() {
+            $(this).siblings('.rate-text').text($(this).val() + "% 완료");
+        }).on('change', function() {
+            var $card = $(this).closest('.task-card');
+            var id = $card.data('id');
+            var rate = parseInt($(this).val());
+            var currentStatus = $card.closest('.task-list').data('status');
+            var newStatus = currentStatus;
+
+            // 로직: 10% 이상 진행(2), 100% 완료(3), 0% 요청(1)
+            if (currentStatus == 1 && rate >= 10) newStatus = 2;
+            else if (rate == 100) newStatus = 3;
+            else if (currentStatus == 3 && rate < 100) newStatus = 2;
+            else if (rate == 0) newStatus = 1;
+
+            if (newStatus != currentStatus) {
+                $('.task-list[data-status="' + newStatus + '"]').append($card);
+                $.post("/kanban/modifyStatus", { taskId: id, taskStatus: newStatus });
+            }
+            $.post("/kanban/updateRate", { taskId: id, taskRate: rate });
+        });
+
+        // SortableJS 초기화
+        $(".task-list").each(function() {
+            new Sortable(this, {
+                group: 'kanban',
+                animation: 150,
+                filter: '.rate-slider, .pin-btn',
+                preventOnFilter: false,
+                onEnd: function(evt) {
+                    var $item = $(evt.item);
+                    var id = $item.data('id');
+                    var rate = parseInt($item.find('.rate-slider').val());
+                    var toStatus = $(evt.to).data('status');
+
+                    // 100% 카드를 다른 곳으로 옮길 때 방지
+                    if (rate == 100 && toStatus != 3) {
+                        alert("완료된 업무입니다.");
+                        $('.task-list[data-status="3"]').append($item);
+                        return;
+                    }
+                    
+                    if (toStatus == 1 && rate >= 10) {
+                        alert("진행중인 업무입니다.");
+                        $('.task-list[data-status="2"]').append($item);
+                        $.post("/kanban/modifyStatus", { taskId: id, taskStatus: 2 });
+                    }
+
+                    // 미완료 카드를 완료로 옮길 때 컨펌
+                    if (toStatus == 3 && rate < 100) {
+                        if (confirm("진척도를 100%로 수정하고 완료 처리하시겠습니까?")) {
+                            $item.find('.rate-slider').val(100);
+                            $item.find('.rate-text').text("100% 완료");
+                            $.post("/kanban/updateRate", { taskId: id, taskRate: 100 });
+                            $.post("/kanban/modifyStatus", { taskId: id, taskStatus: 3 });
+                        } else {
+                        	alert("완료하시려면 진척도를 100%로 수정하세요.");
+                            $('.task-list[data-status="2"]').append($item);
+                            $.post("/kanban/modifyStatus", { taskId: id, taskStatus: 2 });
+                        }
+                    } else {
+                        $.post("/kanban/modifyStatus", { taskId: id, taskStatus: toStatus });
+                    }
+                }
+            });
+        });
+    }
+
+    loadTasks();
+});
+</script>
+</body>
+</html>

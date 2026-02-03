@@ -1,0 +1,430 @@
+@charset "UTF-8";
+
+/* =========================================
+   1. Core System & Variables
+   ========================================= */
+:root {
+    --tudio-blue-50: #EBF5FF;
+    --tudio-blue-100: #C7E3FF;
+    --tudio-blue-200: #8FC8FF;
+    --tudio-blue-300: #56ACFF;
+    --tudio-blue-400: #1E90FF; /* Primary */
+    --tudio-blue-500: #0074E5;
+    --tudio-blue-600: #0056AA;
+    --tudio-blue-700: #00407F;
+    --tudio-blue-900: #00152A;
+
+    --shadow-soft: 0 10px 40px -10px rgba(0, 64, 127, 0.1);
+    --shadow-hard: 0 20px 60px -15px rgba(0, 64, 127, 0.2);
+    --radius-lg: 28px;
+    --radius-md: 20px;
+}
+
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    padding-top: 0;
+    margin: 0;
+    background-color: #fff;
+    color: var(--tudio-blue-900);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* =========================================
+   2. Hero Section (Blob 스타일 + 끊김 해결)
+   ========================================= */
+.hero-section {
+    min-height: 90vh; /* 화면 꽉 차게 유지 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding-top: 60px;
+    /* [핵심] 배경색을 없애고 Blob이 보이게 함 */
+    background: transparent; 
+    /* [핵심] overflow: hidden 제거 -> 빛뭉치가 밖으로 넘치게 허용 */
+    overflow: visible; 
+    z-index: 2;
+    margin-bottom: -100px; /* 아래 섹션과 자연스럽게 겹치기 */
+}
+
+/* [요청하신 스타일 복원]
+   보내주신 코드의 Blob 애니메이션을 사용하되,
+   끊김 방지를 위해 크기와 위치만 미세 조정했습니다.
+*/
+.ambient-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px); /* 보내주신 블러 값 유지 */
+    opacity: 0.6;
+    z-index: -1;
+    animation: float 10s infinite alternate;
+}
+
+/* 왼쪽 위 파란 뭉치 */
+.blob-1 { 
+    top: -10%; 
+    left: -10%; 
+    width: 600px; /* 자연스러움을 위해 약간 키움 */
+    height: 600px; 
+    background: var(--tudio-blue-100); 
+    animation-delay: 0s; 
+}
+
+/* [끊김 해결의 핵심]
+   오른쪽 아래 파란 뭉치를 더 아래로(bottom: -20%) 내려서
+   다음 섹션까지 빛이 이어지게 만듦
+*/
+.blob-2 { 
+    bottom: -20%; 
+    right: -10%; 
+    width: 500px; 
+    height: 500px; 
+    background: var(--tudio-blue-200); 
+    animation-delay: -5s; 
+}
+
+@keyframes float {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(30px, 50px) rotate(10deg); }
+}
+
+/* 텍스트 컨테이너 */
+.hero-content {
+    z-index: 1;
+    text-align: center;
+    max-width: 900px;
+    padding: 0 20px;
+}
+
+/* 상단 태그라인 */
+.hero-tagline {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--tudio-blue-600);
+    margin-bottom: 0rem;
+    letter-spacing: -0.02em;
+    opacity: 0;
+    animation: fade-up 0.8s forwards 0.2s;
+}
+
+/* 대형 브랜드 로고 (커진 로고 유지) */
+.hero-brand {
+    font-size: 8rem;
+    font-weight: 900;
+    color: var(--tudio-blue-900);
+    line-height: 1;
+    margin-bottom: 2rem;
+    letter-spacing: -0.04em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    opacity: 0;
+    animation: fade-up 0.8s forwards 0.4s;
+}
+
+/* Tudio 'o' 그래프 */
+.tudio-circle-svg {
+    width: 0.75em;
+    height: 0.75em;
+    transform: rotate(-90deg);
+}
+.circle-bg { fill: none; stroke: var(--tudio-blue-100); stroke-width: 14; }
+.circle-progress {
+    fill: none; stroke: var(--tudio-blue-400); stroke-width: 14;
+    stroke-linecap: round; stroke-dasharray: 251; stroke-dashoffset: 251;
+    animation: progress-fill 2s cubic-bezier(0.22, 1, 0.36, 1) forwards 0.8s;
+}
+@keyframes progress-fill { to { stroke-dashoffset: 0; } }
+
+/* 설명글 */
+.hero-desc {
+    font-size: 1.35rem;
+    color: #555;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+    word-break: keep-all;
+    opacity: 0;
+    animation: fade-up 0.8s forwards 0.6s;
+}
+
+/* 버튼 */
+.btn-cta {
+    background: var(--tudio-blue-500);
+    color: white;
+    padding: 20px 56px;
+    border-radius: 100px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border: none;
+    box-shadow: 0 10px 30px rgba(30, 144, 255, 0.4);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    opacity: 0;
+    animation: fade-up 0.8s forwards 0.8s;
+}
+.btn-cta:hover {
+    background: var(--tudio-blue-400);
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(30, 144, 255, 0.5);
+    color: white;
+}
+@keyframes fade-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+
+/* =========================================
+   3. Sticky Scroll Section (연결성 강화)
+   ========================================= */
+.scroll-container {
+    padding: 180px 0 120px;
+    /* [핵심] 배경을 완전 흰색(#fff)이 아닌, 
+       위쪽이 투명한 그라데이션으로 처리하여
+       Hero 섹션의 Blob-2가 자연스럽게 비치도록 함
+    */
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, #ffffff 40%);
+    position: relative;
+    z-index: 1;
+}
+
+.sticky-wrapper { position: relative; display: flex; gap: 60px; }
+.scroll-content { width: 45%; padding-bottom: 20vh; }
+.step-block { min-height: 80vh; display: flex; flex-direction: column; justify-content: center; opacity: 0.2; transition: opacity 0.5s; }
+.step-block.active { opacity: 1; }
+.step-num { font-size: 1.2rem; font-weight: 800; color: var(--tudio-blue-400); margin-bottom: 1rem; display: block; }
+.step-title { font-size: 2.8rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.2; }
+.step-desc { font-size: 1.2rem; color: #555; }
+.sticky-image-area { width: 50%; height: 60vh; position: sticky; top: 20vh; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-hard); overflow: hidden; border: 1px solid var(--tudio-blue-100); }
+.ui-screen { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; transition: all 0.6s ease; padding: 40px; background: white; display: flex; flex-direction: column; gap: 20px; }
+.ui-screen.active { opacity: 1; transform: scale(1); }
+.ui-screen.inactive { transform: scale(0.95); }
+.mock-bar { height: 20px; background: var(--tudio-blue-50); border-radius: 6px; width: 100%; }
+.mock-card { height: 80px; background: var(--tudio-blue-50); border-radius: 12px; width: 100%; border-left: 5px solid var(--tudio-blue-300); }
+.mock-chart-circle { width: 150px; height: 150px; border-radius: 50%; border: 20px solid var(--tudio-blue-100); border-top-color: var(--tudio-blue-500); margin: 20px auto; }
+
+/* =========================================
+   4. Bento Grid & Others (기존 유지)
+   ========================================= */
+.bento-section { padding: 140px 0; background: #fff; }
+.bento-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 320px); gap: 24px; }
+.bento-item { background: #f4f6f8; border-radius: var(--radius-md); padding: 36px; transition: transform 0.3s; position: relative; overflow: hidden; border: 1px solid rgba(0,0,0,0.03); }
+.bento-item:hover { transform: translateY(-8px); box-shadow: var(--shadow-soft); }
+.bento-large { grid-column: span 2; background: var(--tudio-blue-50); }
+.bento-tall { grid-row: span 2; background: var(--tudio-blue-900); color: white; }
+.bento-tall h3, .bento-tall p { color: white !important; }
+.bento-title { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.8rem; }
+.bento-desc { font-size: 1.05rem; color: #666; line-height: 1.6; }
+
+.stats-section { padding: 120px 0; background: var(--tudio-blue-900); color: white; text-align: center; }
+.stat-item h3 { font-size: 4.5rem; font-weight: 800; color: var(--tudio-blue-300); margin-bottom: 0; }
+
+/* =========================================
+   [FINAL FIXED] Logo Slider Section (Color Ver.)
+   ========================================= */
+
+.logo-section {
+    padding: 60px 0;
+    background-color: #ffffff;
+    overflow: hidden;
+    position: relative;
+    border-top: 1px solid #f1f3f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo-section::before,
+.logo-section::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 150px;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+.logo-section::before { left: 0; background: linear-gradient(to right, #fff, transparent); }
+.logo-section::after { right: 0; background: linear-gradient(to left, #fff, transparent); }
+
+.logo-slider-wrap {
+    display: flex;
+    width: fit-content;
+}
+
+.logo-slider {
+    display: flex;
+    align-items: center;
+    animation: slide-left 40s linear infinite;
+}
+
+/* [핵심 수정 1] 이미지 로고 컬러 활성화 */
+.logo-slider img {
+    height: 36px !important; 
+    width: auto !important;
+    max-width: none !important; 
+    margin: 0 45px;
+    
+    /* 기존 흑백(grayscale 100%)을 제거하고 컬러(0%)로 변경 */
+    /* opacity를 0.85 정도로 주어 호버 시 1.0이 되며 반짝이는 느낌 유지 */
+    filter: grayscale(0%) opacity(0.85);
+    
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    object-fit: contain;
+    display: block;
+}
+
+/* [핵심 수정 2] 대덕인재개발원 주황색 적용 */
+.logo-badge {
+    font-size: 2.8rem; 
+    line-height: 1;
+    font-weight: 900;
+    
+    /* 주황색 (#FF6B00) 적용 */
+    color: #FF6B00; 
+    
+    white-space: nowrap;
+    font-family: 'Pretendard', sans-serif;
+    margin: 0 45px;
+    
+    /* 색상이 잘 보이도록 투명도를 높임 (기존 0.5 -> 0.9) */
+    opacity: 0.9;
+    
+    transition: all 0.3s;
+    cursor: pointer;
+    display: inline-block;
+    letter-spacing: -0.02em;
+}
+
+/* 호버 효과 */
+.logo-slider img:hover,
+.logo-badge:hover {
+    filter: grayscale(0%) opacity(1); /* 완전 선명하게 */
+    opacity: 1;
+    transform: scale(1.05); /* 살짝 커짐 */
+    cursor: pointer;
+}
+
+.logo-badge:hover {
+    /* 호버 시 조금 더 진한 주황색이나, 브랜드 컬러로 변경 가능 */
+    color: #e65100; 
+}
+
+@keyframes slide-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .logo-slider img {
+        height: 24px !important;
+        margin: 0 25px;
+    }
+    .logo-badge {
+        font-size: 1.5rem; /* 모바일에서도 적절히 큼직하게 */
+        margin: 0 25px;
+    }
+}
+
+/* Mobile Response */
+@media (max-width: 992px) {
+    .hero-brand { font-size: 4.5rem; }
+    .hero-tagline { font-size: 1.3rem; }
+    .hero-section { margin-bottom: 0; overflow: hidden; } /* 모바일은 성능상 hidden 처리 권장 */
+    .scroll-container { padding-top: 80px; background: #f9fafb; }
+    .sticky-wrapper { flex-direction: column; }
+    .scroll-content, .sticky-image-area { width: 100%; }
+    .sticky-image-area { position: relative; top: 0; height: 350px; margin-bottom: 40px; }
+    .step-block { min-height: auto; padding: 40px 0; opacity: 1; }
+    .bento-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .bento-large, .bento-tall { grid-column: span 1; grid-row: span 1; }
+    .logo-slider img {
+        height: 24px !important; /* 모바일선 조금 작게 */
+        margin: 0 30px;
+    }
+    .logo-badge {
+        font-size: 1.1rem;
+        margin: 0 30px;
+    }
+}
+
+/* 유틸리티: 스크롤 애니메이션 클래스 */
+.reveal-hidden {
+    opacity: 0;
+    transform: translateY(60px) scale(0.95);
+    transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-active { opacity: 1; transform: translateY(0) scale(1); }
+.delay-100 { transition-delay: 0.1s; }
+.delay-200 { transition-delay: 0.2s; }
+.delay-300 { transition-delay: 0.3s; }
+
+/* =========================================
+   [NEW] UI Mockup Screens (Real-based)
+   ========================================= */
+
+/* 공통 헤더 스타일 */
+.mock-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #f1f3f5;
+}
+.mock-title { font-weight: 800; font-size: 1.2rem; color: var(--tudio-blue-800); }
+.mock-btn { width: 12px; height: 12px; border-radius: 50%; background: #f1f3f5; display: inline-block; margin-left: 6px; }
+.mock-btn.active { background: var(--tudio-blue-300); }
+
+/* --- Screen 0: Calendar (전체 일정) --- */
+.mock-calendar-wrapper { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.mock-cal-header-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.mock-cal-day { font-size: 0.8rem; color: #adb5bd; font-weight: 600; width: 14%; text-align: center; }
+
+.mock-cal-grid {
+    display: grid; 
+    grid-template-columns: repeat(7, 1fr); 
+    grid-template-rows: repeat(4, 1fr);
+    gap: 8px; flex-grow: 1;
+}
+.mock-cal-cell { border-top: 1px solid #f8f9fa; position: relative; padding-top: 5px; }
+.mock-cal-bar {
+    height: 24px; border-radius: 6px; margin-bottom: 6px; font-size: 0.75rem; 
+    color: white; font-weight: 600; display: flex; align-items: center; padding-left: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap; overflow: hidden;
+}
+.bar-blue { background-color: var(--tudio-blue-300); grid-column: span 3; width: 100%; }
+.bar-red { background-color: #ff8787; grid-column: span 2; width: 100%; margin-left: 10%; } /* 빨간색 포인트 */
+.bar-yellow { background-color: #ffd43b; color: #865e09; grid-column: span 4; width: 100%; }
+
+/* --- Screen 1: Kanban (칸반 보드) --- */
+.mock-kanban-board { display: flex; gap: 15px; height: 100%; align-items: stretch; }
+.mock-kb-col { flex: 1; background: #f8f9fa; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+.mock-kb-header { font-size: 0.9rem; font-weight: 700; color: var(--tudio-blue-700); margin-bottom: 5px; display: flex; justify-content: space-between; }
+.mock-kb-card {
+    background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.02); transition: transform 0.2s;
+}
+.mock-kb-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.06); }
+.kb-tag { font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; font-weight: 700; display: inline-block; margin-bottom: 8px; }
+.tag-blue { background: var(--tudio-blue-50); color: var(--tudio-blue-500); }
+.tag-red { background: #fff5f5; color: #fa5252; }
+.kb-title { font-size: 0.85rem; font-weight: 600; color: #333; margin-bottom: 10px; display: block; }
+.kb-progress-bg { height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden; }
+.kb-progress-bar { height: 100%; background: var(--tudio-blue-400); border-radius: 2px; }
+
+/* --- Screen 2: Approval List (결재 관리) --- */
+.mock-list-wrapper { display: flex; flex-direction: column; gap: 12px; }
+.mock-approval-card {
+    display: flex; align-items: center; justify-content: space-between;
+    background: white; padding: 18px 20px; border-radius: 12px;
+    border: 1px solid #f1f3f5; box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+.mock-approval-card:hover { border-color: var(--tudio-blue-200); }
+.ap-status { padding: 6px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: 700; }
+.status-done { background: var(--tudio-blue-50); color: var(--tudio-blue-600); }
+.status-wait { background: #fff9db; color: #f08c00; }
+.status-temp { background: #f1f3f5; color: #868e96; }
+.ap-info { flex-grow: 1; margin-left: 15px; }
+.ap-title { font-size: 0.95rem; font-weight: 600; color: #333; display: block; margin-bottom: 4px; }
+.ap-meta { font-size: 0.75rem; color: #adb5bd; }
+.ap-user { display: flex; align-items: center; gap: 8px; }
+.user-avatar { width: 24px; height: 24px; background: #e9ecef; border-radius: 50%; }

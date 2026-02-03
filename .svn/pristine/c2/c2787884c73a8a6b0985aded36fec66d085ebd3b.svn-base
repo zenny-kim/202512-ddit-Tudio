@@ -1,0 +1,70 @@
+package kr.or.ddit.member.mapper;
+
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import kr.or.ddit.vo.ClientCompanyVO;
+import kr.or.ddit.vo.FileDetailVO;
+import kr.or.ddit.vo.FileGroupVO;
+import kr.or.ddit.vo.MemberVO;
+
+@Mapper
+public interface MemberMapper {
+	
+	//로그인 ( 아이디로 사용자 정보 가져오기 )
+	public MemberVO findByMemberId(@Param("memberId") String memberId);
+
+	//아이디 중복 확인
+	public MemberVO idCheck(String memberId);
+	
+	//일반 회원가입
+	public int memberSignup(MemberVO memberVO);
+	//일반 회원가입 시 회사명, 사업자등록번호 저장
+	public void insertCompanySimple(ClientCompanyVO companyVO);
+
+	//회원가입 시 권한 설정
+	public void insertMemberAuth(@Param("memberNo")int memberNo, @Param("auth") String auth);
+
+	//회원가입 프로필사진 저장
+	public int insertProfileFileGroup(FileGroupVO fileGroupVO);
+	public int insertProfileFileDetail(FileDetailVO fileDetailVO);
+	
+	//기업담당자 회원가입 사업자등록증 저장
+	public int insertbizFileFileGroup(FileGroupVO fileGroupVO);
+	public int insertbizFileFileDetail(FileDetailVO fileDetailVO);
+	
+	//일반회원가입 프로필 경로 추가
+	public void updateMemberProfile(MemberVO memberVO);
+	
+	//아이디 찾기
+	public String findMemberId(MemberVO memberVO);
+	
+	//비밀번호 찾기
+	public MemberVO findMemberPw(MemberVO memberVO);
+	
+	//임시비밀번호 업데이트
+	public int updateNewMemberPw(MemberVO memberVO);
+
+	//사업자등록번호 db 조회
+	public ClientCompanyVO getCompanyInfo(String companyNo);
+
+	//기업담당자 회원가입
+	public int insertClientCompany(ClientCompanyVO companyVO);
+	
+	//프로필 이미지 삭제 전 조회
+	public String getProfilePath(int memberNo);
+
+	//프로필 변경 전 삭제
+	public void deleteProfileFile(int memberNo);
+	public int deleteProfileGroup(int memberNo);
+	
+	//회원정보 수정
+	public int updateMember(MemberVO memberVO);
+	
+
+	
+	
+
+	
+	
+}

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.videoChat.mapper.IVideoChatMapper">
+
+	<select id="selectMemberProjectList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectVO">
+        SELECT 
+            P.PROJECT_NO 
+            , P.PROJECT_NAME
+        FROM PROJECT P
+        INNER JOIN PROJECT_MEMBER PM ON P.PROJECT_NO = PM.PROJECT_NO
+        WHERE PM.MEMBER_NO = #{memberNo}
+          <!-- AND PM.PROJECT_ROLE IN ('MANAGER', 'CLIENT') -->
+          AND P.PROJECT_STATUS = 0
+        ORDER BY P.PROJECT_REGDATE DESC
+	</select>
+	
+	<select id="selectProjectMemberList" parameterType="int" resultType="kr.or.ddit.vo.MemberVO">
+        SELECT DISTINCT 
+        	M.MEMBER_NO AS 
+        	, M.MEMBER_NAME AS
+        	, CASE 
+	            WHEN PM.PROJECT_ROLE = 'MANAGER' THEN '프로젝트 관리자'
+	            WHEN PM.PROJECT_ROLE = 'CLIENT' THEN '기업 담당자'
+	            ELSE '프로젝트 참여자' 
+	          END as "memberRole"
+        FROM MEMBER M
+    	INNER JOIN PROJECT_MEMBER PM ON M.MEMBER_NO = PM.MEMBER_NO
+    	WHERE PM.PROJECT_NO = #{projectNo}
+    	  AND M.MEMBER_NO != #{loginMemberNo}
+    	  <!-- AND PM.PROJECT_ROLE IN ('MANAGER', 'CLIENT') -->
+    	  AND PM.PROJECT_MEM_STATUS = 'Y'
+    	ORDER BY M.MEMBER_NAME ASC
+    </select>
+    
+    <insert id="insertVideoChatRoom" parameterType="kr.or.ddit.vo.VideoChatVO" useGeneratedKeys="true">
+		<selectKey keyProperty="videochatNo" resultType="int" order="BEFORE">
+			SELECT SEQ_VIDEOCHAT.NEXTVAL FROM DUAL 
+		</selectKey>    
+        INSERT INTO VIDEOCHAT_ROOM (
+            VIDEOCHAT_NO
+            , VIDEOCHAT_TITLE
+            , VIDEOCHAT_ID  
+            , VIDEOCHAT_PW
+            , VIDEOCHAT_STATUS    
+            , VIDEOCHAT_CREATER_NO
+            , PROJECT_NO
+            , VIDEOCHAT_URL
+            , VIDEOCHAT_REGDATE
+        ) VALUES (
+            #{videochatNo}
+            , #{videochatTitle}
+            , #{videochatId}
+            , #{videochatPw}
+            , 0
+            , #{videochatCreaterNo}
+            , #{projectNo}
+            , '/tudio/videoChat/room/' || #{videochatId}
+            , CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <insert id="insertVideoChatMember" parameterType="map">
+        INSERT INTO VIDEOCHAT_MEMBER (VIDEOCHAT_NO, MEMBER_NO)
+	        SELECT #{videochatNo}, A.* FROM (
+	            <foreach collection="memberList" item="memberNo" separator="UNION ALL">
+	                SELECT #{memberNo} FROM DUAL
+	            </foreach>
+	        ) A
+    </insert>
+    
+    <select id="selectVideoChatMember" parameterType="string" resultType="kr.or.ddit.vo.MemberVO">
+	    SELECT 
+	    	M.MEMBER_NO as "memberNo"
+	        , M.MEMBER_NAME as "memberName"
+	        , CASE 
+	            WHEN PM.PROJECT_ROLE = 'MANAGER' THEN '프로젝트 관리자'
+	            WHEN PM.PROJECT_ROLE = 'CLIENT' THEN '기업 담당자'
+	            ELSE '참여자' 
+	          END as "memberRole"
+	    FROM VIDEOCHAT_MEMBER VM
+	    INNER JOIN VIDEOCHAT_ROOM VR ON VM.VIDEOCHAT_NO = VR.VIDEOCHAT_NO
+	    INNER JOIN MEMBER M ON VM.MEMBER_NO = M.MEMBER_NO
+	    LEFT JOIN PROJECT_MEMBER PM ON (M.MEMBER_NO = PM.MEMBER_NO AND VR.PROJECT_NO = PM.PROJECT_NO)
+	    WHERE VR.VIDEOCHAT_ID = #{videochatId}
+	    ORDER BY (CASE WHEN PM.PROJECT_ROLE = 'MANAGER' THEN 1 ELSE 2 END)
+	    		  , M.MEMBER_NAME ASC
+	</select>
+    
+    <select id="selectVideoChatById" parameterType="string" resultType="kr.or.ddit.vo.VideoChatVO">
+        SELECT 
+              VIDEOCHAT_NO
+            , VIDEOCHAT_TITLE
+            , VIDEOCHAT_ID
+            , VIDEOCHAT_PW
+            , VIDEOCHAT_STATUS
+            , VIDEOCHAT_CREATER_NO
+            , PROJECT_NO
+            , VIDEOCHAT_REGDATE
+        FROM VIDEOCHAT_ROOM
+        WHERE VIDEOCHAT_ID = #{videochatId}
+    </select>
+    
+    <select id="getRoomNameById" parameterType="string" resultType="string">
+	    SELECT 
+	        VIDEOCHAT_TITLE
+	    FROM VIDEOCHAT_ROOM
+	    WHERE VIDEOCHAT_ID = #{roomId}
+	</select>
+
+    <select id="countVideoChatMember" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM VIDEOCHAT_MEMBER VM
+        INNER JOIN VIDEOCHAT_ROOM VR ON VM.VIDEOCHAT_NO = VR.VIDEOCHAT_NO
+        WHERE VR.VIDEOCHAT_ID = #{videochatId}
+    </select>
+
+	<select id="countRoomByIdAndPw" parameterType="map" resultType="int">
+	    SELECT COUNT(*)
+	    FROM VIDEOCHAT_ROOM
+	    WHERE VIDEOCHAT_ID = #{roomId}
+	      AND VIDEOCHAT_PW = #{roomPw}
+	      AND VIDEOCHAT_STATUS = 0
+	</select>
+	
+	<select id="selectVideoChatCount" parameterType="int" resultType="int">
+	    SELECT COUNT(*)
+	    FROM VIDEOCHAT_ROOM VR
+	    INNER JOIN VIDEOCHAT_MEMBER VM ON VR.VIDEOCHAT_NO = VM.VIDEOCHAT_NO
+	    WHERE VM.MEMBER_NO = #{memberNo}
+	</select>
+	
+	<select id="selectVideoChatHistoryList" parameterType="map" resultType="kr.or.ddit.vo.VideoChatVO">
+	    SELECT B.*
+	    FROM (
+	        SELECT A.*, ROWNUM RNUM
+	        FROM (
+	            SELECT 
+	                VR.VIDEOCHAT_NO
+	                , VR.VIDEOCHAT_ID
+	                , VR.VIDEOCHAT_TITLE
+	                , VR.VIDEOCHAT_PW
+	                , VR.VIDEOCHAT_STATUS
+	                , VR.VIDEOCHAT_REGDATE as "createdDate"
+	                , P.PROJECT_NAME as "projectName"
+	                , M.MEMBER_NAME as "creatorName"
+	            FROM VIDEOCHAT_ROOM VR
+	            INNER JOIN VIDEOCHAT_MEMBER VM ON VR.VIDEOCHAT_NO = VM.VIDEOCHAT_NO
+	            INNER JOIN PROJECT P ON VR.PROJECT_NO = P.PROJECT_NO
+	            INNER JOIN MEMBER M ON VR.VIDEOCHAT_CREATER_NO = M.MEMBER_NO
+	            WHERE VM.MEMBER_NO = #{memberNo}
+	            ORDER BY VR.VIDEOCHAT_REGDATE DESC
+	        ) A
+	    ) B
+	    WHERE B.RNUM BETWEEN #{pagingVO.startRow} AND #{pagingVO.endRow}
+	</select>
+	
+	<update id="updateRoomStatusClosed" parameterType="string">
+	    UPDATE VIDEOCHAT_ROOM
+	       SET VIDEOCHAT_STATUS = 2
+	     WHERE VIDEOCHAT_ID = #{videochatId}
+	</update>
+
+</mapper>

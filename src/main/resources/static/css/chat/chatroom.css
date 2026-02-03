@@ -1,0 +1,346 @@
+@charset "UTF-8";
+
+/* :root 및 reset 삭제 -> common.css 사용 */
+
+/* ==========================
+Chat Widget Frame
+========================== */
+.chat-widget {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-secondary);
+    border-radius: 0; 
+    box-shadow: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================
+Header
+========================== */
+.chat-room-header {
+    position: relative; 
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px; 
+    background-color: var(--bg-color);
+    z-index: 10;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.header-left { display: flex; align-items: center; flex-shrink: 0; }
+.header-right { display: flex; align-items: center; gap: 0px; flex-shrink: 0; margin-left: 8px; }
+
+/* 버튼 스타일 */
+.header-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    padding: 6px; 
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background-color 0.2s;
+    position: relative;
+}
+.header-btn:hover { background-color: var(--bg-secondary); }
+
+/* 제목 영역 */
+.room-title {
+    margin: 0 4px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex; align-items: center; justify-content: center;
+    flex-grow: 1; min-width: 0;
+}
+
+.room-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.member-count { font-size: 13px; color: var(--text-secondary); font-weight: 400; margin-left: 4px; flex-shrink: 0; }
+
+/* ==========================
+Chat Content
+========================== */
+.chat-room-content {
+    flex-grow: 1;
+    padding: 20px 16px !important;
+    overflow-y: auto;
+    
+    /* [핵심] 가로 스크롤 원천 차단 */
+    overflow-x: hidden; 
+    
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 0 !important;
+}
+
+.chat-room-content::-webkit-scrollbar { width: 14px; }
+.chat-room-content::-webkit-scrollbar-thumb {
+    background-color: #d1d1d6; 
+    border-radius: 10px;
+    background-clip: padding-box;
+    border: 4px solid transparent; 
+}
+.chat-room-content::-webkit-scrollbar-track {
+    background-color: transparent;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+/* System Messages */
+.system-message-container {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 12px; margin: 0;
+}
+
+.system-message {
+    display: inline-block;
+    background-color: rgba(0, 0, 0, 0.04);
+    color: #6b7684; 
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 16px; 
+    border-radius: 24px; 
+    text-align: center;
+    line-height: 1.5;
+    word-break: keep-all;
+    max-width: 70%; 
+    margin: 0;
+    box-shadow: none;
+}
+
+/* Message Row Common */
+.message-row { display: flex; width: 100%; }
+
+.message-bubble {
+    padding: 10px 12px;
+    font-size: 13px; line-height: 1.4;
+    border-radius: var(--radius-md);
+    max-width: 220px; 
+    position: relative;
+    
+    /* [수정] 텍스트 줄바꿈 확실하게 적용 */
+    white-space: pre-wrap; 
+    word-break: break-all; /* 영어/숫자 긴 단어도 강제 줄바꿈 */
+}
+
+.message-time {
+    font-size: 11px; color: var(--text-secondary);
+    white-space: nowrap; margin-bottom: 2px;
+}
+
+/* Received Message (Left) */
+.message-row.received { align-items: flex-start; }
+
+.message-row.received .default-avatar,
+.message-row.received .profile-img {
+    margin-right: 8px; flex-shrink: 0;
+}
+
+.message-content { display: flex; flex-direction: column; align-items: flex-start; }
+.sender-name { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; margin-left: 2px; }
+
+.message-row.received .bubble-container { display: flex; align-items: flex-end; }
+.message-row.received .message-bubble {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    border-top-left-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Sent Message (Right) */
+.message-row.sent { justify-content: flex-end; align-items: flex-end; }
+.message-row.sent .bubble-container { display: flex; flex-direction: row; align-items: flex-end; }
+
+.sent-info {
+    display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end;
+    margin-right: 6px; min-width: 50px;
+}
+
+.unread-count {
+    font-size: 10px; color: var(--primary-color);
+    font-weight: 700; margin-bottom: 2px;
+}
+
+.message-row.sent .message-bubble {
+    background-color: var(--primary-color);
+    color: var(--text-on-primary);
+    border-top-right-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.received-info {
+    display: flex; flex-direction: column; align-items: flex-start;
+    justify-content: flex-end; margin-left: 6px;
+}
+
+/* ==========================
+   Media (Image) Message Style (Fixed 180px)
+   ========================== */
+.message-media-image {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    border-radius: 16px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    
+    /* [핵심] 너비를 180px로 고정하여 가로 스크롤 방지 */
+    width: 180px !important; 
+    height: auto !important; 
+    
+    flex-shrink: 0; 
+    flex-grow: 0;
+    line-height: 0;
+    display: block;
+    margin: 0;
+}
+
+.message-media-image img {
+    width: 100% !important; 
+    height: 100% !important;
+    object-fit: cover; 
+    display: block;
+}
+
+/* ==========================
+   File Attachment Style (Fix Wrap)
+   ========================== */
+.message-bubble.file-type {
+    white-space: normal !important; 
+    padding: 8px 10px !important;
+    min-width: 180px; 
+}
+
+.file-attachment-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.file-icon-box {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+
+.file-info-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-width: 0; /* Flex 자식 줄바꿈을 위해 필수 */
+    line-height: 1.3;
+}
+
+.file-name {
+    font-size: 13px;
+    font-weight: 600;
+    
+    /* [핵심] 파일명 줄바꿈 설정 */
+    white-space: normal;       /* 줄바꿈 허용 */
+    word-break: break-all;     /* 긴 영어단어도 강제 줄바꿈 */
+    overflow: visible;         /* 내용 다 보여주기 */
+    text-overflow: clip;       /* 말줄임표(...) 제거 */
+    
+    margin-bottom: 2px;
+    display: block;
+}
+
+.file-size {
+    font-size: 11px;
+    opacity: 0.8;
+    font-weight: 400;
+    display: block;
+}
+
+/* Input Area 등 나머지는 기존 유지 */
+.chat-input-area {
+    background-color: var(--bg-color);
+    padding: 12px 10px;
+    display: flex; align-items: flex-end; gap: 8px;
+    min-height: 60px; height: auto; flex-shrink: 0;
+}
+.input-wrapper {
+    flex-grow: 1;
+    background-color: var(--bg-secondary);
+    border-radius: 20px;
+    display: flex; align-items: center;
+    padding-right: 1px; padding-left: 12px;
+    min-height: 44px;
+}
+.chat-input {
+    width: 100%; border: none; background-color: transparent;
+    font-size: 15px; line-height: 1.4; outline: none; resize: none;
+    padding: 12px 12px 12px 0;
+    height: 44px; max-height: 120px; overflow-y: hidden; 
+    font-family: inherit; margin: 0;
+}
+.chat-input::-webkit-scrollbar { width: 14px; }
+.chat-input::-webkit-scrollbar-thumb {
+    background-color: #d1d1d6; border-radius: 10px;
+    background-clip: padding-box; border: 4px solid transparent; 
+}
+.chat-input::-webkit-scrollbar-track {
+    background-color: transparent; margin-top: 6px; margin-bottom: 6px;
+}
+.footer-btn {
+    border: none; width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; margin-bottom: 4px;
+    transition: background-color 0.2s; position: relative;
+}
+.attach-btn { background-color: transparent; color: var(--text-secondary); }
+.attach-btn:hover { background-color: var(--bg-secondary); color: var(--text-primary); }
+.send-btn { background-color: var(--primary-color); color: white; }
+.send-btn svg { margin-left: -2px; transform: rotate(45deg); }
+.input-file{ display: none; }
+
+/* Dropdown, Modal 등 나머지 CSS 기존과 동일 (생략 없이 사용하세요) */
+.chat-dropdown-menu {
+    display: none; position: absolute; top: 55px; right: 24px; width: 160px;
+    background-color: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    z-index: 1000; overflow: hidden; transform-origin: top right;
+    animation: menuPop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.chat-dropdown-menu.active { display: block; }
+.chat-dropdown-menu ul { list-style: none; margin: 0; padding-left: 0; padding: 6px; }
+.chat-dropdown-menu li a {
+    display: block; text-align: center; padding: 12px 10px; font-size: 15px; 
+    font-weight: 500; color: var(--text-primary); text-decoration: none;
+    border-radius: 10px; transition: all 0.2s;
+}
+.chat-dropdown-menu li a:hover { background-color: rgba(0,0,0,0.05); }
+.chat-dropdown-menu li.danger a { color: var(--danger-color); font-weight: 600; }
+.chat-dropdown-menu li.danger a:hover { background-color: rgba(255, 59, 48, 0.08); }
+@keyframes menuPop { 0% { opacity: 0; transform: scale(0.9) translateY(-10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+.header-btn.active[data-tooltip]:hover::after { display: none; }
+.modal-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(2px);
+    z-index: 2000; display: flex; align-items: center; justify-content: center;
+}
+.modal-window {
+    width: 290px !important; height: 480px !important;
+    background-color: #ffffff; border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    display: flex; flex-direction: column; overflow: hidden;
+    animation: modalPopUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-header-bar {
+    height: 50px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #f2f2f7; flex-shrink: 0;
+}
+.modal-title-text { font-size: 15px; font-weight: 700; color: #333; }
+.modal-close-btn { background: none; border: none; padding: 4px; cursor: pointer; color: #333; display: flex; }
+.modal-body-content { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #fff; }
+@keyframes modalPopUp { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }

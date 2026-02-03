@@ -1,0 +1,391 @@
+@charset "UTF-8";
+
+/* ==========================
+   Global Variables & Reset
+========================== */
+:root {
+    --primary-color: #007aff;
+    --text-primary: #1c1c1e;
+    --text-secondary: #8e8e93;
+    --text-on-primary: #ffffff;
+    --bg-color: #ffffff;
+    --bg-secondary: #f2f2f7;
+    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --radius-lg: 20px;
+    --radius-md: 16px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #e9e9e9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* ==========================
+   Chat Widget Frame
+========================== */
+.chat-widget {
+    width: 380px;
+    height: 700px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================
+   Header
+========================== */
+.chat-room-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px; 
+    background-color: var(--bg-color);
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px; 
+}
+
+.header-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    position: relative;
+}
+.header-btn:hover { background-color: var(--bg-secondary); }
+
+.room-title {
+    margin: 0 12px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 150px; 
+}
+
+.room-name-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1; 
+}
+
+.member-count {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-left: 4px;
+    flex-shrink: 0; 
+}
+
+/* ==========================
+   Chat Content
+========================== */
+.chat-room-content {
+    flex-grow: 1;
+    padding: 20px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px; 
+}
+.chat-room-content::-webkit-scrollbar { display: none; }
+.chat-room-content { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* System Messages */
+.system-message-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px; 
+    margin: 0; 
+}
+
+.system-message {
+    background-color: rgba(0,0,0,0.05);
+    color: var(--text-secondary);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    text-align: center;
+    display: inline-block;
+}
+
+/* Message Row Common */
+.message-row {
+    display: flex;
+    width: 100%;
+}
+
+.message-bubble {
+    padding: 10px 14px;
+    font-size: 15px;
+    line-height: 1.4;
+    border-radius: var(--radius-md);
+    max-width: 220px;
+    word-break: break-word;
+    position: relative;
+}
+
+.message-time {
+    font-size: 11px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    margin-bottom: 2px;
+}
+
+/* Received Message (Left) */
+.message-row.received {
+    align-items: flex-start;
+}
+
+.message-row.received .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #ffcc00;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.sender-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    margin-left: 2px;
+}
+
+.message-row.received .bubble-container {
+    display: flex;
+    align-items: flex-end;
+}
+
+.message-row.received .message-bubble {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    border-top-left-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Sent Message (Right) */
+.message-row.sent {
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+
+.message-row.sent .bubble-container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.sent-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    margin-right: 6px;
+    min-width: 50px;
+}
+
+.unread-count {
+    font-size: 10px;
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.message-row.sent .message-bubble {
+    background-color: var(--primary-color);
+    color: var(--text-on-primary);
+    border-top-right-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* ==========================
+   Input Area
+========================== */
+.chat-input-area {
+    background-color: var(--bg-color);
+    padding: 12px 10px; /* 푸터 원래 패딩 유지 */
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    min-height: 60px;
+    height: auto; 
+    flex-shrink: 0;
+}
+
+.input-wrapper {
+    flex-grow: 1;
+    background-color: var(--bg-secondary);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    padding-right: 1px; 
+    padding-left: 12px;
+    min-height: 44px;
+}
+
+.chat-input {
+    width: 100%; 
+    border: none;
+    background-color: transparent; 
+    font-size: 15px;
+    line-height: 1.4;
+    outline: none;
+    resize: none;
+    padding: 12px 0; 
+    height: 44px;
+    max-height: 120px; 
+    overflow-y: auto;
+    font-family: inherit;
+    margin: 0;
+}
+
+.chat-input::-webkit-scrollbar { width: 16px; }
+.chat-input::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
+    border-radius: 150px; 
+    background-clip: padding-box;
+    border: 5px solid transparent; 
+}
+
+.footer-btn {
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-bottom: 4px;
+    transition: background-color 0.2s;
+    position: relative;
+}
+
+.attach-btn {
+    background-color: transparent;
+    color: var(--text-secondary);
+}
+.attach-btn:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.send-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+.send-btn svg { margin-left: -2px; transform: rotate(45deg); }
+
+.received-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    margin-left: 6px;
+}
+
+/* ==========================
+   Clean Tooltip Styles
+========================== */
+[data-tooltip] {
+    cursor: pointer;
+}
+
+/* 1. 기본 툴팁 (중앙 정렬) */
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    background-color: #ffffff;
+    color: #333333;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeIn 0.2s forwards;
+    
+    /* 기본값: 부모 요소의 중앙 */
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* 2. [수정] 왼쪽 벽에 붙는 툴팁 (좌측 정렬) */
+/* 헤더, 푸터 구분 없이 무조건 버튼의 왼쪽 끝에 맞춤 */
+[data-tooltip-pos="left"]:hover::after {
+    left: 0; 
+    transform: translateX(0); /* 중앙 정렬 해제 */
+}
+
+/* 3. [수정] 오른쪽 벽에 붙는 툴팁 (우측 정렬) */
+/* 헤더, 푸터 구분 없이 무조건 버튼의 오른쪽 끝에 맞춤 */
+[data-tooltip-pos="right"]:hover::after {
+    left: auto;
+    right: 0; 
+    transform: translateX(0); /* 중앙 정렬 해제 */
+}
+
+
+/* 상단 헤더 버튼용 (아래로 뜸) */
+.header-btn[data-tooltip]:hover::after {
+    top: 100%;       
+    margin-top: 8px; 
+}
+
+/* 하단 푸터 버튼용 (위로 뜸) */
+.footer-btn[data-tooltip]:hover::after {
+    bottom: 100%;     
+    top: auto;       
+    margin-bottom: 8px; 
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}

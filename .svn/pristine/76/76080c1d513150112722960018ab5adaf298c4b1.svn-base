@@ -1,0 +1,15 @@
+package kr.or.ddit.survey.service;
+
+import kr.or.ddit.ServiceResult;
+import kr.or.ddit.vo.survey.SurveyParticipationVO;
+import kr.or.ddit.vo.survey.SurveyVO;
+
+public interface ISurveyService {
+	
+	//설문 조회
+	public SurveyVO getSurveyDetail(int surveyNo);
+    
+	//설문 저장
+	public ServiceResult insertParticipation(SurveyParticipationVO participationVO);
+    
+}

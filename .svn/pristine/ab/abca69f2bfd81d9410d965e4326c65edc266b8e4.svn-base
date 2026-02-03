@@ -1,0 +1,18 @@
+package kr.or.ddit.vo;
+
+import java.sql.Timestamp;
+
+import lombok.Data;
+
+@Data
+public class ProjectMemberVO {
+	private int projectNo;					// 프로젝트 일련번호
+	private int memberNo;					// 회원번호ㅋ
+	private Timestamp projectMemregdate;	// 구성원 등록일시
+	private String projectMemstatus;		// 구성원 사용여부 (Y:활성 / N:비활성)
+	private String projectRole;				// 프로젝트 권한 (PROJECT_MANAGER, PROJECT_MEMBER)
+	
+	// 구성원 초대를 위한 정보
+	private String memberEmail;			
+	private String memberName;
+}

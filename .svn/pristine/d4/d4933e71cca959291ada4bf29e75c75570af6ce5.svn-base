@@ -1,0 +1,38 @@
+package kr.or.ddit.dashboard.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Mapper;
+
+import kr.or.ddit.vo.NoticeVO;
+import kr.or.ddit.vo.NotificationVO;
+import kr.or.ddit.vo.WidgetVO;
+import kr.or.ddit.vo.project.ProjectTaskVO;
+import kr.or.ddit.vo.project.ProjectVO;
+
+@Mapper
+public interface IWidgetMapper {
+	public void insertDefaultWidget(List<WidgetVO> widgetList);
+	
+	public List<WidgetVO> selectWidgetList(int memberNo);
+	public int updateWidgetLayout(WidgetVO widgetVO);
+	
+	// [위젯 1] 마감 임박 상위업무 조회
+    public List<ProjectTaskVO> selectDeadlineTask(int memberNo);
+    
+    // [위젯 2] 개인 업무
+    public List<Map<String, Object>> selectWeeklyWorkList(Map<String, Object> params);
+
+    // [위젯 3] 시스템 공지사항
+	public List<NoticeVO> selectWidgetNoticeList();
+	
+	// [위젯 4] 시스템 미확인 알림
+	public List<NotificationVO> selectWidgetNotiList(int memberNo);
+	
+	// [위젯 5] 북마크 프로젝트
+	public List<ProjectVO> selectWidgetBookmarkList(int memberNo);
+	
+	// [위젯 6] 투두 리스트는 ITodoMapper에서 처리
+
+}

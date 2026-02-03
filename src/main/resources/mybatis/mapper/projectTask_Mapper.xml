@@ -1,0 +1,775 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.projectTask.mapper.IProjectTaskMapper">
+
+	<!--  칸반보드 - 하위업무 -->
+    <resultMap id="subTaskMap" type="kr.or.ddit.vo.project.ProjectTaskSubVO">
+        <id     property="subId"            column="SUB_ID"/>
+        <result property="taskId"           column="TASK_ID"/>
+        <result property="subStatus"        column="SUB_STATUS"
+        		javaType="kr.or.ddit.common.code.TaskStatus"
+                typeHandler="kr.or.ddit.common.code.CodeEnumTypeHandler"/>
+        <result property="subPriority" column="SUB_PRIORITY"
+            javaType="kr.or.ddit.common.code.TaskPriority"
+            typeHandler="kr.or.ddit.common.code.TaskPriorityTypeHandler"/>
+        <result property="parentTitle"      column="PARENT_TITLE"/>
+        <result property="subTitle"         column="SUB_TITLE"/>
+        <result property="taskManagerName"  column="TASK_MANAGER_NAME"/>
+        <result property="taskManagerIds"   column="TASK_MANAGER_IDS"/> 
+        <result property="subRate"          column="SUB_RATE"/>
+        <result property="subPinYn" column="SUB_PIN_YN"/>
+        <result property="subEnddate"       column="SUB_ENDDATE"/>
+    </resultMap>
+
+	<!-- 상위업무 리스트 resultMap -->
+	<resultMap id="projectTaskListMap" type="kr.or.ddit.vo.project.ProjectTaskVO">
+		<id property="taskId" column="TASK_ID"/>
+		<result property="taskTitle" column="TASK_TITLE"/>
+		
+		<result property="taskStatus" column="TASK_STATUS" 
+				javaType="kr.or.ddit.common.code.TaskStatus"
+				typeHandler="kr.or.ddit.common.code.CodeEnumTypeHandler"/>
+		
+		<result property="taskPriority" column="TASK_PRIORITY"
+	            javaType="kr.or.ddit.common.code.TaskPriority"
+	            typeHandler="kr.or.ddit.common.code.TaskPriorityTypeHandler"/>
+				
+		<result property="taskStartdate" column="TASK_STARTDATE"/>
+		<result property="taskEnddate" column="TASK_ENDDATE"/>
+		<result property="taskFinishdate" column="TASK_FINISHDATE"/>
+		<result property="taskFinishdate" column="TASK_FINISHDATE"/>
+		<result property="taskRate" column="TASK_RATE"/>
+		<result property="taskPinYn" column="TASK_PIN_YN"/>
+		<result property="taskPinOrder" column="TASK_PIN_ORDER"/>
+		<result property="taskPinMember" column="TASK_PIN_MEMBER"/>
+		<result property="writerName" column="WRITER_NAME"/>
+		<result property="taskPinMemberName" column="TASK_PIN_MEMBER_NAME"/>
+	</resultMap>
+
+	<!-- 상위업무 상세정보 resultMap -->
+	<resultMap id="projectTaskDetailMap" type="kr.or.ddit.vo.project.ProjectTaskVO" extends="projectTaskListMap">
+		<result property="projectNo" column="PROJECT_NO"/>
+		<result property="projectName" column="PROJECT_NAME"/>
+		<result property="taskWriter" column="TASK_WRITER"/>
+		<result property="taskContent" column="TASK_CONTENT"/>
+		<result property="taskRegdate" column="TASK_REGDATE"/>
+		<result property="fileGroupNo" column="FILE_GROUP_NO"/>
+	</resultMap>
+	
+	<!-- 내 업무 목록 -->
+	<resultMap id="myTaskMap" type="kr.or.ddit.vo.project.ProjectTaskVO" extends="projectTaskListMap">
+        <result property="projectNo"   column="PROJECT_NO"/>
+        <result property="projectName" column="PROJECT_NAME"/>
+        <result property="taskManagerName" column="T_MANAGER_NAMES"/>
+        
+        <result property="isMyTask" column="IS_MY_TASK"/>
+        
+        <collection property="subTasks" ofType="kr.or.ddit.vo.project.ProjectTaskSubVO">
+            <id     property="subId"       column="SUB_ID"/>
+            <result property="taskId"      column="S_TASK_ID"/> 
+            <result property="subTitle"    column="SUB_TITLE"/>
+            <result property="subStatus"   column="SUB_STATUS" 
+                    typeHandler="kr.or.ddit.common.code.CodeEnumTypeHandler"/>
+            <result property="subPriority" column="SUB_PRIORITY" 
+                    typeHandler="kr.or.ddit.common.code.TaskPriorityTypeHandler"/>
+            <result property="subRate"     column="SUB_RATE"/>
+            <result property="subStartdate" column="SUB_STARTDATE"/>
+            <result property="subEnddate"  column="SUB_ENDDATE"/>
+            <result property="subFinishdate" column="SUB_FINISHDATE"/>
+            <result property="subWriter"   column="SUB_WRITER"/>
+            <result property="writerName"  column="S_WRITER_NAME"/>
+            <result property="taskManagerName" column="S_MANAGER_NAMES"/>
+        </collection>
+    </resultMap>
+	
+	<!-- 하위업무 리스트 resultMap -->
+	<resultMap id="subTaskListMap" type="kr.or.ddit.vo.project.ProjectTaskSubVO">
+		<id property="subId" column="SUB_ID"/>
+		<result property="taskId" column="TASK_ID"/>
+		<result property="subTitle" column="SUB_TITLE"/>
+		
+		<result property="subStatus" column="SUB_STATUS"
+				javaType="kr.or.ddit.common.code.TaskStatus"
+				typeHandler="kr.or.ddit.common.code.CodeEnumTypeHandler"/>
+		
+		<result property="subPriority" column="SUB_PRIORITY"
+            javaType="kr.or.ddit.common.code.TaskPriority"
+            typeHandler="kr.or.ddit.common.code.TaskPriorityTypeHandler"/>
+		<result property="testRawPriority" column="SUB_PRIORITY"/>
+		
+		<result property="subStartdate" column="SUB_STARTDATE"/>
+		<result property="subEnddate" column="SUB_ENDDATE"/>
+		<result property="subFinishdate" column="SUB_FINISHDATE"/>
+		<result property="subRate" column="SUB_RATE"/>
+		<result property="subPinYn" column="SUB_PIN_YN"/>
+		<result property="subPinOrder" column="SUB_PIN_ORDER"/>
+		<result property="subPinMember" column="SUB_PIN_MEMBER"/>
+		<result property="subWriter" column="SUB_WRITER"/>
+		<result property="writerName" column="WRITER_NAME"/>
+		<result property="subPinMemberName" column="SUB_PIN_MEMBER_NAME"/>
+	</resultMap>
+	
+	<!-- 하위업무 상세정보 resultMap -->
+	<resultMap id="subTaskDetailMap" type="kr.or.ddit.vo.project.ProjectTaskSubVO" extends="subTaskListMap">
+		<result property="parentTitle" column="PARENT_TITLE" />
+		<result property="projectNo" column="PROJECT_NO" />
+		<result property="projectName" column="PROJECT_NAME" />
+		<result property="subContent" column="SUB_CONTENT" />
+		<result property="subRegdate" column="SUB_REGDATE" />
+		<result property="fileGroupNo" column="FILE_GROUP_NO" />
+	</resultMap>
+		
+	<!-- 간트 DTO resultMap -->
+	<resultMap id="ganttTaskMap" type="kr.or.ddit.dto.GanttTaskDTO">
+	    <id property="id" column="ID"/>
+	    <result property="text" column="TEXT"/>
+	    <result property="startDate" column="START_DATE"/>
+	    <result property="endDate" column="END_DATE"/>
+	    <result property="progress" column="PROGRESS"/>
+	    <result property="parent" column="PARENT"/>
+	    <result property="type" column="TYPE"/>
+	    <result property="status" column="STATUS" />
+    	<result property="subFinishdate" column="SUB_FINISHDATE" />
+	</resultMap>
+	
+	<!-- ================ myTask START  ================ -->
+	<select id="selectMyTaskList" parameterType="map" resultMap="myTaskMap">
+        SELECT
+            P.PROJECT_NO, 
+            P.PROJECT_NAME
+            
+          , T.TASK_ID
+          , T.TASK_TITLE
+          , T.TASK_STATUS
+          , T.TASK_PRIORITY
+          , T.TASK_RATE
+          , T.TASK_STARTDATE
+          , T.TASK_ENDDATE
+          , T.TASK_FINISHDATE
+          , T.TASK_PIN_YN
+          , T.TASK_WRITER
+          , M_T.MEMBER_NAME AS WRITER_NAME
+          , (SELECT LISTAGG(M.MEMBER_NAME, ', ') WITHIN GROUP (ORDER BY M.MEMBER_NAME)
+             FROM PROJECT_TASK_MANAGER TM 
+             JOIN MEMBER M 
+             ON TM.MEMBER_NO = M.MEMBER_NO
+             WHERE TM.WORK_ID = T.TASK_ID AND TM.WORK_TYPE = 'T') AS T_MANAGER_NAMES
+             
+          , CASE 
+                WHEN (
+                    (#{type} IS NULL OR #{type} = '' OR #{type} = 'writer') 
+                    AND T.TASK_WRITER = #{memberNo}
+                ) OR (
+                    (#{type} IS NULL OR #{type} = '' OR #{type} = 'manager') 
+                    AND EXISTS (
+                        SELECT 1 FROM PROJECT_TASK_MANAGER TM 
+                        WHERE TM.WORK_ID = T.TASK_ID AND TM.WORK_TYPE = 'T' AND TM.MEMBER_NO = #{memberNo}
+                    )
+                ) THEN 'Y' ELSE 'N' 
+            END AS IS_MY_TASK
+
+          , S.SUB_ID
+          , S.TASK_ID AS S_TASK_ID
+          , S.SUB_TITLE
+          , S.SUB_STATUS
+          , S.SUB_PRIORITY
+          , S.SUB_RATE
+          , S.SUB_STARTDATE
+          , S.SUB_ENDDATE
+          , S.SUB_FINISHDATE
+          , S.SUB_WRITER
+          , M_S.MEMBER_NAME AS S_WRITER_NAME
+          , (SELECT LISTAGG(M.MEMBER_NAME, ', ') WITHIN GROUP (ORDER BY M.MEMBER_NAME)
+             FROM PROJECT_TASK_MANAGER TM 
+             JOIN MEMBER M 
+             ON TM.MEMBER_NO = M.MEMBER_NO
+             WHERE TM.WORK_ID = S.SUB_ID AND TM.WORK_TYPE = 'S') AS S_MANAGER_NAMES
+
+        FROM PROJECT_TASK T
+        JOIN PROJECT P ON T.PROJECT_NO = P.PROJECT_NO
+        JOIN MEMBER M_T ON T.TASK_WRITER = M_T.MEMBER_NO
+        
+        LEFT JOIN PROJECT_TASK_SUB S 
+            ON T.TASK_ID = S.TASK_ID
+           AND (
+               ( (#{type} IS NULL OR #{type} = '' OR #{type} = 'writer') AND S.SUB_WRITER = #{memberNo} )
+               OR 
+               ( (#{type} IS NULL OR #{type} = '' OR #{type} = 'manager') AND EXISTS (
+                   SELECT 1 FROM PROJECT_TASK_MANAGER PTM 
+                   WHERE PTM.WORK_ID = S.SUB_ID AND PTM.WORK_TYPE = 'S' AND PTM.MEMBER_NO = #{memberNo}
+               ))
+           )
+        LEFT JOIN MEMBER M_S ON S.SUB_WRITER = M_S.MEMBER_NO
+        
+        WHERE 1=1
+          <choose>
+              <when test="projectStatus == 3 or projectStatus == '3'">
+              </when>
+
+              <when test="projectStatus == 0 or projectStatus == '0' or projectStatus == 1 or projectStatus == '1'">
+                  AND P.PROJECT_STATUS = #{projectStatus}
+              </when>
+
+              <otherwise>
+                  AND P.PROJECT_STATUS = 0
+              </otherwise>
+          </choose>
+          
+          AND (
+              (
+                  ( (#{type} IS NULL OR #{type} = '' OR #{type} = 'writer') AND T.TASK_WRITER = #{memberNo} )
+                  OR 
+                  ( (#{type} IS NULL OR #{type} = '' OR #{type} = 'manager') AND EXISTS (
+                      SELECT 1 FROM PROJECT_TASK_MANAGER PTM 
+                      WHERE PTM.WORK_ID = T.TASK_ID AND PTM.WORK_TYPE = 'T' AND PTM.MEMBER_NO = #{memberNo}
+                  ))
+              )
+              OR S.SUB_ID IS NOT NULL
+          )
+        
+        ORDER BY 
+            P.PROJECT_NAME ASC, 
+            T.TASK_ID DESC,     
+            S.SUB_ID ASC
+    </select>
+	<!-- ================ myTask END  ================ -->
+	 
+	<!-- ================ list START ================ -->
+	<!-- 상위 업무 전체 조회 -->
+	<select id="selectTaskList" parameterType="map" resultMap="projectTaskListMap">
+	 	SELECT
+		    T.TASK_ID
+		  , T.TASK_TITLE
+		  , T.TASK_STATUS
+		  , T.TASK_STARTDATE
+		  , T.TASK_ENDDATE
+		  , T.TASK_FINISHDATE
+		  , T.TASK_PRIORITY
+		  , T.TASK_RATE
+		  , T.TASK_PIN_YN
+		  , T.TASK_PIN_ORDER
+		  , T.TASK_PIN_MEMBER
+		  , M.MEMBER_NAME AS WRITER_NAME
+		  , (SELECT MEMBER_NAME FROM MEMBER WHERE MEMBER_NO = T.TASK_PIN_MEMBER) AS TASK_PIN_MEMBER_NAME
+		FROM
+		    PROJECT_TASK T
+	   	JOIN MEMBER M
+		  ON M.MEMBER_NO = T.TASK_WRITER
+	 	WHERE T.PROJECT_NO = #{projectNo}
+   		ORDER BY
+		    T.TASK_PIN_YN DESC
+		    
+		    <choose>
+		    	<when test="sortType == 'ENDDATE'">
+		    		, T.TASK_ENDDATE ${sortOrder} NULLS LAST
+		    	</when>
+		    	
+		    	<when test="sortType == 'PRIORITY'">
+		    		, T.TASK_PRIORITY ${sortOrder}
+		    	</when>
+		    	
+		    	<otherwise>
+		    		, T.TASK_ID ${sortOrder}
+		    	</otherwise>
+		    </choose>
+		    
+		  , T.TASK_ID DESC
+	</select>
+	
+	<!-- 하위업무 전체 조회 -->
+	<select id="selectSubTaskList" parameterType="int" resultMap="subTaskListMap">
+		SELECT
+			S.SUB_ID
+		  , S.TASK_ID
+		  , S.SUB_TITLE
+		  , S.SUB_STATUS
+		  , S.SUB_STARTDATE
+		  , S.SUB_ENDDATE
+		  , S.SUB_FINISHDATE
+		  , S.SUB_PRIORITY
+		  , S.SUB_RATE
+		  , S.SUB_PIN_YN
+		  , S.SUB_PIN_ORDER
+		  , S.SUB_PIN_MEMBER
+		  , M.MEMBER_NAME AS WRITER_NAME
+		  , (SELECT MEMBER_NAME FROM MEMBER WHERE MEMBER_NO = S.SUB_PIN_MEMBER) AS SUB_PIN_MEMBER_NAME
+		FROM
+			PROJECT_TASK_SUB S
+		JOIN PROJECT_TASK T
+		  ON T.TASK_ID = S.TASK_ID
+		JOIN MEMBER M
+		  ON M.MEMBER_NO = S.SUB_WRITER
+		WHERE T.PROJECT_NO = #{projectNo}
+		ORDER BY
+			S.TASK_ID DESC
+		  , S.SUB_PIN_YN DESC
+		  , S.SUB_ID DESC
+	</select>
+	
+	<!-- 상위/하위별 업무 담당자 전체 조회 -->
+	<select id="selectTaskManagerList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectTaskManagerVO">
+		SELECT
+			PTM.TASK_MANAGER_ID
+		  , PTM.WORK_TYPE
+		  , PTM.WORK_ID
+		  , PTM.MEMBER_NO
+		  , PTM.WORK_MANAGER_REGDATE
+		  , M.MEMBER_NAME
+		  , M.MEMBER_PROFILEIMG
+		FROM
+			PROJECT_TASK_MANAGER PTM
+		JOIN MEMBER M
+		  ON M.MEMBER_NO = PTM.MEMBER_NO
+		WHERE
+			(
+				PTM.WORK_TYPE = 'T'
+				AND PTM.WORK_ID IN (
+					SELECT TASK_ID
+					FROM PROJECT_TASK
+					WHERE PROJECT_NO = #{projectNo}
+				)
+			)
+			OR
+			(
+				PTM.WORK_TYPE = 'S'
+				AND PTM.WORK_ID IN (
+					SELECT S.SUB_ID
+					FROM PROJECT_TASK_SUB S
+					JOIN PROJECT_TASK T
+					  ON T.TASK_ID = S.TASK_ID
+					WHERE T.PROJECT_NO = #{projectNo}
+				)
+			)
+		ORDER BY
+		--	PTM.TASK_MANAGER_ID
+		    PTM.WORK_TYPE
+  		  , PTM.WORK_ID
+		  , M.MEMBER_NAME
+	</select>
+	<!-- ================ list END ================ -->
+	
+	<!-- ================ create START ================ -->
+	<!-- 상위업무 생성 -->
+	<insert id="insertTask" parameterType="kr.or.ddit.vo.project.ProjectTaskVO">
+		<selectKey keyProperty="taskId" resultType="int" order="BEFORE">
+			SELECT SEQ_PROJECT_TASK.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO PROJECT_TASK (
+			TASK_ID
+		  , PROJECT_NO
+		  , TASK_TITLE
+		  , TASK_WRITER
+		  , TASK_CONTENT
+		  , TASK_STARTDATE
+		  , TASK_ENDDATE
+		  , TASK_STATUS
+		  , TASK_RATE
+		  , TASK_PRIORITY
+	      , FILE_GROUP_NO
+	  	) VALUES (
+	  	  	#{taskId}
+	  	  , #{projectNo}
+	      ,	#{taskTitle}
+	      , #{taskWriter}
+	      , #{taskContent}
+	      ,	#{taskStartdate}
+	      ,	#{taskEnddate}
+	      , #{taskStatus}
+	      , #{taskRate}
+	      ,	#{taskPriority}
+		   	<choose>
+		   		<when test="fileGroupNo != 0">, #{fileGroupNo}</when>
+		   		<otherwise>, null</otherwise>
+		   	</choose>
+	  	)
+	</insert>
+	
+	<!-- 상위업무 담당자 생성 -->
+	<insert id="insertTaskManager" parameterType="map">
+		INSERT INTO PROJECT_TASK_MANAGER (
+			TASK_MANAGER_ID
+		  , WORK_TYPE
+		  , WORK_ID
+		  , MEMBER_NO
+		)
+		SELECT
+			SEQ_PROJECT_TASK_MANAGER.NEXTVAL
+		  , 'T'
+		  , #{workId}
+		  , X.MEMBER_NO
+		FROM (
+			<foreach collection="taskManagerNos" item="tmn" separator=" UNION ">
+				SELECT #{tmn} AS MEMBER_NO FROM DUAL
+			</foreach>
+		) X
+	</insert>
+		
+	<!-- 하위업무 생성 -->
+	<insert id="insertSubTask" parameterType="kr.or.ddit.vo.project.ProjectTaskSubVO">
+		<selectKey keyProperty="subId" resultType="int" order="BEFORE">
+			SELECT SEQ_PROJECT_TASK_SUB.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO PROJECT_TASK_SUB (
+			SUB_ID
+		  , TASK_ID
+		  , SUB_TITLE
+		  , SUB_WRITER
+		  , SUB_CONTENT
+		  , SUB_STARTDATE
+		  , SUB_ENDDATE
+		  , SUB_STATUS
+		  , SUB_RATE
+		  , SUB_PRIORITY
+	      , FILE_GROUP_NO
+	  	) VALUES (
+	  	  	#{subId}
+	  	  , #{taskId}
+	      ,	#{subTitle}
+	      , #{subWriter}
+	      , #{subContent}
+	      ,	#{subStartdate}
+	      ,	#{subEnddate}
+	      , #{subStatus}
+	      , #{subRate}
+	      ,	#{subPriority}
+		   	<choose>
+		   		<when test="fileGroupNo != 0">, #{fileGroupNo}</when>
+		   		<otherwise>, null</otherwise>
+		   	</choose>
+	  	)
+	</insert>
+	
+	<!-- 하위업무 담당자 생성 -->
+	<insert id="insertSubManager" parameterType="map">
+		INSERT INTO PROJECT_TASK_MANAGER (
+			TASK_MANAGER_ID
+		  , WORK_TYPE
+		  , WORK_ID
+		  , MEMBER_NO
+		)
+		SELECT
+			SEQ_PROJECT_TASK_MANAGER.NEXTVAL
+		  , 'S'
+		  , #{workId}
+		  , X.MEMBER_NO
+		FROM (
+			<foreach collection="subManagerNos" item="smn" separator=" UNION ">
+				SELECT #{smn} AS MEMBER_NO FROM DUAL
+			</foreach>
+		) X
+	</insert>
+	<!-- ================ create END ================ -->
+	
+	<!-- ================ detail START ================ -->
+	<select id="selectTaskDetail" parameterType="int" resultMap="projectTaskDetailMap">
+		SELECT
+	        T.TASK_ID
+	      , T.PROJECT_NO
+	      , P.PROJECT_NAME
+	      , T.TASK_TITLE
+	      , T.TASK_CONTENT
+	      , T.TASK_WRITER
+	      , T.TASK_REGDATE
+	      , T.TASK_STARTDATE
+	      , T.TASK_ENDDATE
+	      , T.TASK_FINISHDATE
+	      , T.TASK_STATUS
+	      , T.TASK_RATE
+	      , T.TASK_PRIORITY
+	      , T.FILE_GROUP_NO
+	      , M.MEMBER_NAME AS WRITER_NAME
+	    FROM PROJECT_TASK T
+	    JOIN MEMBER M 
+	      ON T.TASK_WRITER = M.MEMBER_NO
+	    JOIN PROJECT P
+	      ON T.PROJECT_NO = P.PROJECT_NO
+	    WHERE T.TASK_ID = #{taskId}
+	</select>
+	
+	<select id="selectSubListByTaskId" parameterType="int" resultMap="subTaskListMap">
+	    SELECT
+	        S.SUB_ID
+	      , S.TASK_ID
+	      , S.SUB_TITLE
+	      , S.SUB_STATUS
+	      , S.SUB_STARTDATE
+	      , S.SUB_ENDDATE
+	      , S.SUB_FINISHDATE
+	      , S.SUB_PRIORITY
+	      , S.SUB_RATE
+	      , S.SUB_WRITER      
+	      , M.MEMBER_NAME AS WRITER_NAME
+	    FROM PROJECT_TASK_SUB S
+	    LEFT JOIN MEMBER M 
+	      ON S.SUB_WRITER = M.MEMBER_NO
+	    WHERE S.TASK_ID = #{taskId}
+	    ORDER BY S.SUB_ID ASC
+	</select>
+	
+	<select id="selectSubTaskDetail" parameterType="int" resultMap="subTaskDetailMap">
+		SELECT
+			S.SUB_ID
+		  , S.TASK_ID
+		  , T.TASK_TITLE AS PARENT_TITLE
+		  , T.PROJECT_NO
+		  , P.PROJECT_NAME
+		  , S.SUB_TITLE
+	      , S.SUB_CONTENT
+	      , S.SUB_WRITER
+	      , S.SUB_REGDATE
+	      , S.SUB_STARTDATE
+	      , S.SUB_ENDDATE
+	      , S.SUB_FINISHDATE
+	      , S.SUB_STATUS
+	      , S.SUB_RATE
+	      , S.SUB_PRIORITY
+	      , S.FILE_GROUP_NO
+	      , M.MEMBER_NAME AS WRITER_NAME
+		FROM PROJECT_TASK_SUB S
+		JOIN PROJECT_TASK T 
+		  ON S.TASK_ID = T.TASK_ID
+		JOIN PROJECT P
+		  ON T.PROJECT_NO = P.PROJECT_NO
+		JOIN MEMBER M
+		  ON S.SUB_WRITER = M.MEMBER_NO
+		WHERE S.SUB_ID = #{subId}
+	</select>
+	
+	<select id="selectTaskManagers" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectTaskManagerVO">
+	    SELECT
+	        PTM.TASK_MANAGER_ID
+	      , PTM.WORK_TYPE
+	      , PTM.WORK_ID
+	      , PTM.MEMBER_NO
+	      , M.MEMBER_NAME
+	      , M.MEMBER_PROFILEIMG
+	    FROM PROJECT_TASK_MANAGER PTM
+	    JOIN MEMBER M ON M.MEMBER_NO = PTM.MEMBER_NO
+	    WHERE PTM.WORK_TYPE = 'T'
+	      AND PTM.WORK_ID = #{taskId}
+	</select>
+	
+	<select id="selectSubTaskManagers" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectTaskManagerVO">
+	    SELECT
+	        PTM.TASK_MANAGER_ID
+	      , PTM.WORK_TYPE
+	      , PTM.WORK_ID
+	      , PTM.MEMBER_NO
+	      , M.MEMBER_NAME
+	      , M.MEMBER_PROFILEIMG
+	    FROM PROJECT_TASK_MANAGER PTM
+	    JOIN MEMBER M ON M.MEMBER_NO = PTM.MEMBER_NO
+	    WHERE PTM.WORK_TYPE = 'S'
+	      AND PTM.WORK_ID = #{subId}
+	</select>
+	
+	<!-- ================ update START ================ -->
+	<update id="updateTaskRate" parameterType="kr.or.ddit.vo.project.ProjectTaskVO">
+        UPDATE PROJECT_TASK
+        SET TASK_RATE = #{taskRate}
+        WHERE TASK_ID = #{taskId}
+    </update>
+    
+    <update id="updateTask" parameterType="kr.or.ddit.vo.project.ProjectTaskVO">
+		UPDATE PROJECT_TASK
+		SET TASK_TITLE = #{taskTitle}
+		  , TASK_CONTENT = #{taskContent}
+		  , TASK_STARTDATE = #{taskStartdate}
+		  , TASK_ENDDATE = #{taskEnddate}
+		  , TASK_STATUS = #{taskStatus, typeHandler=kr.or.ddit.common.code.CodeEnumTypeHandler}
+		  , TASK_RATE = #{taskRate}
+		  , TASK_PRIORITY = #{taskPriority, typeHandler=kr.or.ddit.common.code.TaskPriorityTypeHandler}
+		  , TASK_FINISHDATE = CASE 
+                              	WHEN #{taskStatus, typeHandler=kr.or.ddit.common.code.CodeEnumTypeHandler} != 203 THEN NULL 
+                              	ELSE NVL(TASK_FINISHDATE, SYSTIMESTAMP)
+                              END
+		<if test="fileGroupNo != 0">, FILE_GROUP_NO = #{fileGroupNo}</if>
+		WHERE TASK_ID = #{taskId}
+    </update>
+    
+    <update id="updateSubTask" parameterType="kr.or.ddit.vo.project.ProjectTaskSubVO">
+    	UPDATE PROJECT_TASK_SUB
+		SET SUB_TITLE     = #{subTitle}
+		  , SUB_CONTENT   = #{subContent}
+		  , SUB_STARTDATE = #{subStartdate}
+		  , SUB_ENDDATE   = #{subEnddate}
+		  , SUB_STATUS    = #{subStatus, typeHandler=kr.or.ddit.common.code.CodeEnumTypeHandler}
+		  , SUB_RATE      = #{subRate}
+		  , SUB_PRIORITY  = #{subPriority, typeHandler=kr.or.ddit.common.code.TaskPriorityTypeHandler}
+		  , SUB_FINISHDATE = CASE 
+                              	WHEN #{subStatus, typeHandler=kr.or.ddit.common.code.CodeEnumTypeHandler} != 203 THEN NULL 
+                              	ELSE NVL(SUB_FINISHDATE, SYSTIMESTAMP) 
+                              END
+		 <if test="fileGroupNo != 0">, FILE_GROUP_NO = #{fileGroupNo}</if>
+		 WHERE SUB_ID        = #{subId}
+    </update>
+
+	<update id="setTaskPin" parameterType="map">
+		UPDATE PROJECT_TASK
+		SET
+		TASK_PIN_YN = CASE WHEN TASK_PIN_YN = 'Y' THEN 'N' ELSE 'Y' END,
+		TASK_PIN_MEMBER = CASE WHEN TASK_PIN_YN = 'Y' THEN NULL ELSE #{memberNo} END
+		WHERE TASK_ID = #{id}
+	</update>
+
+	<update id="setSubTaskPin" parameterType="map">
+		UPDATE PROJECT_TASK_SUB
+		SET
+		SUB_PIN_YN = CASE WHEN SUB_PIN_YN = 'Y' THEN 'N' ELSE 'Y' END,
+		SUB_PIN_MEMBER = CASE WHEN SUB_PIN_YN = 'Y' THEN NULL ELSE #{memberNo} END
+		WHERE SUB_ID = #{id}
+	</update>
+	<!-- ================ update END ================ -->
+
+	<!-- ================ delete START ================ -->
+	<delete id="deleteTask" parameterType="int">
+	    DELETE FROM PROJECT_TASK
+	    WHERE TASK_ID = #{workId}
+	</delete>
+	
+	<delete id="deleteSubTask" parameterType="int">
+	    DELETE FROM PROJECT_TASK_SUB
+	    WHERE SUB_ID = #{workId}
+	</delete>
+
+	<delete id="deleteTaskManager" parameterType="map">
+	    DELETE FROM PROJECT_TASK_MANAGER
+	    WHERE WORK_ID = #{workId}
+	      AND WORK_TYPE = #{workType}
+	</delete>
+	<!-- ================ delete END ================ -->
+
+	<!-- ================ Kanban START ================ -->
+    <select id="getKanbanTaskList" resultMap="subTaskMap" >
+	    SELECT
+	          S.SUB_ID
+	        , S.TASK_ID
+	        , P.TASK_TITLE AS PARENT_TITLE
+	        , S.SUB_TITLE
+	        , S.SUB_STATUS
+	        , S.SUB_PRIORITY
+	        , S.SUB_RATE
+	        , S.SUB_ENDDATE
+	        , S.SUB_PIN_YN
+	
+	        /* 내부 로직용: 담당자 번호 확인 */
+	        , (SELECT LISTAGG(MEMBER_NO, ',') WITHIN GROUP (ORDER BY MEMBER_NO)
+	             FROM PROJECT_TASK_MANAGER
+	            WHERE WORK_ID   = S.SUB_ID
+	              AND WORK_TYPE = 'S'
+	          ) AS TASK_MANAGER_IDS
+	
+	        /* 화면 표시용: 담당자 이름 */
+	        , (
+			    SELECT
+			        CASE
+			            WHEN COUNT(*) = 1 THEN
+			                MAX(M.MEMBER_NAME)
+			                    KEEP (DENSE_RANK FIRST ORDER BY PTM.WORK_MANAGER_REGDATE)
+			            WHEN COUNT(*) > 1 THEN
+			                MAX(M.MEMBER_NAME)
+			                    KEEP (DENSE_RANK FIRST ORDER BY PTM.WORK_MANAGER_REGDATE)
+			                || ' 외 '
+			                || (COUNT(*) - 1)
+			                || '명'
+			        END
+			    FROM PROJECT_TASK_MANAGER PTM
+			    JOIN MEMBER M
+			      ON PTM.MEMBER_NO = M.MEMBER_NO
+			    WHERE PTM.WORK_ID   = S.SUB_ID
+			      AND PTM.WORK_TYPE = 'S'
+			) AS TASK_MANAGER_NAME
+	    FROM PROJECT_TASK_SUB S
+	    JOIN PROJECT_TASK P
+	      ON S.TASK_ID = P.TASK_ID
+	    WHERE P.PROJECT_NO = #{projectNo}
+	    ORDER BY
+		     S.SUB_PIN_YN DESC,
+		     S.SUB_PIN_ORDER DESC,
+		     S.SUB_ID ASC
+	</select>
+
+    
+    <update id="modifySubTaskStatus" parameterType="kr.or.ddit.vo.project.ProjectTaskSubVO">
+        UPDATE PROJECT_TASK_SUB
+        SET SUB_STATUS = #{subStatus},
+            SUB_FINISHDATE = CURRENT_TIMESTAMP
+        WHERE SUB_ID = #{subId}
+    </update>
+    
+    <update id="updateSubTaskRate" parameterType="kr.or.ddit.vo.project.ProjectTaskSubVO">
+        UPDATE PROJECT_TASK_SUB
+        SET SUB_RATE = #{subRate}
+        WHERE SUB_ID = #{subId}
+    </update>
+    
+    <update id="updateSubTaskPin" parameterType="kr.or.ddit.vo.project.ProjectTaskSubVO">
+	    UPDATE PROJECT_TASK_SUB
+		   SET SUB_PIN_YN = #{subPinYn},
+		       SUB_PIN_MEMBER = <choose>
+		           <when test='subPinYn == "Y"'>#{subPinMember}</when>
+		           <otherwise>NULL</otherwise>
+		       </choose>,
+		       SUB_PIN_ORDER = <choose>
+		           <when test='subPinYn == "Y"'>
+		               (SELECT NVL(MAX(SUB_PIN_ORDER), 0) + 1 
+		                  FROM PROJECT_TASK_SUB 
+		                 WHERE TASK_ID = #{taskId} AND SUB_PIN_YN = 'Y')
+		           </when>
+		           <otherwise>0</otherwise> </choose>
+		WHERE SUB_ID = #{subId}
+	</update>
+	
+	<select id="getProjectRole" resultType="string">
+	    SELECT 
+	        PROJECT_ROLE
+	    FROM 
+	        PROJECT_MEMBER
+	    WHERE 
+	        PROJECT_NO = #{projectNo}
+	        AND MEMBER_NO = #{memberNo}
+	        AND PROJECT_MEM_STATUS = 'Y'
+	</select>
+	<!-- ================ Kanban END ================ -->
+	
+	<!-- ================ GanttChart START ================ -->
+	<select id="selectGanttTaskList" parameterType="int" resultMap="ganttTaskMap">
+
+	    SELECT
+	        'T_' || T.TASK_ID    AS ID,
+	        T.TASK_TITLE         AS TEXT,
+	        T.TASK_STARTDATE     AS START_DATE,
+	        T.TASK_ENDDATE       AS END_DATE,
+	        T.TASK_RATE /100.0   AS PROGRESS,
+	        '0'                    AS PARENT,
+	        'project'            AS TYPE,
+	        T.TASK_STATUS        AS STATUS,
+        	NULL                 AS SUB_FINISHDATE,
+        	NULL                 AS MANAGERS
+	    FROM PROJECT_TASK T
+	    WHERE T.PROJECT_NO = #{projectNo}
+	
+	    UNION ALL
+	
+	    SELECT
+	        'S_' || S.SUB_ID     AS ID,
+	        S.SUB_TITLE          AS TEXT,
+	        S.SUB_STARTDATE      AS START_DATE,
+	        S.SUB_ENDDATE        AS END_DATE,
+	        S.SUB_RATE /100.0    AS PROGRESS,
+	        'T_' || S.TASK_ID    AS PARENT,
+	        'task'               AS TYPE,
+	        SUB_STATUS AS STATUS,     
+    		SUB_FINISHDATE AS SUB_FINISHDATE,
+    		(SELECT LISTAGG(M.MEMBER_NAME,',') WITHIN GROUP(ORDER BY M.MEMBER_NAME) 
+    		FROM PROJECT_TASK_MANAGER PTM, MEMBER M 
+    		WHERE PTM.WORK_ID = S.SUB_ID AND PTM.MEMBER_NO = M.MEMBER_NO) AS MANAGERS
+	    FROM PROJECT_TASK_SUB S
+	    JOIN PROJECT_TASK T ON S.TASK_ID = T.TASK_ID
+	    WHERE T.PROJECT_NO = #{projectNo}
+	
+	    ORDER BY PARENT, ID
+	</select>
+	<!-- ================ GanttChart END ================ -->
+
+</mapper>

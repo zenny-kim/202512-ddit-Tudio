@@ -1,0 +1,134 @@
+package kr.or.ddit.project.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import kr.or.ddit.member.service.impl.CustomUser;
+import kr.or.ddit.project.service.IProjectService;
+import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.ProjectVO;
+import lombok.extern.slf4j.Slf4j;
+
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : ProjectController
+ * DESC : 프로젝트 생성, 수정, 삭제 컨트롤러
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 YHB
+ * @version 1.0, 2025.12.26
+ * 
+ */
+@Slf4j
+@Controller
+@RequestMapping("/tudio/project")
+public class ProjectController {
+	
+	@Autowired
+	private IProjectService projectService; 
+	
+	/**
+	 * 프로젝트 생성폼
+	 * @return views/project/createForm
+	 */
+	@GetMapping("/create")
+	public String projectCreateForm() {
+		log.info("projectCreateForm() 메소드 실행...!");
+		return "project/createForm";
+	}
+	
+	
+	/**
+	 * 프로젝트 생성
+	 * @param projectVO
+	 * @param authentication
+	 * @return
+	 */
+	@PostMapping("/create")
+	@ResponseBody
+	public ResponseEntity<String> projectCreate(@RequestBody ProjectVO projectVO, Authentication authentication) {
+		try {
+			log.info("projectCreate() 메소드 실행...!");
+			
+			CustomUser customUser = (CustomUser)authentication.getPrincipal();
+			MemberVO memberVO = customUser.getMemberVO();
+			int loginMemberNo = memberVO.getMemberNo();
+			projectVO.setMemberNo(loginMemberNo);
+			
+			projectService.createProject(projectVO);
+			
+			return new ResponseEntity<>("SUCCESS", HttpStatus.OK);
+		} catch(Exception e) {			
+			e.printStackTrace();			 
+			return new ResponseEntity<>("FAILED", HttpStatus.BAD_REQUEST);
+		}
+	}
+	
+	
+	/**
+	 * 프로젝트 상세
+	 */
+	@GetMapping("/detail")
+	public String projectDetail() {
+		log.info("projectDetail() 실행...!");
+		return "project/detail";
+	}
+	
+	
+	/**
+	 * 프로젝트 목록
+	 * @return
+	 */
+	@GetMapping("/list")
+	public String projectList(Model model) {
+		log.info("projectList() 실행...!");
+		List<ProjectVO> projectList = projectService.list();
+		model.addAttribute(projectList);
+		return "project/list";
+	}
+	
+	/**
+	 * 프로젝트 수정폼
+	 * @return
+	 */
+	@GetMapping("/modify")
+	public String projectModifyForm() {
+		log.info("projectModifyForm() 실행...!");
+		return "project/createForm";
+	}
+	
+	/**
+	 * 프로젝트 수정
+	 * @return
+	 */
+	@PostMapping("/modify")
+	public String projectModify() {
+		log.info("projectModify");
+		
+		return "";
+	}
+	
+	/**
+	 * 프로젝트 삭제 (논리 삭제로 상태값을 변경한다)
+	 * @return
+	 */
+	@PostMapping("/delete")
+	public String projectDelete() {
+		log.info("projectDelete() 실행...!");
+		
+		return "";
+	}
+}

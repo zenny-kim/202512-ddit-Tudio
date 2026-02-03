@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.admin.siteMember.mapper.IAdminMemberMapper">
+
+    <resultMap type="kr.or.ddit.vo.MemberVO" id="memberMap">
+        <id property="memberNo" column="MEMBER_NO"/>
+        <result property="memberId" column="MEMBER_ID"/>
+        <result property="memberName" column="MEMBER_NAME"/>
+        <result property="memberTel" column="MEMBER_TEL"/>
+        <result property="memberEmail" column="MEMBER_EMAIL"/>
+        <result property="memberDepartment" column="MEMBER_DEPARTMENT"/>
+        <result property="memberPosition" column="MEMBER_POSITION"/>
+        <result property="companyNo" column="COMPANY_NO"/>
+        <result property="companyName" column="COMPANY_NAME"/> 
+        <result property="memberRegno" column="MEMBER_REGNO"/>
+        <result property="memberJoinDate" column="MEMBER_JOIN_DATE"/>
+        <result property="leaveStatus" column="LEAVE_STATUS"/>
+        <result property="leaveReason" column="LEAVE_REASON"/>
+        <result property="memberLeaveDate" column="MEMBER_LEAVE_DATE"/>
+        <result property="projectCount" column="PROJECT_COUNT"/>
+        <collection property="memberAuthVOList" resultMap="authMap"/>
+    </resultMap>
+
+    <resultMap type="kr.or.ddit.vo.MemberAuthVO" id="authMap">
+        <result property="memberNo" column="MEMBER_NO"/>
+        <result property="auth" column="AUTH"/>
+    </resultMap>
+
+    <sql id="whereCondition">
+        AND NOT EXISTS (
+            SELECT 1 FROM MEMBER_AUTH C 
+            WHERE C.MEMBER_NO = A.MEMBER_NO AND C.AUTH = 'ROLE_ADMIN'
+        )
+        <if test="type != null and type != 'all'">
+            <choose>
+                <when test="type == 'general'">AND (B.AUTH = 'ROLE_MEMBER' OR B.AUTH IS NULL) AND A.LEAVE_STATUS = 'N'</when>
+                <when test="type == 'company'">AND B.AUTH = 'ROLE_CLIENT' AND A.LEAVE_STATUS = 'N'</when>
+                <when test="type == 'withdrawal'">AND A.LEAVE_STATUS = 'Y'</when>
+            </choose>
+        </if>
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (
+                A.MEMBER_ID LIKE '%' || #{searchKeyword} || '%' OR 
+                A.MEMBER_NAME LIKE '%' || #{searchKeyword} || '%'
+            )
+        </if>
+    </sql>
+
+    <select id="selectAdminMember" parameterType="String" resultType="kr.or.ddit.dto.AdminUserDTO">
+	    SELECT 
+	        MEMBER_NO          AS memberNo, 
+	        MEMBER_ID          AS memberId, 
+	        MEMBER_NAME        AS memberName, 
+	        MEMBER_PROFILEIMG  AS memberProfileimg     
+	    FROM MEMBER 
+	    WHERE MEMBER_ID = #{memId}
+	</select>
+
+    <select id="selectMemberCount" parameterType="kr.or.ddit.vo.MemberVO" resultType="int">
+        SELECT COUNT(*)
+        FROM MEMBER A
+        LEFT OUTER JOIN MEMBER_AUTH B ON (A.MEMBER_NO = B.MEMBER_NO)
+        WHERE 1=1 <include refid="whereCondition"/>
+    </select>
+
+    <select id="selectAdminMemberList" parameterType="kr.or.ddit.vo.MemberVO" resultMap="memberMap">
+        SELECT * FROM (
+            SELECT T.*, ROWNUM RNUM FROM (
+                SELECT 
+                    A.MEMBER_NO, A.MEMBER_ID, A.MEMBER_NAME, A.MEMBER_TEL,
+                    A.MEMBER_EMAIL, A.MEMBER_DEPARTMENT, A.MEMBER_POSITION,
+                    A.COMPANY_NO, C.COMPANY_NAME, A.MEMBER_REGNO, A.MEMBER_JOIN_DATE,
+                    A.LEAVE_STATUS, A.LEAVE_REASON, A.MEMBER_LEAVE_DATE, B.AUTH,
+                    (SELECT COUNT(*) FROM PROJECT_MEMBER PM WHERE PM.MEMBER_NO = A.MEMBER_NO) AS PROJECT_COUNT
+                FROM MEMBER A
+                LEFT OUTER JOIN MEMBER_AUTH B ON (A.MEMBER_NO = B.MEMBER_NO)
+                LEFT OUTER JOIN CLIENT_COMPANY C ON (A.COMPANY_NO = C.COMPANY_NO)
+                WHERE 1=1 <include refid="whereCondition"/>
+                ORDER BY A.MEMBER_JOIN_DATE DESC
+            ) T
+            WHERE ROWNUM &lt;= #{endRow}
+        )
+        WHERE RNUM &gt;= #{startRow}
+    </select>
+    
+    <select id="selectMemberListForExcel" parameterType="kr.or.ddit.vo.MemberVO" resultMap="memberMap">
+        SELECT 
+            A.MEMBER_NO, A.MEMBER_ID, A.MEMBER_NAME, A.MEMBER_TEL,
+            A.MEMBER_EMAIL, A.MEMBER_DEPARTMENT, A.MEMBER_POSITION,
+            A.COMPANY_NO, C.COMPANY_NAME, A.MEMBER_REGNO, A.MEMBER_JOIN_DATE,
+            A.LEAVE_STATUS, A.LEAVE_REASON, A.MEMBER_LEAVE_DATE, B.AUTH
+        FROM MEMBER A
+        LEFT OUTER JOIN MEMBER_AUTH B ON (A.MEMBER_NO = B.MEMBER_NO)
+        LEFT OUTER JOIN CLIENT_COMPANY C ON (A.COMPANY_NO = C.COMPANY_NO)
+        WHERE 1=1 <include refid="whereCondition"/>
+        ORDER BY A.MEMBER_JOIN_DATE DESC
+    </select>
+
+    <insert id="insertMember" parameterType="kr.or.ddit.vo.MemberVO">
+        <selectKey keyProperty="memberNo" resultType="int" order="BEFORE">
+            SELECT seq_member.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO MEMBER (
+            MEMBER_NO, MEMBER_ID, MEMBER_PW, MEMBER_NAME,
+            MEMBER_TEL, COMPANY_NO, COMPANY_NO_STATUS,
+            MEMBER_EMAIL, EMAIL_STATUS, MEMBER_JOIN_DATE,
+            LEAVE_STATUS, MEMBER_REGNO, MEMBER_DEPARTMENT, MEMBER_POSITION
+        ) VALUES (
+            #{memberNo}, #{memberId}, #{memberPw}, #{memberName},
+            #{memberTel}, #{companyNo}, 'N',
+            #{memberEmail}, 'N', CURRENT_TIMESTAMP,
+            'N', #{memberRegno}, #{memberDepartment}, #{memberPosition}
+        )
+    </insert>
+	
+    <insert id="insertMemberAuth" parameterType="map">
+        INSERT INTO MEMBER_AUTH (MEMBER_NO, AUTH) VALUES (#{memberNo}, #{auth})
+    </insert>
+
+    <select id="selectMemberSummaryStats" resultType="map">
+	    SELECT 
+	        /* 1. 누적 회원 (관리자 제외) */
+	        (SELECT COUNT(*) FROM MEMBER M 
+	         WHERE NOT EXISTS (SELECT 1 FROM MEMBER_AUTH MA WHERE MA.MEMBER_NO = M.MEMBER_NO AND MA.AUTH = 'ROLE_ADMIN')) AS "totalCount",
+	        
+	        /* 2. 오늘 가입 (관리자 제외) */
+	        (SELECT COUNT(*) FROM MEMBER M 
+	         WHERE TO_CHAR(MEMBER_JOIN_DATE, 'YYYYMMDD') = TO_CHAR(SYSDATE, 'YYYYMMDD')
+	           AND NOT EXISTS (SELECT 1 FROM MEMBER_AUTH MA WHERE MA.MEMBER_NO = M.MEMBER_NO AND MA.AUTH = 'ROLE_ADMIN')) AS "todayCount",
+	        
+	        /* 3. 활성 유저 (관리자 제외 + 탈퇴 안 한 사람) */
+	        (SELECT COUNT(*) FROM MEMBER M 
+	         WHERE LEAVE_STATUS = 'N'
+	           AND NOT EXISTS (SELECT 1 FROM MEMBER_AUTH MA WHERE MA.MEMBER_NO = M.MEMBER_NO AND MA.AUTH = 'ROLE_ADMIN')) AS "activeCount",
+	        
+	        /* 4. 탈퇴 회원 (관리자 제외 + 탈퇴한 사람) */
+	        (SELECT COUNT(*) FROM MEMBER M 
+	         WHERE LEAVE_STATUS = 'Y'
+	           AND NOT EXISTS (SELECT 1 FROM MEMBER_AUTH MA WHERE MA.MEMBER_NO = M.MEMBER_NO AND MA.AUTH = 'ROLE_ADMIN')) AS "withdrawnCount"
+	    FROM DUAL
+	</select>
+	
+	<select id="selectMemberDetail" parameterType="String" resultType="kr.or.ddit.dto.AdminUserDTO">
+	    SELECT 
+	        /* 1. MEMBER 테이블 정보 */
+	        A.MEMBER_NO          AS memberNo,
+	        A.MEMBER_ID          AS memberId,
+	        A.MEMBER_NAME        AS memberName,
+	        A.MEMBER_TEL         AS memberTel,
+	        A.MEMBER_EMAIL       AS memberEmail,
+	        A.MEMBER_DEPARTMENT  AS memberDepartment,
+	        A.MEMBER_POSITION    AS memberPosition,
+	        A.MEMBER_REGNO       AS memberRegno,
+	        A.MEMBER_PROFILEIMG  AS memberProfileimg,
+	        A.LEAVE_STATUS       AS leaveStatus,
+	        TO_CHAR(A.MEMBER_JOIN_DATE, 'YYYY-MM-DD HH24:MI')  AS memberJoinDate,
+	        
+	        /* 2. 권한 정보 (LISTAGG로 한 줄 합치기) */
+	        (SELECT LISTAGG(AUTH, ', ') WITHIN GROUP (ORDER BY AUTH) 
+	         FROM MEMBER_AUTH WHERE MEMBER_NO = A.MEMBER_NO) AS auth,
+	        
+	        /* 3. 기업 정보 */
+	        C.COMPANY_NAME       AS companyName,
+	        C.COMPANY_NO         AS companyNo,
+	        
+	        /* 4. 활동 통계 (본인 데이터만 필터링) */
+	        
+	        /* 최근 접속: LOG_LOGIN */
+	        (SELECT TO_CHAR(MAX(REG_DATE), 'YYYY-MM-DD HH24:MI') 
+	         FROM LOG_LOGIN 
+	         WHERE MEMBER_ID = A.MEMBER_ID) AS lastLoginAt,
+	         
+	        /* 1:1 문의 수: INQUIRY */
+	        (SELECT COUNT(*) 
+	         FROM INQUIRY 
+	         WHERE USER_NO = A.MEMBER_NO) AS inquiryCount,
+	         
+	        /* 작성 글 수 */
+	        (SELECT COUNT(*) 
+	         FROM PROJECT_BOARD 
+	         WHERE MEMBER_NO = A.MEMBER_NO) AS postCount,
+	         
+	        /* 작성 댓글 수 */
+	        (SELECT COUNT(*) 
+	         FROM TB_COMMENT 
+	         WHERE MEMBER_NO = A.MEMBER_NO) AS commentCount
+	         
+	    FROM MEMBER A
+	    LEFT OUTER JOIN CLIENT_COMPANY C ON (A.COMPANY_NO = C.COMPANY_NO)
+	    WHERE A.MEMBER_ID = #{memId}
+	</select>
+</mapper>

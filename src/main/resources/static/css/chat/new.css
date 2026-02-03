@@ -1,0 +1,33 @@
+@charset "UTF-8";
+
+/* ==========================
+   New Chat Layout (Clean White Theme)
+   - memList.jsp를 감싸는 컨테이너 및 헤더 스타일만 존재
+========================== */
+.new-chat-container { 
+	display: flex; 
+	flex-direction: column; 
+	height: 100%; 
+	background-color: #ffffff; 
+	position: relative; /* memList 하단 버튼이 absolute라 필수 */
+}
+
+.new-chat-container .chat-room-header { 
+    background-color: #ffffff; 
+    border-bottom: none; 
+    padding: 12px 20px; 
+    position: relative; 
+    display: flex; align-items: center; justify-content: center; 
+    height: 60px; flex-shrink: 0; 
+}
+
+.new-chat-container .header-left { position: absolute; left: 20px; z-index: 10; }
+.new-chat-container .header-btn { color: #000000; padding: 0; }
+
+.new-chat-container .room-title { 
+    font-size: 18px; font-weight: 700; color: #000000; 
+    position: absolute; left: 50%; transform: translateX(-50%); 
+    margin: 0; 
+}
+
+/* --- 나머지(리스트, 검색창 등)는 memList.css로 이사감 --- */

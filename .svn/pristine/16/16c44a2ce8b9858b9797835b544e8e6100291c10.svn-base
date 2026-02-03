@@ -1,0 +1,205 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="chat-widget new-chat-container">
+    <header class="chat-room-header">
+        <div class="header-left">
+            <button id="backBtn" class="header-btn" aria-label="뒤로 가기" 
+                    data-tooltip="뒤로 가기" data-tooltip-pos="left">
+                <i data-feather="arrow-left"></i>
+            </button>
+        </div>
+        <h2 class="room-title">새 채팅</h2>
+        <div class="header-right">
+            </div>
+    </header>
+
+    <div class="search-area">
+        <div class="search-input-wrapper">
+            <i data-feather="search" class="search-icon" style="width: 18px; height: 18px;"></i>
+            <input type="text" class="search-input" placeholder="이름, 부서 검색">
+        </div>
+    </div>
+
+    <div class="user-list-area">
+        <div class="section-title">프로젝트 구성원</div>
+        
+        <ul class="user-list">
+        	<c:forEach items="${memberList }" var="member">
+	            <li class="user-item">
+	                <div class="user-info-wrapper">
+	                	<c:choose>
+                            <c:when test="${not empty member.memberProfileimg}">
+                                <img src="${pageContext.request.contextPath}${member.memberProfileimg}" class="profile-img" alt="프로필">
+                            </c:when>
+                            <c:otherwise>
+                                <div class="default-avatar avatar-color-${member.memberNo % 5}">
+                                    <i data-feather="user" style="width:20px; height:20px;"></i>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+	                    <div class="user-text">
+	                        <span class="user-name">${member.memberName }</span>
+	                        <span class="user-status">${member.memberDepartment } ${member.memberPosition }</span>
+	                    </div>
+	                </div>
+	                <div class="checkbox-wrapper">
+	                    <input type="checkbox" class="user-checkbox" id="user${member.memberNo }" value="${member.memberNo }">
+	                    <span class="checkmark"></span>
+	                </div>
+	            </li>
+        	</c:forEach>
+        </ul>
+    </div>
+
+    <div class="bottom-action-area">
+        <button class="start-chat-btn" disabled>채팅 시작</button>
+    </div>
+</div>
+
+<script>
+$(function(){
+	
+    feather.replace();
+
+    const $checkboxes = $(".user-checkbox");
+    const $startBtn = $(".start-chat-btn");
+
+    // 리스트 아이템 클릭 시 체크박스 선택
+    $(".user-item").on("click", function(e) {
+        // 체크박스를 직접 누른 게 아니라면 (즉, 배경이나 글자를 누름)
+        if (!$(e.target).is("input[type='checkbox']")) {
+            const $chk = $(this).find(".user-checkbox");
+            $chk.prop("checked", !$chk.prop("checked")).trigger("change");
+        }
+    });
+
+    let checkedCount = 0;
+    let selectedUserNo = [];
+    let chatroomName = [];
+    let selectedAllUserName = [];
+
+    // 체크박스 변경 감지 -> 버튼 활성화/비활성화
+    $checkboxes.on("change", function() {
+    	checkedCount = $(".user-checkbox:checked").length;
+        let checkedNames = $(".user-checkbox:checked").closest(".user-item").find(".user-name");
+        chatroomName = [];
+        selectedAllUserName = [];
+	    checkedNames.each(function(index, userItem){
+	    	if(index < 3){
+		    	chatroomName.push($(userItem).html());
+	    	}
+	    	selectedAllUserName.push($(userItem).html());
+	    })
+	    
+	    if(selectedAllUserName.length > 2){
+	   		chatroomName.push("...");
+	    }
+    	
+        if (checkedCount > 0) {
+            $startBtn.prop("disabled", false).addClass("active");
+            $startBtn.text(checkedCount + "명과 채팅 시작");
+        } else {
+            $startBtn.prop("disabled", true).removeClass("active");
+            $startBtn.text("채팅 시작");
+        }
+    });
+    
+    // 채팅 시작 버튼 클릭
+    $startBtn.on("click", function(){
+        $(".user-checkbox:checked").each(function(){
+            selectedUserNo.push($(this).val());
+        });
+        
+	    sweetAlert();
+    });
+    
+ 	// 뒤로가기 버튼을 클릭할 경우
+    $("#backBtn").on("click", function(){
+        $container.load("/tudio/chat/list", function(){
+            feather.replace();
+        });
+    });
+
+    // 채팅방 이름 입력받는 sweetAlert
+    function sweetAlert(){
+    	Swal.fire({
+            title: "채팅방 이름 입력", 
+            input: "text",
+            target: document.querySelector('.new-chat-container'),
+            width: "85%",           
+            padding: 0,             
+            showCancelButton: true,
+            cancelButtonText: '취소',
+            confirmButtonText: '생성', 
+            reverseButtons: true,   
+            buttonsStyling: false, 
+            inputValue: chatroomName.join(", "),
+            didOpen: () => {
+            	Swal.getInput().select();
+            },
+            customClass: {
+                container: 'my-swal-container',
+                popup: 'my-swal-popup',
+                title: 'my-mini-title',
+                input: 'my-swal-input',
+                actions: 'my-swal-actions',
+                confirmButton: 'my-mini-btn my-confirm-btn', 
+                cancelButton: 'my-mini-btn my-cancel-btn',   
+                validationMessage: 'my-validation-msg'
+            },
+            inputValidator: (value) => {
+                if(!value){
+                    return "채팅방 이름을 입력해주세요.";
+                } 
+            },
+  		    preConfirm: (chatroomName) => {
+  		    	let chatroomType = "";
+  		    	if(checkedCount > 1){
+  		    		chatroomType = "GROUP"
+  		    	}else{
+  		    		chatroomType = "PRIVATE"
+  		    	}
+  		    	
+  		    	const chatroomVo = {
+  		    		chatroomName : chatroomName,
+  		    		chatroomType : chatroomType,
+  		    		memCount : (checkedCount + 1),
+  		    		chatMemberNoList : selectedUserNo,
+  		    		chatMemberNameList : selectedAllUserName
+  		    	};
+  		    	
+  		    	return $.ajax({
+  		    		url: "/tudio/chat/new",
+  		    		type: "post", 
+  		    		contentType: "application/json;charset=utf-8",
+  		    		data: JSON.stringify(chatroomVo),
+  		    		error: function(error, status, thrown){
+  		    			console.log(error);
+  		    			console.log(status);
+  		    			console.log(thrown);
+  		    		}
+  		    	})  
+  		    }
+	    }).then((response) => {
+	        if (response.isConfirmed) {
+	        	if(response.value.result === "OK"){
+		        	$container.load("/tudio/chat/chatroom/" + response.value.chatroomNo, function(){
+		                feather.replace();
+		            });
+	        	} else{
+	        		Swal.fire({
+	        	        icon: 'error',
+	        	        title: '생성 실패',
+	        	        text: '채팅방을 만들지 못했습니다. 다시 시도해주세요.'
+	        	    });
+	        	}
+	        } 
+	    });
+    }
+    
+});
+</script>

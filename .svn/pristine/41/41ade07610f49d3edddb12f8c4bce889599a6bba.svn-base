@@ -1,0 +1,90 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+    
+<!-- Board Section (red area redesign) -->
+<section class="board-section">
+  <!-- header row -->
+  <div class="board-header">
+    <div class="board-tabs">
+      <button class="tab is-active" data-category="">전체</button>
+      <button class="tab tab-notice" data-category="NOTICE">공지</button>
+      <button class="tab tab-free" data-category="FREE">자유</button>
+      <button class="tab tab-minutes" data-category="MINUTES">회의록</button>
+    </div>
+
+  <button class="btn-write" type="button" onclick="location.href='${pageContext.request.contextPath}/tudio/project/${projectNo}/insertForm'" >글쓰기</button>
+  									
+  </div>
+
+  <!-- filter row -->
+  <div class="board-filter">
+    <div class="filter-left">
+      <div class="select-wrap">
+        <select class="form-select form-select-sm">
+          <option>제목</option>
+          <option>작성자</option>
+          <option>내용</option>
+        </select>
+      </div>
+
+      <div class="search-wrap">
+        <input class="form-control form-control-sm" placeholder="검색어를 입력하세요" />
+        <button class="btn-search" aria-label="search">🔍</button>
+      </div>
+
+      <div class="count">총 <b>50</b>건</div>
+    </div>
+
+   
+  </div>
+
+  <!-- table -->
+  <div class="board-table-wrap">
+    <table class="board-table">
+      <thead>
+        <tr>
+          <th style="width:90px">구분</th>
+          <th>제목</th>
+          <th style="width:160px">작성자</th>
+          <th style="width:140px">작성일</th>
+          <th style="width:120px">조회수</th>
+        </tr>
+      </thead>
+      
+ <!--  비동기 교체 대상은 게시글 목록이 반복되는 영역과 페이징 버튼 영역이다 -->
+
+      <tbody id="boardTbody">
+      
+      <!--  여기 반복문  -->
+        <tr class="row-click">
+          <td><span class="badge badge-notice">공지</span></td>
+          <td class="title">
+            <a href="${pageContext.request.contextPath}/tudio/project/${projectNo}/select?boNo=${1}">Tudio 최종 런칭 일정 및 QA 공지 (15)</a>
+            <span class="pin">📌</span>
+          </td>
+          <td class="muted">운영팀</td>
+          <td class="muted">2025-12-10</td>
+          <td class="muted">520</td>
+        </tr>
+	  <!--  여기 반복문  -->
+	  
+      </tbody>
+ <!--  비동기 교체 대상은 게시글 목록이 반복되는 영역과 페이징 버튼 영역이다 -->      
+
+    </table>
+  </div>
+
+<!-- 페이징 -->
+  <div class="board-footer">
+    <div class="pager" id="boardPager">
+		      <button class="pg">이전</button>
+		      <button class="pg is-active">1</button>
+		      <button class="pg">2</button>
+		      <button class="pg">3</button>
+		      <button class="pg">다음</button>
+    </div>
+  </div>
+<!-- 페이징 -->  
+  
+</section>
+

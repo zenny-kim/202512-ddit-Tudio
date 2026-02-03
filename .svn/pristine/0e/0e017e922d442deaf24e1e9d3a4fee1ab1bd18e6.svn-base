@@ -1,0 +1,139 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<style>
+.tudio-badge.badge-red {
+    background-color: #ffeded;
+    color: #ff4d4f;
+    border: 1px solid #ffccc7;
+}
+
+.tudio-badge.badge-yellow {
+    background-color: #fffbe6;
+    color: #faad14;
+    border: 1px solid #ffe58f;
+}
+
+.tudio-badge.badge-blue {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    border: 1px solid #91d5ff;
+}
+
+.tudio-badge.badge-default {
+    background-color: #f5f5f5;
+    color: #8c8c8c;
+    border: 1px solid #d9d9d9;
+}
+.tudio-section .tudio-table-card {
+    border-collapse: collapse !important; /* 강제로 테두리 합치기 */
+    border-spacing: 0 !important;        /* 간격 0으로 만들기 */
+}
+
+</style>
+<section class="tudio-section">
+
+	<div class="tudio-section-header d-flex align-items-center justify-content-between">
+    
+    <h2 class="h5 fw-bold m-0 text-primary-dark">
+        <i class="bi bi-journal-text me-2"></i>프로젝트 게시판
+    </h2>
+
+    <div class="d-flex align-items-center gap-2">
+        <div class="tudio-pills">
+            <button class="tudio-pill is-active" data-category="">전체</button>
+            <button class="tudio-pill" data-category="NOTICE">공지</button>
+            <button class="tudio-pill" data-category="FREE">자유</button>
+            <button class="tudio-pill" data-category="MINUTES">회의록</button>
+        </div>
+        
+        <button class="tudio-btn tudio-btn-primary ms-2" type="button" id="btnInsertForm">
+            <i class="bi bi-pencil me-1"></i> 글쓰기
+        </button>
+    </div>
+
+</div>
+
+	<div class="tudio-section-filter">
+		<div class="d-flex align-items-center gap-3">
+			<div style="width: 110px;">
+				<select class="form-select form-select-sm" id="searchType">
+					<option value="title"<c:if test="${searchType eq 'title' }">selected</c:if>>제목</option>
+					<option value="writer"<c:if test="${searchType eq 'writer' }">selected</c:if>>작성자</option>
+					<option>내용</option>
+				</select>
+			</div>
+
+			<div class="tudio-search">
+				<input type="text" id="searchWord"  value="${searchWord}" placeholder="검색어를 입력하세요" />
+				<button id="btnSearch" class="border-0 bg-transparent" aria-label="search">🔍</button>
+			</div>
+
+			<div class="text-muted" style="font-size: 13px;">
+				총 <b class="text-dark" id="totalCnt">0</b>건
+			</div>
+		</div>
+	</div>
+
+	<div class="tudio-table-wrap">
+		<table class="tudio-table-card">
+			<thead>
+				<tr>
+					<th class="text-center" style="width: 90px">글번호</th>
+					<th class="text-center" style="width: 90px">구분</th>
+					<th class="text">제목</th>
+					<th class="text-center" style="width: 120px">작성자</th>
+					<th class="text-center" style="width: 140px">작성일</th>
+					<th class="text-center" style="width: 90px">조회수</th>
+				</tr>
+			</thead>
+			<tbody id="boardTbody">
+			    <c:forEach items="${boardList}" var="board">
+			        <c:set var="tempTitle" value="${board.boTitle}" />
+			        <c:set var="tempTitle" value="${fn:replace(tempTitle, '[공지]', '')}" />
+			        <c:set var="tempTitle" value="${fn:replace(tempTitle, '[자유]', '')}" />
+			        <c:set var="tempTitle" value="${fn:replace(tempTitle, '[회의록]', '')}" />
+			        
+			        <tr class="row-click">
+			            <td class="text-center">${board.boNo}</td>
+			            <td class="text-center">
+			                <c:choose>
+			                    <c:when test="${board.categoryName == 'NOTICE'}">
+			                        <span class="tudio-badge badge-red">공지</span>
+			                    </c:when>
+			                    <c:when test="${board.categoryName == 'FREE'}">
+			                        <span class="tudio-badge badge-yellow">자유</span>
+			                    </c:when>
+			                    <c:when test="${board.categoryName == 'MINUTES'}">
+			                        <span class="tudio-badge badge-blue">회의록</span>
+			                    </c:when>
+			                    <c:otherwise>
+			                        <span class="tudio-badge badge-default">기타</span>
+			                    </c:otherwise>
+			                </c:choose>
+			            </td>
+			            <td class="title" onclick="goDetail(${param.projectNo}, ${board.boNo})">
+			                <a href="javascript:void(0);" style="pointer-events: none;" class="text-decoration-none text-dark">
+			                    ${fn:trim(tempTitle)}
+			                </a>
+			            </td>
+			            <td class="text-center">${board.memberVO.memberName}</td>
+			            <td class="text-center">
+			                <c:choose>
+			                    <c:when test="${fn:length(board.boRegdate) >= 10}">
+			                        ${fn:substring(board.boRegdate, 2, 10)}
+			                    </c:when>
+			                    <c:otherwise>${board.boRegdate}</c:otherwise>
+			                </c:choose>
+			            </td>
+			            <td class="text-center">${board.boHit}</td>
+			        </tr>
+			    </c:forEach>
+			</tbody>
+		</table>
+	</div>
+
+	<div class="tudio-pager" id="boardPager"></div>
+
+</section>
+<script src="${pageContext.request.contextPath}/js/projectBoard.js"></script>

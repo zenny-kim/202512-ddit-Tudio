@@ -1,0 +1,33 @@
+package kr.or.ddit.meetingRoom.service.impl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.or.ddit.meetingRoom.mapper.IMeetingRoomMapper;
+import kr.or.ddit.meetingRoom.service.IMeetingRoomService;
+import kr.or.ddit.vo.meetingRoom.MeetingBranchVO;
+import kr.or.ddit.vo.meetingRoom.MeetingRoomVO;
+
+@Service
+public class MeetingRoomServiceImpl implements IMeetingRoomService {
+
+	@Autowired
+	private IMeetingRoomMapper meetingRoomMapper;
+	
+	//전체 지점 목록 조회
+	@Override
+	public List<MeetingBranchVO> selectBranchList() {
+		return meetingRoomMapper.selectBranchList();
+	}
+	
+	//전체 회의실 목록 조회
+	@Override
+	public List<MeetingRoomVO> selectMeetingRoomList(int branchId) {
+		return meetingRoomMapper.selectMeetingRoomList(branchId);
+	}
+
+	
+
+}

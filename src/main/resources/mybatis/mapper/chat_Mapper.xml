@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.chat.mapper.IChatMapper">
+
+	<resultMap type="kr.or.ddit.vo.MemberVO" id="memberMap">
+		<id property="memberNo" column="MEMBER_NO"/>
+		<result property="memberNo" column="MEMBER_NO"/>
+		<result property="memberName" column="MEMBER_NAME"/>
+		<result property="memberDepartment" column="MEMBER_DEPARTMENT"/>
+		<result property="memberPosition" column="MEMBER_POSITION"/>
+		<result property="memberProfileimg" column="MEMBER_PROFILEIMG"/>
+		<collection property="projectList" resultMap="projectMap"/>
+	</resultMap>
+	
+	<resultMap type="kr.or.ddit.vo.project.ProjectVO" id="projectMap">
+		<id property="projectNo" column="PROJECT_NO"/>
+		<result property="projectNo" column="PROJECT_NO"/>
+		<result property="projectName" column="PROJECT_NAME"/>
+	</resultMap>
+
+	<!-- 채팅방 목록 조회 쿼리 -->
+	<select id="selectChatroomList" parameterType="int" resultType="kr.or.ddit.vo.chat.ChatroomVO">
+		SELECT 
+			   R.CHATROOM_NO
+			 , M.CHATROOM_NAME
+			 , R.CHATROOM_TYPE
+			 , CASE WHEN R.LAST_CHAT_DATE >= M.CHATROOM_JOIN_DATE THEN R.LAST_CHAT
+		            ELSE NULL
+		       END AS LAST_CHAT
+			 , (SELECT COUNT(*) 
+		        FROM CHAT C
+		        WHERE C.CHAT_NO > NVL(M.LAST_READ_CHAT_NO, 0)
+		          AND C.CHATROOM_NO = M.CHATROOM_NO) AS NOT_READ_CNT
+		     , R.MEM_COUNT
+		     , R.LAST_CHAT_DATE
+		FROM CHAT_MEMBER M 
+		INNER JOIN CHATROOM R 
+		   ON M.CHATROOM_NO = R.CHATROOM_NO
+		WHERE M.MEMBER_NO = #{memberNo}
+		ORDER BY R.LAST_CHAT_DATE DESC NULLS LAST
+	</select>
+	
+	<!-- 로그인한 유저의 안읽은 전체 채팅 개수  -->
+	<select id="selectNotReadChatCnt" parameterType="int" resultType="int">
+		SELECT COUNT(*) AS NOT_READ_CNT
+		FROM CHAT_MEMBER M 
+		INNER JOIN CHAT C 
+		   ON C.CHATROOM_NO = M.CHATROOM_NO
+		WHERE M.MEMBER_NO = #{memberNo}
+		AND C.CHAT_NO > NVL(M.LAST_READ_CHAT_NO, 0)       
+	</select>
+	
+	<!-- 특정 채팅방 조회 쿼리(채팅 내역 및 세부사항) -->
+	<select id="selectChatList" parameterType="kr.or.ddit.vo.chat.ChatVO" resultType="kr.or.ddit.vo.chat.ChatVO">
+		SELECT 
+			   FINAL.*
+			 , (SELECT COUNT(*)
+		          FROM CHAT_MEMBER CCM
+		         WHERE FINAL.CHAT_NO > NVL(CCM.LAST_READ_CHAT_NO, 0)
+		           AND CCM.CHATROOM_NO = FINAL.CHATROOM_NO) AS NOT_READ_CNT
+		FROM (SELECT 
+					 *
+		        FROM (SELECT
+		                      C.CHAT_NO
+		                    , C.CHATROOM_NO
+		                    , C.MEMBER_NO
+		                    , M.MEMBER_NAME
+		                    , M.MEMBER_PROFILEIMG
+		                    , C.MESSAGE
+		                    , C.CREATE_DATE
+		                    , C.FILE_ATTACH_NO
+		                    , C.CHAT_TYPE             
+		              FROM CHAT C
+		              LEFT JOIN MEMBER M 
+		                ON C.MEMBER_NO = M.MEMBER_NO
+		              INNER JOIN CHAT_MEMBER CM 
+		                 ON CM.CHATROOM_NO = C.CHATROOM_NO
+		              WHERE C.CHATROOM_NO = #{chatroomNo}
+		                AND (CM.MEMBER_NO = #{memberNo} AND 
+		                	((C.CREATE_DATE >= CM.CHATROOM_JOIN_DATE) OR (C.CHAT_TYPE = 'SYSTEM')))
+		              ORDER BY CHAT_NO DESC) 
+            <![CDATA[
+		        WHERE ROWNUM <=30
+            ]]>
+	       	<if test="chatNo != null and chatNo != 0">
+	       	 	<![CDATA[
+	       			AND CHAT_NO < #{chatNo}
+	       		]]>
+	       	</if>
+ 			) FINAL
+		ORDER BY CREATE_DATE
+	</select>
+	
+	<!-- 로그인한 사용자의 마지막으로 읽은 채팅번호 조회 -->
+	<select id="selectLastReadChatNo" parameterType="kr.or.ddit.vo.chat.ChatMemberVO" resultType="int">
+		SELECT LAST_READ_CHAT_NO
+		FROM CHAT_MEMBER 
+		WHERE MEMBER_NO = #{memberNo}
+		AND CHATROOM_NO = #{chatroomNo} 
+	</select>
+	
+	<!-- 특정 채팅방의 채팅방 타이틀 조회(방이름, 인원수) -->
+	<select id="selectChatroomTitle" parameterType="kr.or.ddit.vo.chat.ChatVO" resultType="map">
+		SELECT 
+		       R.CHATROOM_NO	
+		     , M.CHATROOM_NAME
+		     , R.MEM_COUNT
+		FROM CHATROOM R
+		INNER JOIN CHAT_MEMBER M
+		ON R.CHATROOM_NO = M.CHATROOM_NO
+		WHERE R.CHATROOM_NO = #{chatroomNo}
+		AND M.MEMBER_NO = #{memberNo}
+	</select>
+	
+	<!-- 로그인한 유저가 참여중인 모든 프로젝트의 구성원 목록 조회 -->
+	<select id="selectProjectMemberList" parameterType="kr.or.ddit.vo.chat.ChatVO" resultMap="memberMap">
+		SELECT
+		        P.PROJECT_NO
+		      , P.PROJECT_NAME
+		      , M.MEMBER_NO
+		      , M.MEMBER_NAME
+		      , M.MEMBER_DEPARTMENT
+		      , M.MEMBER_POSITION
+	          , M.MEMBER_PROFILEIMG
+		FROM 
+		    PROJECT_MEMBER MY_PM     
+		INNER JOIN 
+		    PROJECT_MEMBER ALL_PM    
+		    ON MY_PM.PROJECT_NO = ALL_PM.PROJECT_NO
+		INNER JOIN 
+		    PROJECT P                
+		    ON MY_PM.PROJECT_NO = P.PROJECT_NO
+		INNER JOIN 
+		    MEMBER M                
+		    ON ALL_PM.MEMBER_NO = M.MEMBER_NO
+		WHERE 
+		    MY_PM.MEMBER_NO = #{memberNo} 
+		AND
+    		ALL_PM.MEMBER_NO != #{memberNo} 
+		ORDER BY 
+			M.MEMBER_NAME
+	</select>
+	
+	<!-- 목록에 띄워줄 특정 채팅방의 정보 -->
+	<select id="selectChatroomMemList" parameterType="int" resultType="int">
+		SELECT MEMBER_NO
+		FROM CHAT_MEMBER
+		WHERE CHATROOM_NO = #{chatroomNo}
+	</select>
+	
+	<!-- 특정 멤버와의 1대1 채팅방이 존재하는지 확인 -->
+	<select id="selectIsExistChatroom" parameterType="map" resultType="int">
+		SELECT NVL(MAX(OM.CHATROOM_NO), 0)
+		FROM CHAT_MEMBER OM
+		INNER JOIN CHATROOM R
+		ON OM.CHATROOM_NO = R.CHATROOM_NO 
+		WHERE OM.MEMBER_NO = #{myMemNo}
+		AND R.CHATROOM_TYPE = 'PRIVATE'
+		AND EXISTS (SELECT IM.CHATROOM_NO
+		            FROM CHAT_MEMBER IM
+		            INNER JOIN CHATROOM R
+		            ON IM.CHATROOM_NO = R.CHATROOM_NO 
+		            WHERE IM.MEMBER_NO = #{youMemNo}
+		            AND R.CHATROOM_TYPE = 'PRIVATE'
+		            AND OM.CHATROOM_NO = IM.CHATROOM_NO)
+		AND ROWNUM = 1
+	</select>
+	
+	<!-- 새로운 채팅방 추가 -->
+	<insert id="insertChatroom" parameterType="kr.or.ddit.vo.chat.ChatroomVO">
+		<selectKey keyProperty="chatroomNo" resultType="int" order="BEFORE">
+			select SEQ_CHATROOM.NEXTVAL from dual
+		</selectKey>
+		INSERT INTO chatroom(
+		      CHATROOM_NO 
+		    , CHATROOM_NAME
+		    , CHATROOM_TYPE 
+		    , LAST_CHAT 
+		    , LAST_CHAT_DATE 
+		    , MEM_COUNT
+		) VALUES ( 
+		      #{chatroomNo}
+		    , #{chatroomName}
+		    , #{chatroomType}
+		    , null
+		    , null
+		    , #{memCount}
+		)
+	</insert>
+	
+	<!-- 채팅방에 시스템 메세지 추가(초대/퇴장 알림) -->
+	<insert id="insertSystemChat" parameterType="kr.or.ddit.vo.chat.ChatVO">
+		<selectKey keyProperty="chatNo" resultType="int" order="BEFORE">
+			SELECT SEQ_CHAT.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO CHAT(
+			  CHAT_NO
+			, CHATROOM_NO
+			, CREATE_DATE
+			, CHAT_TYPE
+			, MESSAGE
+		) VALUES (
+			  #{chatNo}
+			, #{chatroomNo}
+			, NVL(#{createDate, jdbcType=TIMESTAMP}, CURRENT_TIMESTAMP)
+			, #{chatType}
+			, #{message}
+		)
+	</insert>
+	
+	<!-- (채팅방 생성시 같이 수행) 새로운 채팅방에 소속되는 멤버 추가 -->
+	<insert id="insertChatMember" parameterType="kr.or.ddit.vo.chat.ChatMemberVO">
+		INSERT INTO CHAT_MEMBER(
+		      PARTICIPANT_NO
+		    , CHATROOM_NO
+		    , MEMBER_NO
+		    , LAST_READ_CHAT_NO
+		    , CHATROOM_JOIN_DATE
+		    , CHATROOM_NAME
+		) VALUES (
+		      SEQ_CHAT_MEMBER.NEXTVAL
+		    , #{chatroomNo}
+		    , #{memberNo}
+		    , #{lastReadChatNo}
+		    , CURRENT_TIMESTAMP
+		    , #{chatroomName}
+		)
+	</insert>
+	
+	<!-- 사용자가 보낸 채팅 추가 -->
+	<insert id="insertChat" parameterType="kr.or.ddit.vo.chat.ChatVO">
+		<selectKey keyProperty="chatNo" resultType="int" order="BEFORE">
+			SELECT SEQ_CHAT.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO CHAT(
+		      CHAT_NO
+		    , CHATROOM_NO
+		    , MEMBER_NO
+		    , MESSAGE
+		    , CREATE_DATE
+		    , FILE_ATTACH_NO
+		    , CHAT_TYPE
+		) VALUES (
+		      #{chatNo}
+		    , #{chatroomNo}
+		    , #{memberNo}
+		    , #{message}
+		    , #{createDate}
+		    , #{fileAttachNo}
+		    , #{chatType}
+		)
+	</insert>
+
+	<!-- 채팅방에 초대 시 멤버 수 변경 -->
+	<update id="updateChatroomInfo" parameterType="map">
+		UPDATE CHATROOM
+		SET 
+			  MEM_COUNT = MEM_COUNT + #{changeCount}
+			, CHATROOM_TYPE = #{chatroomType}
+		WHERE CHATROOM_NO = #{chatroomNo}
+	</update>
+	
+	<!-- 채팅 보낼 때 실행 --> 
+	<!-- 채팅방의 마지막 채팅 및 마지막 채팅 날짜 변경 -->
+	<update id="updateLastChat" parameterType="kr.or.ddit.vo.chat.ChatroomVO">
+		UPDATE CHATROOM
+		SET   
+			  LAST_CHAT = #{lastChat}
+		    , LAST_CHAT_DATE = #{lastChatDate}
+		WHERE CHATROOM_NO = #{chatroomNo}
+	</update>
+	
+	<!-- 특정 채팅방의 마지막 채팅 번호 조회 -->
+	<select id="selectRoomLastChatNo" parameterType="int" resultType="int">
+		SELECT MAX(C.CHAT_NO) AS LAST_CHAT_NO
+		FROM CHAT C
+		INNER JOIN CHAT_MEMBER M
+		ON M.CHATROOM_NO = C.CHATROOM_NO
+		WHERE C.CHATROOM_NO = #{chatroomNo}
+	</select>
+	
+	<!-- 채팅방 들어올 때/나갈 때/채팅 보낼 때 실행 -->
+	<!-- 특정 회원이 마지막으로 읽은 채팅 번호 변경 -->
+	<update id="updateLastReadChatNo" parameterType="kr.or.ddit.vo.chat.ChatVO">
+		UPDATE CHAT_MEMBER
+		SET LAST_READ_CHAT_NO = #{chatNo}
+		WHERE MEMBER_NO = #{memberNo}
+		AND CHATROOM_NO = #{chatroomNo}
+	</update>
+	
+	<!-- 채팅방에서 아예 퇴장 시 실행 -->
+	<!-- 특정 채팅방에서 로그인한 유저의 chatMember 삭제 -->
+	<delete id="deleteChatMember" parameterType="map">
+		DELETE FROM CHAT_MEMBER
+		WHERE CHATROOM_NO = #{chatroomNo}
+		AND MEMBER_NO = #{memberNo}
+	</delete>
+	
+	<!-- 채팅방 삭제 전, 채팅방에 있는 모든 채팅 삭제 -->
+	<delete id="deleteAllChat" parameterType="int">
+		DELETE FROM CHAT
+		WHERE CHATROOM_NO = #{chatroomNo}
+	</delete>
+	
+	<!-- 채팅방에서 퇴장 처리 후, 
+		 해당 채팅방에 아예 사람이 없을 경우 채팅방 삭제 -->
+	<delete id="deleteChatroom" parameterType="int">
+		DELETE FROM CHATROOM
+		<![CDATA[
+		WHERE CHATROOM_NO = #{chatroomNo} 
+		AND MEM_COUNT <= 0 
+		]]>
+	</delete>
+	
+</mapper>

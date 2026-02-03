@@ -1,0 +1,55 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<nav class="sidebar">
+	<a href="/tudio/project/create" class="nav-link ${param.menu == 'project_new' ? 'active' : ''}">
+        <i class="bi bi-plus-square"></i>
+        <span>새 프로젝트</span>
+    </a>
+	
+    <a href="/tudio/dashboard" class="nav-link ${param.menu == 'dashboard' ? 'active' : ''}">
+        <i class="bi bi-speedometer2"></i>
+        <span>대시보드</span>
+    </a>
+    
+    <a href="mytask.jsp" class="nav-link ${param.menu == 'mytask' ? 'active' : ''}">
+        <i class="bi bi-check2-square"></i>
+        <span>내 업무</span> </a>
+
+    
+    <a href="/tudio/project/list" class="nav-link ${param.menu == 'project_list' ? 'active' : ''}">
+        <i class="bi bi-folder2-open"></i>
+        <span>프로젝트</span>
+    </a>
+    
+    <a href="/tudio/schedule" class="nav-link ${param.menu == 'schedule' ? 'active' : ''}">
+        <i class="bi bi-calendar3"></i>
+        <span>전체 일정</span>
+    </a>
+    
+    <c:if test="${not empty sessionScope.favoriteList}">
+        
+	    <c:forEach var="project" items="${sessionScope.favoriteList}">
+	        <a href="/project/view?id=${project.id}" class="nav-link text-warning">
+	            <i class="bi bi-star-fill"></i>
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${project.name}</span>
+	        </a>
+	    </c:forEach>
+	</c:if>
+	
+	
+	<a href="archive.jsp" class="nav-link ${param.menu == 'archive' ? 'active' : ''}">
+        <i class="bi bi-archive"></i>
+        <span>자료실</span>
+    </a>
+    
+    <a href="meeting.jsp" class="nav-link ${param.menu == 'meeting' ? 'active' : ''}">
+        <i class="bi bi-camera-video"></i>
+        <span>화상 미팅</span>
+    </a>
+    
+    <a href="/tudio/approval/list" class="nav-link ${param.menu == 'approval' ? 'active' : ''}">
+        <i class="bi bi-file-earmark-check"></i>
+        <span>결재</span>
+    </a>
+</nav>

@@ -1,0 +1,78 @@
+package kr.or.ddit.chatbot.controller;
+
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import kr.or.ddit.chatbot.tool.ChatbotTool;
+
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * <pre>
+ * PROJ : Tudio
+ * Name : ChatbotController
+ * DESC : 챗봇 컨트롤러 클래스
+ * </pre>
+ * 
+ * @author [대덕인재개발원] team1 KJS
+ * @version 1.0, 2025.01.25
+ * 
+ */
+@Slf4j
+@Controller
+@RequestMapping("/tudio/bot")
+public class ChatbotController {
+	
+	@Autowired
+	private ChatbotTool chatbotTool;
+	
+	private final ChatClient chatClient;
+
+	public ChatbotController(ChatClient.Builder builder) {
+		this.chatClient = builder
+				.defaultSystem("당신은 Tudio 프로젝트 관리 시스템의 AI 비서입니다.\n"
+                        + "1. 사용자가 기안 작성법이나 절차를 물으면 'getHowToApproval' 도구를 사용하세요.\n"
+                        + "2. 사용자가 기안서 작성 '예시'를 요청하면, 질문 내용을 분석하여 "
+                        + "'resource'(인력/자원), 'schedule'(일정), 'budget'(예산), 'inspection'(검수), 'final'(완료), 'other'(기타) 중 "
+                        + "가장 적절한 키워드를 선택해 'getApprovalExample' 도구의 파라미터로 전달하세요.\n"
+                        + "단순히 템플릿 양식만 던져주는 것이 아니라, 실제 결재를 올리는 상황이라고 가정하고 출력해야 합니다.\n"
+                        + "3. 도구에서 반환된 템플릿 데이터를 바탕으로 전문적인 비즈니스 톤으로 예시를 보여주세요.\n"
+                        + "4. 사용자가 당신이 할 수 있는 일을 물어볼 때, 내부 메서드명(get...)을 절대 언급하지 마세요.")
+				.build();
+	}
+	
+	/**
+	 * 챗봇 화면 조회
+	 * @return chatbot.jsp 주소
+	 */
+	@GetMapping("/chat")
+	public String chatMain() {
+		return "chatbot/chatbot";
+	}
+	
+	/**
+	 * 사용자의 질문 처리
+	 * @return AI의 답변
+	 */
+	@GetMapping("/ask")
+	@ResponseBody
+	public String ask( String message) {
+		String response = chatClient.prompt(message)
+				.tools(chatbotTool)
+				.call()
+				.content();
+		
+		log.info("myLog: " + response);
+		
+		return response;
+	}
+	
+}

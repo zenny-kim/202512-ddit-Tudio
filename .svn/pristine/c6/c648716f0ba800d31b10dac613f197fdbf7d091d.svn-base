@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.projectInsight.mapper.IProjectInsightMapper">
+
+    <select id="getProjectInsight" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectInsightVO">
+        SELECT 
+        	P.PROJECT_DESC AS projectDesc,
+            (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO) AS totalTaskCount,
+            (SELECT NVL(ROUND(AVG(TASK_RATE), 1), 0) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO) AS overallProgress,
+            
+            (SELECT COUNT(*) FROM PROJECT_TASK 
+              WHERE PROJECT_NO = P.PROJECT_NO 
+                AND TRUNC(TASK_ENDDATE) &lt; TRUNC(SYSDATE) 
+                AND TASK_STATUS != 203) AS delayedTaskCount,
+            
+            (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO AND TASK_STATUS = 201) AS todoCount,
+            (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO AND TASK_STATUS = 202) AS inProgressCount,
+            (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO AND TASK_STATUS = 204) AS reviewCount,
+            (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO AND TASK_STATUS = 203) AS doneCount,
+
+            (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO AND TASK_STATUS = 203 AND TRUNC(TASK_FINISHDATE) &lt; TRUNC(TASK_ENDDATE)) AS earlyDoneCount,
+            (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO AND TASK_STATUS = 203 AND TRUNC(TASK_FINISHDATE) = TRUNC(TASK_ENDDATE)) AS onTimeDoneCount,
+            (SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = P.PROJECT_NO AND TASK_STATUS = 203 AND TRUNC(TASK_FINISHDATE) > TRUNC(TASK_ENDDATE)) AS lateDoneCount,
+
+            CASE 
+                WHEN (TRUNC(P.PROJECT_ENDDATE) - TRUNC(SYSDATE)) > 0 THEN 'D-' || (TRUNC(P.PROJECT_ENDDATE) - TRUNC(SYSDATE))
+                WHEN (TRUNC(P.PROJECT_ENDDATE) - TRUNC(SYSDATE)) = 0 THEN 'D-Day'
+                ELSE '만료'
+            END AS projectDday
+        FROM PROJECT P
+        WHERE P.PROJECT_NO = #{projectNo}
+    </select>
+
+    <select id="getMemberContributionList" parameterType="int" resultType="kr.or.ddit.vo.project.ProjectMemberVO">
+        SELECT 
+            M.MEMBER_NO,
+            U.MEMBER_NAME AS memberName,
+            U.MEMBER_POSITION AS memberPosition,
+            COUNT(T.TASK_ID) AS totalTaskCnt,
+            COUNT(CASE WHEN T.TASK_STATUS = 202 THEN 1 END) AS ingCnt,
+            COUNT(CASE WHEN T.TASK_STATUS = 203 THEN 1 END) AS doneCnt,
+            COUNT(CASE WHEN TRUNC(T.TASK_ENDDATE) &lt; TRUNC(SYSDATE) AND T.TASK_STATUS != 203 THEN 1 END) AS delayCnt,
+            
+            NVL(ROUND((COUNT(CASE WHEN T.TASK_STATUS = 203 THEN 1 END) / 
+                   NULLIF((SELECT COUNT(*) FROM PROJECT_TASK WHERE PROJECT_NO = #{projectNo} AND TASK_STATUS = 203), 0)) * 100, 1), 0) AS contributionRate
+        FROM PROJECT_MEMBER M
+        JOIN MEMBER U ON (M.MEMBER_NO = U.MEMBER_NO)
+        /* 담당자 테이블(PTM)을 거쳐서 실제 배정된 업무(T)를 조인합니다 */
+        LEFT JOIN PROJECT_TASK_MANAGER PTM ON (M.MEMBER_NO = PTM.MEMBER_NO AND PTM.WORK_TYPE = 'T')
+        LEFT JOIN PROJECT_TASK T ON (PTM.WORK_ID = T.TASK_ID AND M.PROJECT_NO = T.PROJECT_NO)
+        WHERE M.PROJECT_NO = #{projectNo}
+          AND M.PROJECT_MEM_STATUS = 'Y'
+        GROUP BY M.MEMBER_NO, U.MEMBER_NAME, U.MEMBER_POSITION
+        ORDER BY contributionRate DESC
+    </select>
+</mapper>

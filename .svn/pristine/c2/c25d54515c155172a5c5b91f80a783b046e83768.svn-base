@@ -1,0 +1,114 @@
+package kr.or.ddit.videoChat.service.impl;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import kr.or.ddit.videoChat.mapper.IVideoChatMapper;
+import kr.or.ddit.videoChat.service.IVideoChatService;
+import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.VideoChatVO;
+import kr.or.ddit.vo.project.ProjectVO;
+
+@Service
+public class VideoChatServiceImpl implements IVideoChatService {
+	
+	@Autowired
+	private IVideoChatMapper videoChatMapper;
+	
+	@Override
+    public List<ProjectVO> selectMemberProjectList(int memberNo) {
+        return videoChatMapper.selectMemberProjectList(memberNo);
+    }
+	
+	@Override
+    public List<MemberVO> selectProjectMemberList(int projectNo) {
+        return videoChatMapper.selectProjectMemberList(projectNo);
+    }
+
+	@Transactional // ★중요: 방 생성과 멤버 추가는 하나의 작업으로 처리
+    @Override
+    public VideoChatVO createVideoChatRoom(VideoChatVO videoChatVO) {
+        
+        // UUID로 방 ID와 비밀번호 생성
+        // String uuidId = UUID.randomUUID().toString();
+        String customRoomId = generateRoomId();         
+        String uuidPw = UUID.randomUUID().toString().substring(0, 8); // 비밀번호는 8자리만 끊어서 사용 (선택사항)
+        
+        // videoChatVO.setVideochatId(uuidId);
+        videoChatVO.setVideochatId(customRoomId);
+        videoChatVO.setVideochatPw(uuidPw);
+        
+        // 방 DB 저장 (insertVideoChatRoom 실행 시 videochatNo가 VO에 담김)
+        videoChatMapper.insertVideoChatRoom(videoChatVO);
+        
+        // 초대 멤버 리스트 구성
+        // (화면에서 넘어온 초대자 리스트 + 방장 본인도 추가해야 함)
+        List<String> memberList = videoChatVO.getInviteMemberList();
+        if(memberList == null) memberList = new ArrayList<>();
+        
+        // 방장(생성자)도 멤버 테이블에 추가 (이미 리스트에 없다면)
+        String createrNoStr = String.valueOf(videoChatVO.getVideochatCreaterNo());
+        if(!memberList.contains(createrNoStr)) {
+            memberList.add(createrNoStr);
+        }
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("videochatNo", videoChatVO.getVideochatNo());
+        map.put("memberList", memberList);
+        
+        videoChatMapper.insertVideoChatMember(map);
+        
+        return videoChatVO;
+    }
+	
+	// 형식: R + 숫자(3) - 숫자(2) - 숫자(3) (R721-94-152)
+    private String generateRoomId() {
+        Random random = new Random();
+        return String.format("R%03d-%02d-%03d", 
+                random.nextInt(1000),  // 0~999
+                random.nextInt(100),   // 0~99
+                random.nextInt(1000)   // 0~999
+        );
+    }
+
+	// 화상미팅 방 정보 조회
+	@Override
+    public Map<String, Object> getVideoChatInfo(String videochatId) {
+        Map<String, Object> resultMap = new HashMap<>();
+        
+        // 화상미팅 방 정보 조회
+        VideoChatVO roomInfo = videoChatMapper.selectVideoChatById(videochatId);
+        
+        // 유효하지 않은 방이면 null 반환 또는 예외 처리
+        if(roomInfo == null) {
+            return null; 
+        }
+        
+        // 화상미팅 참여자 수 조회
+        int memberCount = videoChatMapper.countVideoChatMember(videochatId);
+        
+        resultMap.put("roomInfo", roomInfo);
+        resultMap.put("memberCount", memberCount);
+        
+        return resultMap;
+    }
+	
+    /**
+     * 방 유효성 체크
+     */
+    @Override
+    public boolean checkRoomAccess(String roomId, String roomPw) {
+        // DB에서 해당 ID와 PW를 가진 방이 존재하는지 카운트 조회
+        int count = videoChatMapper.countRoomByIdAndPw(roomId, roomPw);
+        return count > 0;
+    }
+
+}
